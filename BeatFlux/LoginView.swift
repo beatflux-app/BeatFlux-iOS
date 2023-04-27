@@ -12,6 +12,8 @@ import AuthenticationServices
 struct LoginView: View {
     @Environment(\.colorScheme) var colorScheme
     
+    @ObservedObject private var keyboardObserver = KeyboardObserver()
+    
     @State var emailText = ""
     @State var passwordText = ""
 
@@ -29,7 +31,7 @@ struct LoginView: View {
                 .frame(maxWidth: .infinity)
                 .padding(.top)
                 
-                ScrollView {
+                //ScrollView {
 
                     
                     HStack {
@@ -43,32 +45,44 @@ struct LoginView: View {
                     
                     TextField(text: $emailText) {
                         Text("Email")
-                            .padding()
+                            
+                        
                     }
-                    .autocorrectionDisabled()
+                    .autocorrectionDisabled(true)
                     .textInputAutocapitalization(.never)
-                    .padding()
-                    .background(Color(uiColor: .quaternarySystemFill))
-                    .cornerRadius(16)
+                    .padding(.vertical)
+                    .overlay(alignment: .bottom) {
+                        Rectangle()
+                            .frame(height: 1)
+                            .foregroundColor(.secondary)
+                    }
                     .padding(.horizontal)
+                    
                     
                     SecureField(text: $passwordText) {
                         Text("Password")
-                            .padding()
+                            
+                        
                     }
-                    .autocorrectionDisabled()
+                    .autocorrectionDisabled(true)
                     .textInputAutocapitalization(.never)
-                    .padding()
-                    .background(Color(uiColor: .quaternarySystemFill))
-                    .cornerRadius(16)
+                    .padding(.vertical)
+                    .overlay(alignment: .bottom) {
+                        Rectangle()
+                            .frame(height: 1)
+                            .foregroundColor(.secondary)
+                    }
                     .padding(.horizontal)
-                    .padding(.top, 10)
+                    
+                Spacer()
                     
                     Button {
                         UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
                     } label: {
+                        
+                        
                         Rectangle()
-                            .cornerRadius(16)
+                            .cornerRadius(30)
                             .frame(height: 50)
                             .padding(.horizontal)
                             
@@ -77,63 +91,19 @@ struct LoginView: View {
                                     .foregroundColor(.white)
                                     .fontWeight(.semibold)
                             }
-                            .padding(.top, 10)
-                        
-                    }
-                    
-                    HStack {
-                        Rectangle()
-                            .frame(height: 2)
-                        Text("OR")
-                        Rectangle()
-                            .frame(height: 2)
-                    }
-                    .padding(.horizontal)
-                    .padding(.vertical, 5)
-                    .foregroundColor(.secondary)
-
-                    
-                    
-                    
-                    SignInWithAppleButton { request in
-                        
-                    } onCompletion: { error in
-                        
-                    }
-                    .signInWithAppleButtonStyle(colorScheme == .dark ? .white : .black)
-                    .cornerRadius(16)
-                    .frame(height: 50)
-                    .padding(.horizontal)
-                    
-                    
-
-                    NavigationLink(destination: SignupView().navigationBarBackButtonHidden(true)) {
-                        HStack {
-                            Text("Don't Have An Account? ")
-                            +
-                            Text("Sign Up")
-                                .underline()
-                        }
-                        .fontWeight(.semibold)
-                        .padding(.top, 5)
-
-                    }
-                    
-                    Button {
-                        
-                    } label: {
-                        
                             
+                        
                     }
+                    .padding(.bottom, keyboardObserver.keyboardHeight)
+                    
+                    .animation(.easeOut(duration: 0.25))
                     
 
-
-
                     
-                    Spacer()
-                }
-                .scrollDisabled(false)
+//                }
+//                .scrollDisabled(false)
             }
+            
         }
         
     }
