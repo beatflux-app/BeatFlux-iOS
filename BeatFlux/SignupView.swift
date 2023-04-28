@@ -12,142 +12,164 @@ import UIKit
 import AuthenticationServices
 
 struct SignupView: View {
-    @Environment(\.presentationMode) var presentationMode
     @Environment(\.colorScheme) var colorScheme
     
-    @State var emailText = ""
-    @State var passwordText = ""
-    @State var confirmPasswordText = ""
+    enum Field: Hashable {
+        case email
+        case password
+        case confirmPassword
+    }
+    
+    @State var email = ""
+    @State var password = ""
+    @State var confirmPassword = ""
+    @FocusState var focusedField: Field?
     
     var body: some View {
         VStack {
             HStack {
-                Text("Sign Up")
-                    .font(.title3)
-                    .fontWeight(.semibold)
+                Image("BeatFluxLogo")
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: 40)
+                    .cornerRadius(16)
             }
             .frame(maxWidth: .infinity)
-            .overlay(alignment: .leading) {
-                Button {
-                    presentationMode.wrappedValue.dismiss()
-                } label: {
-                    Image(systemName: "chevron.left")
-                        .font(.title2)
-                        .fontWeight(.bold)
-                    
-                        
-                }
-                .padding(.leading)
-            }
             .padding(.top)
             
             ScrollView {
                 
-                
                 HStack {
-                    
+                    Text("Sign up to get started!")
+                        .font(.largeTitle)
+                        .fontWeight(.bold)
                     Spacer()
                 }
-                .padding(.leading)
+                .padding([.leading, .bottom])
                 
-                
-                TextField(text: $emailText) {
-                    Text("Email")
-                        .padding()
-                }
-                .autocorrectionDisabled()
-                .textInputAutocapitalization(.never)
-                .padding()
-                .background(Color(uiColor: .quaternarySystemFill))
-                .cornerRadius(16)
-                .padding(.horizontal)
-                
-                SecureField(text: $passwordText) {
-                    Text("Password")
-                        .padding()
-                }
-                .autocorrectionDisabled()
-                .textInputAutocapitalization(.never)
-                .padding()
-                .background(Color(uiColor: .quaternarySystemFill))
-                .cornerRadius(16)
-                .padding(.horizontal)
-                .padding(.top, 10)
-                
-                SecureField(text: $confirmPasswordText) {
-                    Text("Confirm Password")
-                        .padding()
-                }
-                .autocorrectionDisabled()
-                .textInputAutocapitalization(.never)
-                .padding()
-                .background(Color(uiColor: .quaternarySystemFill))
-                .cornerRadius(16)
-                .padding(.horizontal)
-                .padding(.top, 10)
-                
-                Button {
-                    UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
-                } label: {
-                    Rectangle()
-                        .cornerRadius(16)
-                        .frame(height: 50)
-                        .padding(.horizontal)
-                        
-                        .overlay {
-                            Text("Sign up")
-                                .foregroundColor(.white)
-                                .fontWeight(.semibold)
+                VStack(spacing: 25) {
+                    //MARK: Email
+                    VStack {
+                        ZStack(alignment: .leading) {
+                            
+                            
+                            Text("Email")
+                                .foregroundColor(email.isEmpty ? .secondary : .accentColor)
+                                .offset(y: email.isEmpty ? 0 : -25)
+                                .scaleEffect(email.isEmpty ? 1 : 0.8, anchor: .leading)
+                            
+                            
+                            TextField("", text: $email)
+                                .autocorrectionDisabled()
+                                .textInputAutocapitalization(.never)
+                                .submitLabel(.next)
+                                .focused($focusedField, equals: .email)
+                                .onSubmit {
+                                    focusedField = .password
+                                }
+                            
+                            
+                            
                         }
-                        .padding(.top, 10)
-                    
-                }
-                
-                HStack {
-                    Rectangle()
-                        .frame(height: 2)
-                    Text("OR")
-                    Rectangle()
-                        .frame(height: 2)
-                }
-                .padding(.horizontal)
-                .padding(.vertical, 5)
-                .foregroundColor(.secondary)
-
-
-                
-                SignInWithAppleButton { request in
-                    
-                } onCompletion: { error in
-                    
-                }
-                .signInWithAppleButtonStyle(colorScheme == .dark ? .white : .black)
-                .cornerRadius(16)
-                .frame(height: 50)
-                .padding(.horizontal)
-                
-                
-
-                
-                Button {
-                    presentationMode.wrappedValue.dismiss()
-                } label: {
-                    Text("Have An Account? ")
-                    +
-                    Text("Login")
-                        .underline()
                         
+                        
+                        .animation(.default, value: email.isEmpty)
+                        
+                        Divider()
+                            .frame(height: 1)
+                            .padding(.horizontal, 30)
+                            .background(.secondary)
+                    }
+                    .padding(.horizontal)
+                    
+                    //MARK: Password
+                    VStack {
+                        ZStack(alignment: .leading) {
+                            
+                            
+                            Text("Password")
+                                .foregroundColor(password.isEmpty ? .secondary : .accentColor)
+                                .offset(y: password.isEmpty ? 0 : -25)
+                                .scaleEffect(password.isEmpty ? 1 : 0.8, anchor: .leading)
+                            
+                            
+                            SecureField("", text: $password)
+                                .autocorrectionDisabled()
+                                .textInputAutocapitalization(.never)
+                                .submitLabel(.done)
+                                .focused($focusedField, equals: .password)
+                                .onSubmit {
+                                    focusedField = .confirmPassword
+                                }
+                            
+                        }
+                        
+                        .animation(.default, value: password.isEmpty)
+                        
+                        Divider()
+                            .frame(height: 1)
+                            .padding(.horizontal, 30)
+                            .background(.secondary)
+                    }
+                    .padding(.horizontal)
+                    
+                    //MARK: Confirm Password
+                    VStack {
+                        ZStack(alignment: .leading) {
+                            
+                            
+                            Text("Confirm Password")
+                                .foregroundColor(confirmPassword.isEmpty ? .secondary : .accentColor)
+                                .offset(y: confirmPassword.isEmpty ? 0 : -25)
+                                .scaleEffect(confirmPassword.isEmpty ? 1 : 0.8, anchor: .leading)
+                            
+                            
+                            SecureField("", text: $confirmPassword)
+                                .autocorrectionDisabled()
+                                .textInputAutocapitalization(.never)
+                                .submitLabel(.done)
+                                .focused($focusedField, equals: .confirmPassword)
+                                .onSubmit {
+                                    //add auth code here
+                                }
+                            
+                        }
+                        
+                        .animation(.default, value: confirmPassword.isEmpty)
+                        
+                        Divider()
+                            .frame(height: 1)
+                            .padding(.horizontal, 30)
+                            .background(.secondary)
+                    }
+                    .padding(.horizontal)
                 }
-                .fontWeight(.semibold)
-                .padding(.top, 5)
-
-
-
                 
-                Spacer()
             }
-            .scrollDisabled(false)
+            .scrollDisabled(true)
+            
+            
+            Button {
+                UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
+            } label: {
+                Rectangle()
+                    .cornerRadius(30)
+                    .frame(height: 50)
+                    .padding(.horizontal)
+                    .overlay {
+                        Text("Create Account")
+                            .foregroundColor(.white)
+                            .fontWeight(.semibold)
+                    }
+            }
+            .padding(.bottom)
+            
+            
         }
+        
+        
+        
+        
         
         
     }

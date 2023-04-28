@@ -14,7 +14,6 @@
 		DFB08E2229F7EC1A0074A86A /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFB08E2129F7EC1A0074A86A /* LoginView.swift */; };
 		DFC6661329FA0AA3003227FE /* SignupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFC6661229FA0AA3003227FE /* SignupView.swift */; };
 		DFC6661529FA0EA4003227FE /* Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFC6661429FA0EA4003227FE /* Extensions.swift */; };
-		DFC6661729FAC756003227FE /* KeyboardObserver.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFC6661629FAC756003227FE /* KeyboardObserver.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -26,7 +25,6 @@
 		DFB08E2129F7EC1A0074A86A /* LoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginView.swift; sourceTree = "<group>"; };
 		DFC6661229FA0AA3003227FE /* SignupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignupView.swift; sourceTree = "<group>"; };
 		DFC6661429FA0EA4003227FE /* Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Extensions.swift; sourceTree = "<group>"; };
-		DFC6661629FAC756003227FE /* KeyboardObserver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardObserver.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -66,7 +64,6 @@
 				DFC6661229FA0AA3003227FE /* SignupView.swift */,
 				DFAD004C29F5B6C100EE6874 /* Preview Content */,
 				DFC6661429FA0EA4003227FE /* Extensions.swift */,
-				DFC6661629FAC756003227FE /* KeyboardObserver.swift */,
 			);
 			path = BeatFlux;
 			sourceTree = "<group>";
@@ -153,7 +150,6 @@
 				DFC6661329FA0AA3003227FE /* SignupView.swift in Sources */,
 				DFAD004929F5B6C000EE6874 /* HomeView.swift in Sources */,
 				DFAD004729F5B6C000EE6874 /* BeatFluxApp.swift in Sources */,
-				DFC6661729FAC756003227FE /* KeyboardObserver.swift in Sources */,
 				DFB08E2229F7EC1A0074A86A /* LoginView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
