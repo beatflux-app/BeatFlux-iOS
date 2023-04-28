@@ -10,7 +10,7 @@ import UIKit
 import AuthenticationServices
 
 struct LoginView: View {
-    @Environment(\.colorScheme) var colorScheme
+    @Environment(\.dismiss) var dismiss
     
     enum Field: Hashable {
         case email
@@ -31,6 +31,17 @@ struct LoginView: View {
                     .cornerRadius(16)
             }
             .frame(maxWidth: .infinity)
+            .overlay(alignment: .leading) {
+                Button {
+                    dismiss()
+                } label: {
+                    Text("Done")
+                        .fontWeight(.bold)
+                    
+                }
+                .padding(.leading)
+
+            }
             .padding(.top)
             
             ScrollView {
