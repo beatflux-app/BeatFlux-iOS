@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		DF44EEA929FBDEC40027E3DD /* AuthTextLabel_Element.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF44EEA829FBDEC40027E3DD /* AuthTextLabel_Element.swift */; };
+		DF44EEAB29FBE2720027E3DD /* WelcomePageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF44EEAA29FBE2720027E3DD /* WelcomePageView.swift */; };
 		DFAD004729F5B6C000EE6874 /* BeatFluxApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFAD004629F5B6C000EE6874 /* BeatFluxApp.swift */; };
 		DFAD004929F5B6C000EE6874 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFAD004829F5B6C000EE6874 /* HomeView.swift */; };
 		DFAD004B29F5B6C100EE6874 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = DFAD004A29F5B6C100EE6874 /* Assets.xcassets */; };
@@ -17,6 +19,8 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		DF44EEA829FBDEC40027E3DD /* AuthTextLabel_Element.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthTextLabel_Element.swift; sourceTree = "<group>"; };
+		DF44EEAA29FBE2720027E3DD /* WelcomePageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WelcomePageView.swift; sourceTree = "<group>"; };
 		DFAD004329F5B6C000EE6874 /* BeatFlux.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BeatFlux.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		DFAD004629F5B6C000EE6874 /* BeatFluxApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BeatFluxApp.swift; sourceTree = "<group>"; };
 		DFAD004829F5B6C000EE6874 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
@@ -38,6 +42,42 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		DF44EEA229FBDE480027E3DD /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				DF44EEA429FBDE5E0027E3DD /* AuthenticationViews */,
+				DFAD004829F5B6C000EE6874 /* HomeView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		DF44EEA329FBDE530027E3DD /* Extensions */ = {
+			isa = PBXGroup;
+			children = (
+				DFC6661429FA0EA4003227FE /* Extensions.swift */,
+			);
+			path = Extensions;
+			sourceTree = "<group>";
+		};
+		DF44EEA429FBDE5E0027E3DD /* AuthenticationViews */ = {
+			isa = PBXGroup;
+			children = (
+				DF44EEA529FBDE810027E3DD /* Elements */,
+				DFB08E2129F7EC1A0074A86A /* LoginView.swift */,
+				DFC6661229FA0AA3003227FE /* SignupView.swift */,
+				DF44EEAA29FBE2720027E3DD /* WelcomePageView.swift */,
+			);
+			path = AuthenticationViews;
+			sourceTree = "<group>";
+		};
+		DF44EEA529FBDE810027E3DD /* Elements */ = {
+			isa = PBXGroup;
+			children = (
+				DF44EEA829FBDEC40027E3DD /* AuthTextLabel_Element.swift */,
+			);
+			path = Elements;
+			sourceTree = "<group>";
+		};
 		DFAD003A29F5B6C000EE6874 = {
 			isa = PBXGroup;
 			children = (
@@ -57,13 +97,11 @@
 		DFAD004529F5B6C000EE6874 /* BeatFlux */ = {
 			isa = PBXGroup;
 			children = (
+				DF44EEA329FBDE530027E3DD /* Extensions */,
+				DF44EEA229FBDE480027E3DD /* Views */,
 				DFAD004629F5B6C000EE6874 /* BeatFluxApp.swift */,
-				DFAD004829F5B6C000EE6874 /* HomeView.swift */,
 				DFAD004A29F5B6C100EE6874 /* Assets.xcassets */,
-				DFB08E2129F7EC1A0074A86A /* LoginView.swift */,
-				DFC6661229FA0AA3003227FE /* SignupView.swift */,
 				DFAD004C29F5B6C100EE6874 /* Preview Content */,
-				DFC6661429FA0EA4003227FE /* Extensions.swift */,
 			);
 			path = BeatFlux;
 			sourceTree = "<group>";
@@ -148,8 +186,10 @@
 			files = (
 				DFC6661529FA0EA4003227FE /* Extensions.swift in Sources */,
 				DFC6661329FA0AA3003227FE /* SignupView.swift in Sources */,
+				DF44EEA929FBDEC40027E3DD /* AuthTextLabel_Element.swift in Sources */,
 				DFAD004929F5B6C000EE6874 /* HomeView.swift in Sources */,
 				DFAD004729F5B6C000EE6874 /* BeatFluxApp.swift in Sources */,
+				DF44EEAB29FBE2720027E3DD /* WelcomePageView.swift in Sources */,
 				DFB08E2229F7EC1A0074A86A /* LoginView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
