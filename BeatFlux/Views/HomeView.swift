@@ -9,12 +9,14 @@ import SwiftUI
 
 
 struct HomeView: View {
+    @ObservedObject var authHandler: AuthHandler
+    
     
     var size: CGFloat = 170
     
     var body: some View {
         VStack {
-            TopBarView()
+            TopBarView(authHandler: authHandler)
             
 
             ScrollView {
@@ -58,7 +60,7 @@ struct HomeView: View {
 
 struct HomeView_Previews: PreviewProvider {
     static var previews: some View {
-        HomeView()
+        HomeView(authHandler: AuthHandler())
     }
 }
 
@@ -84,6 +86,8 @@ private struct PlaylistGridSquare: View {
 }
 
 private struct TopBarView: View {
+    @ObservedObject var authHandler: AuthHandler
+    
     var body: some View {
         HStack {
             Image("BeatFluxLogo")
@@ -98,6 +102,19 @@ private struct TopBarView: View {
                 .frame(width: 35)
                 .padding(.leading)
                 .foregroundColor(Color(UIColor.systemGray5))
+        }
+        
+        .overlay(alignment: .trailing) {
+            Button {
+                authHandler.signOut()
+            } label: {
+                Circle()
+                    .frame(width: 35)
+                    .padding(.trailing)
+                    .foregroundColor(Color(UIColor.systemGray5))
+            }
+
+            
         }
     }
 }

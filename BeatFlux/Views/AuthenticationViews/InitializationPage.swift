@@ -12,7 +12,7 @@ struct InitializationPage: View {
     
     var body: some View {
         if authHandler.isUserLoggedIn {
-            HomeView()
+            HomeView(authHandler: authHandler)
         }
         else {
             WelcomePageView(authHandler: authHandler)

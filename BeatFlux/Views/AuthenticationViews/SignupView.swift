@@ -113,7 +113,7 @@ struct SignupView: View {
                 UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
                 Task {
                     do {
-                       var returnValue = try await authHandler.registerUser(with: email, password: password, confirmPassword: confirmPassword)
+                        let returnValue = try await authHandler.registerUser(with: email, password: password, confirmPassword: confirmPassword)
                         if (returnValue != "success") {
                             error =  authHandler.convertStringToErrorMessage(returnValue)
                             displayAlert.toggle()

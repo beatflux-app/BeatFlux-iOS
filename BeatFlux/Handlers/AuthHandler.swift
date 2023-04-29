@@ -94,6 +94,8 @@ class AuthHandler: ObservableObject {
             return "Password is too short"
         case "The email address is already in use by another account.":
             return "Email address is already in use by another account"
+        case "There is no user record corresponding to this identifier. The user may have been deleted.":
+            return "Invalid Credentials"
         default:
             print(errorMsg)
             return "Please try again later"

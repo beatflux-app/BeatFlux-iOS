@@ -101,7 +101,7 @@ struct LoginView: View {
                 UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
                 Task {
                     do {
-                       var returnValue = try await authHandler.loginUser(with: email, password: password)
+                        let returnValue = try await authHandler.loginUser(with: email, password: password)
                         if (returnValue != "success") {
                             error =  authHandler.convertStringToErrorMessage(returnValue)
                             displayAlert.toggle()
@@ -129,7 +129,7 @@ struct LoginView: View {
 
         }
         .alert(isPresented: $displayAlert) {
-                    Alert(title: Text("Cannot Create Account"), message: Text(error), dismissButton: .default(Text("Ok")))
+                    Alert(title: Text("Cannot Login"), message: Text(error), dismissButton: .default(Text("Ok")))
                 }
 
     }
