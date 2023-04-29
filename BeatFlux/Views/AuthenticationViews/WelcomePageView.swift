@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct WelcomePageView: View {
-    
+    @ObservedObject var authHandler: AuthHandler
     @State var loginPageShowing: Bool = false
     @State var signupPageShowing: Bool = false
     
@@ -120,7 +120,7 @@ struct WelcomePageView: View {
                         }
                 }
                 .fullScreenCover(isPresented: $loginPageShowing) {
-                    LoginView()
+                    LoginView(authHandler: authHandler)
                 }
                 
                 
@@ -138,7 +138,7 @@ struct WelcomePageView: View {
                     .fontWeight(.semibold)
                 }
                 .fullScreenCover(isPresented: $signupPageShowing) {
-                    SignupView()
+                    SignupView(authHandler: authHandler)
                 }
             }
             .padding(.bottom)
@@ -151,6 +151,6 @@ struct WelcomePageView: View {
 
 struct WelcomePageView_Previews: PreviewProvider {
     static var previews: some View {
-        WelcomePageView()
+        WelcomePageView(authHandler: AuthHandler())
     }
 }

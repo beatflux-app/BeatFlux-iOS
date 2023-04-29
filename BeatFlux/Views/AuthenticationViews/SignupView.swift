@@ -13,6 +13,7 @@ import AuthenticationServices
 
 struct SignupView: View {
     @Environment(\.dismiss) var dismiss
+    @ObservedObject var authHandler: AuthHandler
     
     enum Field: Hashable {
         case email
@@ -24,6 +25,11 @@ struct SignupView: View {
     @State var password = ""
     @State var confirmPassword = ""
     @FocusState var focusedField: Field?
+    
+    
+    @State var error = ""
+    
+    @State var displayAlert: Bool = false
     
     var body: some View {
         VStack {
@@ -105,6 +111,23 @@ struct SignupView: View {
             
             Button {
                 UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
+                Task {
+                    do {
+                       var returnValue = try await authHandler.registerUser(with: email, password: password, confirmPassword: confirmPassword)
+                        if (returnValue != "success") {
+                            error =  authHandler.convertStringToErrorMessage(returnValue)
+                            displayAlert.toggle()
+                        }
+                        
+                    }
+                    catch {
+                        
+                        return
+                    }
+                    
+                }
+                
+                
             } label: {
                 Rectangle()
                     .cornerRadius(30)
@@ -120,6 +143,9 @@ struct SignupView: View {
             
             
         }
+        .alert(isPresented: $displayAlert) {
+                    Alert(title: Text("Cannot Create Account"), message: Text(error), dismissButton: .default(Text("Ok")))
+                }
         
         
         
@@ -131,6 +157,6 @@ struct SignupView: View {
 
 struct SignupView_Previews: PreviewProvider {
     static var previews: some View {
-        SignupView()
+        SignupView(authHandler: AuthHandler())
     }
 }
