@@ -115,7 +115,7 @@ struct SignupView: View {
                     do {
                         let returnValue = try await authHandler.registerUser(with: email, password: password, confirmPassword: confirmPassword)
                         if (returnValue != "success") {
-                            error =  authHandler.convertStringToErrorMessage(returnValue)
+                            error = returnValue
                             displayAlert.toggle()
                         }
                         

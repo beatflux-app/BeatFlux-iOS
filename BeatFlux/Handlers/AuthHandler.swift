@@ -7,11 +7,17 @@
 
 import Foundation
 import FirebaseAuth
+import Combine
+import CombineFirebaseAuth
 import SwiftUI
 
 
 class AuthHandler: ObservableObject {
 
+    var cancelBag = Set<AnyCancellable>()
+    
+    let auth = Auth.auth()
+    
     
     enum PasswordRequirementReturnTypes {
         case success
@@ -20,13 +26,10 @@ class AuthHandler: ObservableObject {
     
     @Published var isUserLoggedIn: Bool = false
     
-    
-    
     init() {
         Auth.auth().addStateDidChangeListener { auth, user in
 
             if let _ = user {
-                print("Valid account")
                 self.isUserLoggedIn = true
             } else {
                 self.isUserLoggedIn = false
@@ -45,62 +48,94 @@ class AuthHandler: ObservableObject {
     }
     
     func registerUser(with email: String, password: String, confirmPassword: String) async throws -> String  {
-        if (password != confirmPassword) { return "passwords do not match" }
-        if (!isValidEmail(email)) { return "invalid email" }
+        let minCharacterCount = 6
+        if (password != confirmPassword) { return "Passwords do not match" }
+        if (!isValidEmail(email)) { return "Please enter a valid email" }
         
-        switch (checkRequiredPasswordParams(password: password, minCharacterCount: 6)) {
+        switch (checkRequiredPasswordParams(password: password, minCharacterCount: minCharacterCount)) {
         case .needsMoreCharacters:
-            return "password too short"
-        default:
+            return "Password must be at least \(minCharacterCount) characters long"
+        case .success:
             break
         }
         
         
-        do {
-            try await Auth.auth().createUser(withEmail: email, password: password)
-            return "success"
-        }
-        catch {
-            print("USER GENERATION ERROR::\(error.localizedDescription)")
-            return error.localizedDescription
+        return try await withCheckedThrowingContinuation { continutation in
+            auth.createUser(withEmail: email, password: password)
+                .sink(
+                    receiveCompletion: { completion in
+                        switch completion {
+                        case .finished:
+                            break
+                        case .failure(let error):
+                            print(error.localizedDescription)
+                            let errorDescription = self.convertErrorToString(error)
+                            continutation.resume(returning: errorDescription)
+                        }
+                        
+                    },
+                    receiveValue: {_ in
+                        continutation.resume(returning: "success")
+                    }
+                )
+                .store(in: &cancelBag)
         }
         
     }
+    
+    
     
     func loginUser(with email: String, password: String) async throws -> String {
         
-        if (!isValidEmail(email)) { return "invalid email" }
+        if (!isValidEmail(email)) { return "Please enter a valid email" }
         
-        do {
-            try await Auth.auth().signIn(withEmail: email, password: password)
-            return "success"
+        
+        
+        return try await withCheckedThrowingContinuation { continutation in
+            auth.signIn(withEmail: email, password: password)
+                .sink(
+                    receiveCompletion: { completion in
+                        switch completion {
+                        case .finished:
+                            break
+                        case .failure(let error):
+                            print(error.localizedDescription)
+                            let errorDescription = self.convertErrorToString(error)
+                            continutation.resume(returning: errorDescription)
+                        }
+                        
+                    },
+                    receiveValue: {_ in
+                        continutation.resume(returning: "success")
+                    }
+                )
+                .store(in: &cancelBag)
         }
-        catch {
-            print("USER LOGIN ERROR::\(error.localizedDescription)")
-            return error.localizedDescription
-        }
+        
     }
     
-    
-    
-    func convertStringToErrorMessage(_ errorMsg: String) -> String {
-        //MARK: TODO-Add more error messages
-        switch (errorMsg) {
-        case "passwords do not match":
-            return "Passwords do not match"
-        case "invalid email":
-            return "Please enter a valid email"
-        case "password too short":
-            return "Password is too short"
-        case "The email address is already in use by another account.":
-            return "Email address is already in use by another account"
-        case "There is no user record corresponding to this identifier. The user may have been deleted.":
+    func convertErrorToString(_ error: Error) -> String {
+        let nsError = error as NSError
+        let authError = AuthErrorCode(_nsError: nsError)
+        
+        switch authError.code {
+        case .wrongPassword:
             return "Invalid Credentials"
+        case .emailAlreadyInUse:
+            return "Email already in use"
+        case .credentialAlreadyInUse:
+            return "These credentials have already been used with another account"
+        case .invalidEmail:
+            return "Invalid Credentials"
+        case .userNotFound:
+            return "Invalid Credentials"
+        case .userDisabled:
+            return "This account has been disabled. If you have any questions, please contact info@beatflux.app"
         default:
-            print(errorMsg)
             return "Please try again later"
         }
     }
+    
     
     private func checkRequiredPasswordParams(password: String, minCharacterCount: Int) -> PasswordRequirementReturnTypes {
         if (password.count < minCharacterCount) { return .needsMoreCharacters }

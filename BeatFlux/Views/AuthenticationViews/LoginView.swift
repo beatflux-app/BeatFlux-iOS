@@ -103,7 +103,7 @@ struct LoginView: View {
                     do {
                         let returnValue = try await authHandler.loginUser(with: email, password: password)
                         if (returnValue != "success") {
-                            error =  authHandler.convertStringToErrorMessage(returnValue)
+                            error = returnValue
                             displayAlert.toggle()
                         }
                         

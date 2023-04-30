@@ -17,6 +17,13 @@
 		DF599E7129FC99A300EBF850 /* FirebaseStorage in Frameworks */ = {isa = PBXBuildFile; productRef = DF599E7029FC99A300EBF850 /* FirebaseStorage */; };
 		DF599E7429FC9A3000EBF850 /* AuthHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF599E7329FC9A3000EBF850 /* AuthHandler.swift */; };
 		DF599E7629FD70A700EBF850 /* InitializationPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF599E7529FD70A700EBF850 /* InitializationPage.swift */; };
+		DF72E62429FEB487007A6306 /* CombineFirebase in Frameworks */ = {isa = PBXBuildFile; productRef = DF72E62329FEB487007A6306 /* CombineFirebase */; };
+		DF72E62629FEB487007A6306 /* CombineFirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = DF72E62529FEB487007A6306 /* CombineFirebaseAuth */; };
+		DF72E62829FEB487007A6306 /* CombineFirebaseDatabase in Frameworks */ = {isa = PBXBuildFile; productRef = DF72E62729FEB487007A6306 /* CombineFirebaseDatabase */; };
+		DF72E62A29FEB487007A6306 /* CombineFirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = DF72E62929FEB487007A6306 /* CombineFirebaseFirestore */; };
+		DF72E62C29FEB487007A6306 /* CombineFirebaseFunctions in Frameworks */ = {isa = PBXBuildFile; productRef = DF72E62B29FEB487007A6306 /* CombineFirebaseFunctions */; };
+		DF72E62E29FEB487007A6306 /* CombineFirebaseRemoteConfig in Frameworks */ = {isa = PBXBuildFile; productRef = DF72E62D29FEB487007A6306 /* CombineFirebaseRemoteConfig */; };
+		DF72E63029FEB487007A6306 /* CombineFirebaseStorage in Frameworks */ = {isa = PBXBuildFile; productRef = DF72E62F29FEB487007A6306 /* CombineFirebaseStorage */; };
 		DFAD004729F5B6C000EE6874 /* BeatFluxApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFAD004629F5B6C000EE6874 /* BeatFluxApp.swift */; };
 		DFAD004929F5B6C000EE6874 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFAD004829F5B6C000EE6874 /* HomeView.swift */; };
 		DFAD004B29F5B6C100EE6874 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = DFAD004A29F5B6C100EE6874 /* Assets.xcassets */; };
@@ -48,10 +55,17 @@
 			buildActionMask = 2147483647;
 			files = (
 				DF599E6D29FC99A300EBF850 /* FirebaseDatabase in Frameworks */,
+				DF72E63029FEB487007A6306 /* CombineFirebaseStorage in Frameworks */,
+				DF72E62C29FEB487007A6306 /* CombineFirebaseFunctions in Frameworks */,
 				DF599E6F29FC99A300EBF850 /* FirebaseFirestore in Frameworks */,
+				DF72E62829FEB487007A6306 /* CombineFirebaseDatabase in Frameworks */,
 				DF599E6929FC99A300EBF850 /* FirebaseAnalytics in Frameworks */,
 				DF599E7129FC99A300EBF850 /* FirebaseStorage in Frameworks */,
 				DF599E6B29FC99A300EBF850 /* FirebaseAuth in Frameworks */,
+				DF72E62429FEB487007A6306 /* CombineFirebase in Frameworks */,
+				DF72E62E29FEB487007A6306 /* CombineFirebaseRemoteConfig in Frameworks */,
+				DF72E62629FEB487007A6306 /* CombineFirebaseAuth in Frameworks */,
+				DF72E62A29FEB487007A6306 /* CombineFirebaseFirestore in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -163,6 +177,13 @@
 				DF599E6C29FC99A300EBF850 /* FirebaseDatabase */,
 				DF599E6E29FC99A300EBF850 /* FirebaseFirestore */,
 				DF599E7029FC99A300EBF850 /* FirebaseStorage */,
+				DF72E62329FEB487007A6306 /* CombineFirebase */,
+				DF72E62529FEB487007A6306 /* CombineFirebaseAuth */,
+				DF72E62729FEB487007A6306 /* CombineFirebaseDatabase */,
+				DF72E62929FEB487007A6306 /* CombineFirebaseFirestore */,
+				DF72E62B29FEB487007A6306 /* CombineFirebaseFunctions */,
+				DF72E62D29FEB487007A6306 /* CombineFirebaseRemoteConfig */,
+				DF72E62F29FEB487007A6306 /* CombineFirebaseStorage */,
 			);
 			productName = BeatFlux;
 			productReference = DFAD004329F5B6C000EE6874 /* BeatFlux.app */;
@@ -194,6 +215,7 @@
 			mainGroup = DFAD003A29F5B6C000EE6874;
 			packageReferences = (
 				DF599E6729FC99A300EBF850 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
+				DF72E62229FEB487007A6306 /* XCRemoteSwiftPackageReference "CombineFirebase" */,
 			);
 			productRefGroup = DFAD004429F5B6C000EE6874 /* Products */;
 			projectDirPath = "";
@@ -443,6 +465,14 @@
 				minimumVersion = 10.0.0;
 			};
 		};
+		DF72E62229FEB487007A6306 /* XCRemoteSwiftPackageReference "CombineFirebase" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/rever-ai/CombineFirebase";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.3.3;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -470,6 +500,41 @@
 			isa = XCSwiftPackageProductDependency;
 			package = DF599E6729FC99A300EBF850 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
 			productName = FirebaseStorage;
+		};
+		DF72E62329FEB487007A6306 /* CombineFirebase */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = DF72E62229FEB487007A6306 /* XCRemoteSwiftPackageReference "CombineFirebase" */;
+			productName = CombineFirebase;
+		};
+		DF72E62529FEB487007A6306 /* CombineFirebaseAuth */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = DF72E62229FEB487007A6306 /* XCRemoteSwiftPackageReference "CombineFirebase" */;
+			productName = CombineFirebaseAuth;
+		};
+		DF72E62729FEB487007A6306 /* CombineFirebaseDatabase */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = DF72E62229FEB487007A6306 /* XCRemoteSwiftPackageReference "CombineFirebase" */;
+			productName = CombineFirebaseDatabase;
+		};
+		DF72E62929FEB487007A6306 /* CombineFirebaseFirestore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = DF72E62229FEB487007A6306 /* XCRemoteSwiftPackageReference "CombineFirebase" */;
+			productName = CombineFirebaseFirestore;
+		};
+		DF72E62B29FEB487007A6306 /* CombineFirebaseFunctions */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = DF72E62229FEB487007A6306 /* XCRemoteSwiftPackageReference "CombineFirebase" */;
+			productName = CombineFirebaseFunctions;
+		};
+		DF72E62D29FEB487007A6306 /* CombineFirebaseRemoteConfig */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = DF72E62229FEB487007A6306 /* XCRemoteSwiftPackageReference "CombineFirebase" */;
+			productName = CombineFirebaseRemoteConfig;
+		};
+		DF72E62F29FEB487007A6306 /* CombineFirebaseStorage */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = DF72E62229FEB487007A6306 /* XCRemoteSwiftPackageReference "CombineFirebase" */;
+			productName = CombineFirebaseStorage;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
