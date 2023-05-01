@@ -13,6 +13,7 @@ import AuthenticationServices
 
 struct SignupView: View {
     @Environment(\.dismiss) var dismiss
+    @ObservedObject var authHandler: AuthHandler
     
     enum Field: Hashable {
         case email
@@ -24,6 +25,11 @@ struct SignupView: View {
     @State var password = ""
     @State var confirmPassword = ""
     @FocusState var focusedField: Field?
+    @State private var isLoading = false
+    
+    @State var error = ""
+    
+    @State private var displayAlert: Bool = false
     
     var body: some View {
         VStack {
@@ -69,6 +75,7 @@ struct SignupView: View {
                             .onSubmit {
                                 focusedField = .password
                             }
+                            .disabled(isLoading)
                     }
                     .padding(.horizontal)
                     
@@ -82,6 +89,7 @@ struct SignupView: View {
                             .onSubmit {
                                 focusedField = .confirmPassword
                             }
+                            .disabled(isLoading)
                     }
                     .padding(.horizontal)
                     
@@ -95,6 +103,7 @@ struct SignupView: View {
                             .onSubmit {
                                 //auth code
                             }
+                            .disabled(isLoading)
                     }
                     .padding(.horizontal)
                 }
@@ -105,21 +114,50 @@ struct SignupView: View {
             
             Button {
                 UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
-            } label: {
-                Rectangle()
-                    .cornerRadius(30)
-                    .frame(height: 50)
-                    .padding(.horizontal)
-                    .overlay {
-                        Text("Create Account")
-                            .foregroundColor(.white)
-                            .fontWeight(.semibold)
+                
+                Task {
+                    isLoading = true
+                    
+                    do {
+                        let _ = try await authHandler.registerUser(with: email, password: password, confirmPassword: confirmPassword)
+                        print("passed")
                     }
+                    catch AuthHandler.AuthResult.error(let error) {
+                        self.error = error
+                        displayAlert.toggle()
+                    }
+                    
+                    isLoading = false
+                }
+                
+                
+                
+            } label: {
+                ZStack {
+                    Rectangle()
+                        .cornerRadius(30)
+                        .frame(height: 50)
+                        .padding(.horizontal)
+                        .overlay {
+                            Text("Create Account")
+                                .foregroundColor(.white)
+                                .fontWeight(.semibold)
+                                .opacity(isLoading ? 0 : 1)
+                    }
+                    
+                    LoadingIndicator(size: 45, color: .white, lineWidth: 3)
+                        .opacity(isLoading ? 1 : 0)
+                }
+                    
             }
+            .disabled(isLoading)
             .padding(.bottom)
             
             
         }
+        .alert(isPresented: $displayAlert) {
+                    Alert(title: Text("Cannot Create Account"), message: Text(error), dismissButton: .default(Text("Ok")))
+                }
         
         
         
@@ -131,6 +169,6 @@ struct SignupView: View {
 
 struct SignupView_Previews: PreviewProvider {
     static var previews: some View {
-        SignupView()
+        SignupView(authHandler: AuthHandler())
     }
 }

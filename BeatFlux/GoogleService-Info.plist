@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CLIENT_ID</key>
+	<string>605960783836-j8gm887ik5fluh6mkrvralnifar06oqk.apps.googleusercontent.com</string>
+	<key>REVERSED_CLIENT_ID</key>
+	<string>com.googleusercontent.apps.605960783836-j8gm887ik5fluh6mkrvralnifar06oqk</string>
+	<key>API_KEY</key>
+	<string>AIzaSyAuuO6MBafNpTUyJm_wxtJ8MNt2rTHBOhc</string>
+	<key>GCM_SENDER_ID</key>
+	<string>605960783836</string>
+	<key>PLIST_VERSION</key>
+	<string>1</string>
+	<key>BUNDLE_ID</key>
+	<string>com.beatflux.BeatFlux</string>
+	<key>PROJECT_ID</key>
+	<string>beatflux-93656</string>
+	<key>STORAGE_BUCKET</key>
+	<string>beatflux-93656.appspot.com</string>
+	<key>IS_ADS_ENABLED</key>
+	<false></false>
+	<key>IS_ANALYTICS_ENABLED</key>
+	<false></false>
+	<key>IS_APPINVITE_ENABLED</key>
+	<true></true>
+	<key>IS_GCM_ENABLED</key>
+	<true></true>
+	<key>IS_SIGNIN_ENABLED</key>
+	<true></true>
+	<key>GOOGLE_APP_ID</key>
+	<string>1:605960783836:ios:9fde4adb773c2ecb29f119</string>
+</dict>
+</plist>

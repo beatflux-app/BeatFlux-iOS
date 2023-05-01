@@ -11,6 +11,7 @@ import AuthenticationServices
 
 struct LoginView: View {
     @Environment(\.dismiss) var dismiss
+    @ObservedObject var authHandler: AuthHandler
     
     enum Field: Hashable {
         case email
@@ -20,6 +21,10 @@ struct LoginView: View {
     @State var email = ""
     @State var password = ""
     @FocusState var focusedField: Field?
+    @State var error = ""
+    @State private var isLoading = false
+    
+    @State private var displayAlert: Bool = false
     
     var body: some View {
         VStack {
@@ -65,6 +70,7 @@ struct LoginView: View {
                             .onSubmit {
                                 focusedField = .password
                             }
+                            .disabled(isLoading)
                     }
                     .padding(.horizontal)
 
@@ -78,6 +84,7 @@ struct LoginView: View {
                             .onSubmit {
                                 //auth code here
                             }
+                            .disabled(isLoading)
                     }
                     .padding(.horizontal)
                 }
@@ -95,20 +102,46 @@ struct LoginView: View {
             
             Button {
                 UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
-            } label: {
-                Rectangle()
-                    .cornerRadius(30)
-                    .frame(height: 50)
-                    .padding(.horizontal)
-                    .overlay {
-                        Text("Login")
-                            .foregroundColor(.white)
-                            .fontWeight(.semibold)
+                Task {
+                    isLoading = true
+                    
+                    do {
+                        let _ = try await authHandler.loginUser(with: email, password: password)
                     }
+                    catch AuthHandler.AuthResult.error(let error) {
+                        self.error = error
+                        displayAlert.toggle()
+                    }
+                    
+                    isLoading = false
+                    
+                }
+            } label: {
+                ZStack {
+                    Rectangle()
+                        .cornerRadius(30)
+                        .frame(height: 50)
+                        .padding(.horizontal)
+                        .overlay {
+                            Text("Login")
+                                .foregroundColor(.white)
+                                .fontWeight(.semibold)
+                                .opacity(isLoading ? 0 : 1)
+                        }
+                        
+                    
+                    LoadingIndicator(size: 45, color: .white, lineWidth: 3)
+                        .opacity(isLoading ? 1 : 0)
+                }
+
             }
+            .disabled(isLoading)
             .padding(.bottom)
 
         }
+        .alert(isPresented: $displayAlert) {
+                    Alert(title: Text("Cannot Login"), message: Text(error), dismissButton: .default(Text("Ok")))
+                }
 
     }
 }
@@ -116,6 +149,6 @@ struct LoginView: View {
 
 struct LoginView_Previews: PreviewProvider {
     static var previews: some View {
-        LoginView()
+        LoginView(authHandler: AuthHandler())
     }
 }
