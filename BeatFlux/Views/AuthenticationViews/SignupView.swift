@@ -24,7 +24,7 @@ struct SignupView: View {
     @State private var error = ""
     @State private var displayAlert: Bool = false
     
-    enum Field: Hashable {
+    private enum Field: Hashable {
         case email
         case password
         case confirmPassword
@@ -148,7 +148,6 @@ struct SignupView: View {
                 }
     }
     
-    //MARK: Clean Up
     private func authLogin() {
         Task {
             isLoading = true
