@@ -13,18 +13,18 @@ struct LoginView: View {
     @Environment(\.dismiss) var dismiss
     @ObservedObject var authHandler: AuthHandler
     
+    @FocusState private var focusedField: Field?
+    
+    @State private var email = ""
+    @State private var password = ""
+    @State private var error = ""
+    @State private var isLoading = false
+    @State private var displayAlert: Bool = false
+    
     enum Field: Hashable {
         case email
         case password
     }
-
-    @State var email = ""
-    @State var password = ""
-    @FocusState var focusedField: Field?
-    @State var error = ""
-    @State private var isLoading = false
-    
-    @State private var displayAlert: Bool = false
     
     var body: some View {
         VStack {
@@ -70,7 +70,11 @@ struct LoginView: View {
                             .onSubmit {
                                 focusedField = .password
                             }
+                            .onAppear {
+                                focusedField = .email
+                            }
                             .disabled(isLoading)
+
                     }
                     .padding(.horizontal)
 
@@ -82,7 +86,8 @@ struct LoginView: View {
                             .submitLabel(.done)
                             .focused($focusedField, equals: .password)
                             .onSubmit {
-                                //auth code here
+                                UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
+                                authLogin()
                             }
                             .disabled(isLoading)
                     }
@@ -102,20 +107,7 @@ struct LoginView: View {
             
             Button {
                 UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
-                Task {
-                    isLoading = true
-                    
-                    do {
-                        let _ = try await authHandler.loginUser(with: email, password: password)
-                    }
-                    catch AuthHandler.AuthResult.error(let error) {
-                        self.error = error
-                        displayAlert.toggle()
-                    }
-                    
-                    isLoading = false
-                    
-                }
+                authLogin()
             } label: {
                 ZStack {
                     Rectangle()
@@ -143,6 +135,25 @@ struct LoginView: View {
                     Alert(title: Text("Cannot Login"), message: Text(error), dismissButton: .default(Text("Ok")))
                 }
 
+    }
+    
+    
+    //MARK: Clean up
+    private func authLogin() {
+        Task {
+            isLoading = true
+            
+            do {
+                let _ = try await authHandler.loginUser(with: email, password: password)
+            }
+            catch AuthHandler.AuthResult.error(let error) {
+                self.error = error
+                displayAlert.toggle()
+            }
+            
+            isLoading = false
+            
+        }
     }
 }
 
