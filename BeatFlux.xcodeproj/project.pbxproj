@@ -29,6 +29,7 @@
 		DFAD004B29F5B6C100EE6874 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = DFAD004A29F5B6C100EE6874 /* Assets.xcassets */; };
 		DFAD004E29F5B6C100EE6874 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = DFAD004D29F5B6C100EE6874 /* Preview Assets.xcassets */; };
 		DFB08E2229F7EC1A0074A86A /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFB08E2129F7EC1A0074A86A /* LoginView.swift */; };
+		DFBE88BF29FF51DB00572B47 /* LoadingIndicator.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFBE88BE29FF51DB00572B47 /* LoadingIndicator.swift */; };
 		DFC6661329FA0AA3003227FE /* SignupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFC6661229FA0AA3003227FE /* SignupView.swift */; };
 		DFC6661529FA0EA4003227FE /* Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFC6661429FA0EA4003227FE /* Extensions.swift */; };
 /* End PBXBuildFile section */
@@ -45,6 +46,7 @@
 		DFAD004A29F5B6C100EE6874 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		DFAD004D29F5B6C100EE6874 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		DFB08E2129F7EC1A0074A86A /* LoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginView.swift; sourceTree = "<group>"; };
+		DFBE88BE29FF51DB00572B47 /* LoadingIndicator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoadingIndicator.swift; sourceTree = "<group>"; };
 		DFC6661229FA0AA3003227FE /* SignupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignupView.swift; sourceTree = "<group>"; };
 		DFC6661429FA0EA4003227FE /* Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Extensions.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -159,6 +161,7 @@
 		DFBE88BD29FF51BC00572B47 /* GenericViews */ = {
 			isa = PBXGroup;
 			children = (
+				DFBE88BE29FF51DB00572B47 /* LoadingIndicator.swift */,
 			);
 			path = GenericViews;
 			sourceTree = "<group>";
@@ -254,6 +257,7 @@
 			files = (
 				DFC6661529FA0EA4003227FE /* Extensions.swift in Sources */,
 				DFC6661329FA0AA3003227FE /* SignupView.swift in Sources */,
+				DFBE88BF29FF51DB00572B47 /* LoadingIndicator.swift in Sources */,
 				DF44EEA929FBDEC40027E3DD /* AuthTextLabel_Element.swift in Sources */,
 				DFAD004929F5B6C000EE6874 /* HomeView.swift in Sources */,
 				DF599E7429FC9A3000EBF850 /* AuthHandler.swift in Sources */,

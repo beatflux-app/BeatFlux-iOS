@@ -22,8 +22,9 @@ struct LoginView: View {
     @State var password = ""
     @FocusState var focusedField: Field?
     @State var error = ""
+    @State private var isLoading = false
     
-    @State var displayAlert: Bool = false
+    @State private var displayAlert: Bool = false
     
     var body: some View {
         VStack {
@@ -69,6 +70,7 @@ struct LoginView: View {
                             .onSubmit {
                                 focusedField = .password
                             }
+                            .disabled(isLoading)
                     }
                     .padding(.horizontal)
 
@@ -82,6 +84,7 @@ struct LoginView: View {
                             .onSubmit {
                                 //auth code here
                             }
+                            .disabled(isLoading)
                     }
                     .padding(.horizontal)
                 }
@@ -100,27 +103,39 @@ struct LoginView: View {
             Button {
                 UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
                 Task {
+                    isLoading = true
+                    
                     do {
                         let _ = try await authHandler.loginUser(with: email, password: password)
                     }
                     catch AuthHandler.AuthResult.error(let error) {
-                        print("Error: \(error)")
                         self.error = error
                         displayAlert.toggle()
                     }
                     
+                    isLoading = false
+                    
                 }
             } label: {
-                Rectangle()
-                    .cornerRadius(30)
-                    .frame(height: 50)
-                    .padding(.horizontal)
-                    .overlay {
-                        Text("Login")
-                            .foregroundColor(.white)
-                            .fontWeight(.semibold)
-                    }
+                ZStack {
+                    Rectangle()
+                        .cornerRadius(30)
+                        .frame(height: 50)
+                        .padding(.horizontal)
+                        .overlay {
+                            Text("Login")
+                                .foregroundColor(.white)
+                                .fontWeight(.semibold)
+                                .opacity(isLoading ? 0 : 1)
+                        }
+                        
+                    
+                    LoadingIndicator(size: 45, color: .white, lineWidth: 3)
+                        .opacity(isLoading ? 1 : 0)
+                }
+
             }
+            .disabled(isLoading)
             .padding(.bottom)
 
         }

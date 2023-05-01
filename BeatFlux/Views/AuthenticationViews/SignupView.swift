@@ -25,11 +25,11 @@ struct SignupView: View {
     @State var password = ""
     @State var confirmPassword = ""
     @FocusState var focusedField: Field?
-    
+    @State private var isLoading = false
     
     @State var error = ""
     
-    @State var displayAlert: Bool = false
+    @State private var displayAlert: Bool = false
     
     var body: some View {
         VStack {
@@ -75,6 +75,7 @@ struct SignupView: View {
                             .onSubmit {
                                 focusedField = .password
                             }
+                            .disabled(isLoading)
                     }
                     .padding(.horizontal)
                     
@@ -88,6 +89,7 @@ struct SignupView: View {
                             .onSubmit {
                                 focusedField = .confirmPassword
                             }
+                            .disabled(isLoading)
                     }
                     .padding(.horizontal)
                     
@@ -101,6 +103,7 @@ struct SignupView: View {
                             .onSubmit {
                                 //auth code
                             }
+                            .disabled(isLoading)
                     }
                     .padding(.horizontal)
                 }
@@ -111,30 +114,43 @@ struct SignupView: View {
             
             Button {
                 UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
+                
                 Task {
+                    isLoading = true
+                    
                     do {
                         let _ = try await authHandler.registerUser(with: email, password: password, confirmPassword: confirmPassword)
+                        print("passed")
                     }
                     catch AuthHandler.AuthResult.error(let error) {
-                        print("Error: \(error)")
                         self.error = error
                         displayAlert.toggle()
                     }
                     
+                    isLoading = false
                 }
                 
                 
+                
             } label: {
-                Rectangle()
-                    .cornerRadius(30)
-                    .frame(height: 50)
-                    .padding(.horizontal)
-                    .overlay {
-                        Text("Create Account")
-                            .foregroundColor(.white)
-                            .fontWeight(.semibold)
+                ZStack {
+                    Rectangle()
+                        .cornerRadius(30)
+                        .frame(height: 50)
+                        .padding(.horizontal)
+                        .overlay {
+                            Text("Create Account")
+                                .foregroundColor(.white)
+                                .fontWeight(.semibold)
+                                .opacity(isLoading ? 0 : 1)
                     }
+                    
+                    LoadingIndicator(size: 45, color: .white, lineWidth: 3)
+                        .opacity(isLoading ? 1 : 0)
+                }
+                    
             }
+            .disabled(isLoading)
             .padding(.bottom)
             
             

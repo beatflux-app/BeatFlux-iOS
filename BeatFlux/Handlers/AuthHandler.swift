@@ -53,12 +53,12 @@ class AuthHandler: ObservableObject {
     
     func registerUser(with email: String, password: String, confirmPassword: String) async throws -> AuthResult  {
         let minCharacterCount = 6
-        if (password != confirmPassword) { return AuthResult.error("Passwords do not match")}
-        if (!isValidEmail(email)) { return AuthResult.error("Please enter a valid email") }
+        if (password != confirmPassword) { throw AuthResult.error("Passwords do not match")}
+        if (!isValidEmail(email)) { throw AuthResult.error("Please enter a valid email") }
         
         switch (checkRequiredPasswordParams(password: password, minCharacterCount: minCharacterCount)) {
         case .needsMoreCharacters:
-            return AuthResult.error("Password must be at least \(minCharacterCount) characters long")
+            throw AuthResult.error("Password must be at least \(minCharacterCount) characters long")
         case .success:
             break
         }
@@ -91,7 +91,7 @@ class AuthHandler: ObservableObject {
     
     func loginUser(with email: String, password: String) async throws -> AuthResult {
         
-        if (!isValidEmail(email)) { return AuthResult.error("Please enter a valid email") }
+        if (!isValidEmail(email)) { throw AuthResult.error("Please enter a valid email") }
         
         
         
