@@ -18,6 +18,10 @@ class AuthHandler: ObservableObject {
     
     let auth = Auth.auth()
     
+    enum AuthResult: Error, Equatable {
+        case success
+        case error(String)
+    }
     
     enum PasswordRequirementReturnTypes {
         case success
@@ -47,14 +51,14 @@ class AuthHandler: ObservableObject {
         
     }
     
-    func registerUser(with email: String, password: String, confirmPassword: String) async throws -> String  {
+    func registerUser(with email: String, password: String, confirmPassword: String) async throws -> AuthResult  {
         let minCharacterCount = 6
-        if (password != confirmPassword) { return "Passwords do not match" }
-        if (!isValidEmail(email)) { return "Please enter a valid email" }
+        if (password != confirmPassword) { return AuthResult.error("Passwords do not match")}
+        if (!isValidEmail(email)) { return AuthResult.error("Please enter a valid email") }
         
         switch (checkRequiredPasswordParams(password: password, minCharacterCount: minCharacterCount)) {
         case .needsMoreCharacters:
-            return "Password must be at least \(minCharacterCount) characters long"
+            return AuthResult.error("Password must be at least \(minCharacterCount) characters long")
         case .success:
             break
         }
@@ -70,12 +74,12 @@ class AuthHandler: ObservableObject {
                         case .failure(let error):
                             print(error.localizedDescription)
                             let errorDescription = self.convertErrorToString(error)
-                            continutation.resume(returning: errorDescription)
+                            continutation.resume(throwing: AuthResult.error(errorDescription))
                         }
                         
                     },
                     receiveValue: {_ in
-                        continutation.resume(returning: "success")
+                        continutation.resume(returning: AuthResult.success)
                     }
                 )
                 .store(in: &cancelBag)
@@ -85,9 +89,9 @@ class AuthHandler: ObservableObject {
     
     
     
-    func loginUser(with email: String, password: String) async throws -> String {
+    func loginUser(with email: String, password: String) async throws -> AuthResult {
         
-        if (!isValidEmail(email)) { return "Please enter a valid email" }
+        if (!isValidEmail(email)) { return AuthResult.error("Please enter a valid email") }
         
         
         
@@ -101,12 +105,12 @@ class AuthHandler: ObservableObject {
                         case .failure(let error):
                             print(error.localizedDescription)
                             let errorDescription = self.convertErrorToString(error)
-                            continutation.resume(returning: errorDescription)
+                            continutation.resume(throwing: AuthResult.error(errorDescription))
                         }
                         
                     },
                     receiveValue: {_ in
-                        continutation.resume(returning: "success")
+                        continutation.resume(returning: AuthResult.success)
                     }
                 )
                 .store(in: &cancelBag)

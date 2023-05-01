@@ -101,16 +101,12 @@ struct LoginView: View {
                 UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
                 Task {
                     do {
-                        let returnValue = try await authHandler.loginUser(with: email, password: password)
-                        if (returnValue != "success") {
-                            error = returnValue
-                            displayAlert.toggle()
-                        }
-                        
+                        let _ = try await authHandler.loginUser(with: email, password: password)
                     }
-                    catch {
-                        
-                        return
+                    catch AuthHandler.AuthResult.error(let error) {
+                        print("Error: \(error)")
+                        self.error = error
+                        displayAlert.toggle()
                     }
                     
                 }
