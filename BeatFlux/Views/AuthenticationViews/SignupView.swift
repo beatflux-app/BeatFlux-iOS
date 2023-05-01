@@ -15,21 +15,20 @@ struct SignupView: View {
     @Environment(\.dismiss) var dismiss
     @ObservedObject var authHandler: AuthHandler
     
-    enum Field: Hashable {
+    @FocusState private var focusedField: Field?
+    
+    @State private var email = ""
+    @State private var password = ""
+    @State private var confirmPassword = ""
+    @State private var isLoading = false
+    @State private var error = ""
+    @State private var displayAlert: Bool = false
+    
+    private enum Field: Hashable {
         case email
         case password
         case confirmPassword
     }
-    
-    @State var email = ""
-    @State var password = ""
-    @State var confirmPassword = ""
-    @FocusState var focusedField: Field?
-    @State private var isLoading = false
-    
-    @State var error = ""
-    
-    @State private var displayAlert: Bool = false
     
     var body: some View {
         VStack {
@@ -75,6 +74,9 @@ struct SignupView: View {
                             .onSubmit {
                                 focusedField = .password
                             }
+                            .onAppear {
+                                focusedField = .email
+                            }
                             .disabled(isLoading)
                     }
                     .padding(.horizontal)
@@ -101,7 +103,9 @@ struct SignupView: View {
                             .submitLabel(.done)
                             .focused($focusedField, equals: .confirmPassword)
                             .onSubmit {
-                                //auth code
+                                UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
+                                
+                                authLogin()
                             }
                             .disabled(isLoading)
                     }
@@ -115,23 +119,7 @@ struct SignupView: View {
             Button {
                 UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
                 
-                Task {
-                    isLoading = true
-                    
-                    do {
-                        let _ = try await authHandler.registerUser(with: email, password: password, confirmPassword: confirmPassword)
-                        print("passed")
-                    }
-                    catch AuthHandler.AuthResult.error(let error) {
-                        self.error = error
-                        displayAlert.toggle()
-                    }
-                    
-                    isLoading = false
-                }
-                
-                
-                
+                authLogin()
             } label: {
                 ZStack {
                     Rectangle()
@@ -158,12 +146,23 @@ struct SignupView: View {
         .alert(isPresented: $displayAlert) {
                     Alert(title: Text("Cannot Create Account"), message: Text(error), dismissButton: .default(Text("Ok")))
                 }
-        
-        
-        
-        
-        
-        
+    }
+    
+    private func authLogin() {
+        Task {
+            isLoading = true
+            
+            do {
+                let _ = try await authHandler.registerUser(with: email, password: password, confirmPassword: confirmPassword)
+            }
+            catch AuthHandler.AuthResult.error(let error) {
+                self.error = error
+                displayAlert.toggle()
+            }
+            
+            isLoading = false
+            
+        }
     }
 }
 
