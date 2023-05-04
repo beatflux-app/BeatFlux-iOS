@@ -11,7 +11,9 @@ import FirebaseCore
 @main
 struct BeatFluxApp: App {
     
+    
     @State var beatFluxViewModel = BeatFluxViewModel()
+    
     
     init() {
         FirebaseApp.configure()
@@ -26,3 +28,4 @@ struct BeatFluxApp: App {
         }
     }
 }
+
