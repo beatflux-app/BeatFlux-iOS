@@ -30,6 +30,12 @@
 		DFAD004E29F5B6C100EE6874 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = DFAD004D29F5B6C100EE6874 /* Preview Assets.xcassets */; };
 		DFB08E2229F7EC1A0074A86A /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFB08E2129F7EC1A0074A86A /* LoginView.swift */; };
 		DFBE88BF29FF51DB00572B47 /* LoadingIndicator.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFBE88BE29FF51DB00572B47 /* LoadingIndicator.swift */; };
+		DFBE88C22A0345F000572B47 /* SwiftyJSON in Frameworks */ = {isa = PBXBuildFile; productRef = DFBE88C12A0345F000572B47 /* SwiftyJSON */; };
+		DFBE88C52A03461800572B47 /* Alamofire in Frameworks */ = {isa = PBXBuildFile; productRef = DFBE88C42A03461800572B47 /* Alamofire */; };
+		DFBE88C72A03462F00572B47 /* SpotifyHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFBE88C62A03462F00572B47 /* SpotifyHandler.swift */; };
+		DFBE88C92A03496100572B47 /* BeatFluxViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFBE88C82A03496100572B47 /* BeatFluxViewModel.swift */; };
+		DFBE88CD2A034B4A00572B47 /* AppAuth in Frameworks */ = {isa = PBXBuildFile; productRef = DFBE88CC2A034B4A00572B47 /* AppAuth */; };
+		DFBE88CF2A034B4A00572B47 /* AppAuthCore in Frameworks */ = {isa = PBXBuildFile; productRef = DFBE88CE2A034B4A00572B47 /* AppAuthCore */; };
 		DFC6661329FA0AA3003227FE /* SignupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFC6661229FA0AA3003227FE /* SignupView.swift */; };
 		DFC6661529FA0EA4003227FE /* Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFC6661429FA0EA4003227FE /* Extensions.swift */; };
 /* End PBXBuildFile section */
@@ -47,6 +53,9 @@
 		DFAD004D29F5B6C100EE6874 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		DFB08E2129F7EC1A0074A86A /* LoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginView.swift; sourceTree = "<group>"; };
 		DFBE88BE29FF51DB00572B47 /* LoadingIndicator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoadingIndicator.swift; sourceTree = "<group>"; };
+		DFBE88C62A03462F00572B47 /* SpotifyHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpotifyHandler.swift; sourceTree = "<group>"; };
+		DFBE88C82A03496100572B47 /* BeatFluxViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BeatFluxViewModel.swift; sourceTree = "<group>"; };
+		DFBE88D12A034CF900572B47 /* Bridge.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Bridge.h; sourceTree = "<group>"; };
 		DFC6661229FA0AA3003227FE /* SignupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignupView.swift; sourceTree = "<group>"; };
 		DFC6661429FA0EA4003227FE /* Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Extensions.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -56,10 +65,14 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				DFBE88CD2A034B4A00572B47 /* AppAuth in Frameworks */,
+				DFBE88C22A0345F000572B47 /* SwiftyJSON in Frameworks */,
+				DFBE88C52A03461800572B47 /* Alamofire in Frameworks */,
 				DF599E6D29FC99A300EBF850 /* FirebaseDatabase in Frameworks */,
 				DF72E63029FEB487007A6306 /* CombineFirebaseStorage in Frameworks */,
 				DF72E62C29FEB487007A6306 /* CombineFirebaseFunctions in Frameworks */,
 				DF599E6F29FC99A300EBF850 /* FirebaseFirestore in Frameworks */,
+				DFBE88CF2A034B4A00572B47 /* AppAuthCore in Frameworks */,
 				DF72E62829FEB487007A6306 /* CombineFirebaseDatabase in Frameworks */,
 				DF599E6929FC99A300EBF850 /* FirebaseAnalytics in Frameworks */,
 				DF599E7129FC99A300EBF850 /* FirebaseStorage in Frameworks */,
@@ -116,6 +129,7 @@
 			isa = PBXGroup;
 			children = (
 				DF599E7329FC9A3000EBF850 /* AuthHandler.swift */,
+				DFBE88C62A03462F00572B47 /* SpotifyHandler.swift */,
 			);
 			path = Handlers;
 			sourceTree = "<group>";
@@ -139,6 +153,8 @@
 		DFAD004529F5B6C000EE6874 /* BeatFlux */ = {
 			isa = PBXGroup;
 			children = (
+				DFBE88D02A034CEC00572B47 /* Bridges */,
+				DFBE88CA2A0349A600572B47 /* ViewModels */,
 				DF599E7229FC9A1E00EBF850 /* Handlers */,
 				DF44EEA329FBDE530027E3DD /* Extensions */,
 				DF44EEA229FBDE480027E3DD /* Views */,
@@ -164,6 +180,22 @@
 				DFBE88BE29FF51DB00572B47 /* LoadingIndicator.swift */,
 			);
 			path = GenericViews;
+			sourceTree = "<group>";
+		};
+		DFBE88CA2A0349A600572B47 /* ViewModels */ = {
+			isa = PBXGroup;
+			children = (
+				DFBE88C82A03496100572B47 /* BeatFluxViewModel.swift */,
+			);
+			path = ViewModels;
+			sourceTree = "<group>";
+		};
+		DFBE88D02A034CEC00572B47 /* Bridges */ = {
+			isa = PBXGroup;
+			children = (
+				DFBE88D12A034CF900572B47 /* Bridge.h */,
+			);
+			path = Bridges;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -195,6 +227,10 @@
 				DF72E62B29FEB487007A6306 /* CombineFirebaseFunctions */,
 				DF72E62D29FEB487007A6306 /* CombineFirebaseRemoteConfig */,
 				DF72E62F29FEB487007A6306 /* CombineFirebaseStorage */,
+				DFBE88C12A0345F000572B47 /* SwiftyJSON */,
+				DFBE88C42A03461800572B47 /* Alamofire */,
+				DFBE88CC2A034B4A00572B47 /* AppAuth */,
+				DFBE88CE2A034B4A00572B47 /* AppAuthCore */,
 			);
 			productName = BeatFlux;
 			productReference = DFAD004329F5B6C000EE6874 /* BeatFlux.app */;
@@ -227,6 +263,9 @@
 			packageReferences = (
 				DF599E6729FC99A300EBF850 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
 				DF72E62229FEB487007A6306 /* XCRemoteSwiftPackageReference "CombineFirebase" */,
+				DFBE88C02A0345F000572B47 /* XCRemoteSwiftPackageReference "SwiftyJSON" */,
+				DFBE88C32A03461800572B47 /* XCRemoteSwiftPackageReference "Alamofire" */,
+				DFBE88CB2A034B4A00572B47 /* XCRemoteSwiftPackageReference "AppAuth-iOS" */,
 			);
 			productRefGroup = DFAD004429F5B6C000EE6874 /* Products */;
 			projectDirPath = "";
@@ -255,6 +294,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				DFBE88C72A03462F00572B47 /* SpotifyHandler.swift in Sources */,
 				DFC6661529FA0EA4003227FE /* Extensions.swift in Sources */,
 				DFC6661329FA0AA3003227FE /* SignupView.swift in Sources */,
 				DFBE88BF29FF51DB00572B47 /* LoadingIndicator.swift in Sources */,
@@ -263,6 +303,7 @@
 				DF599E7429FC9A3000EBF850 /* AuthHandler.swift in Sources */,
 				DFAD004729F5B6C000EE6874 /* BeatFluxApp.swift in Sources */,
 				DF599E7629FD70A700EBF850 /* InitializationPage.swift in Sources */,
+				DFBE88C92A03496100572B47 /* BeatFluxViewModel.swift in Sources */,
 				DF44EEAB29FBE2720027E3DD /* WelcomePageView.swift in Sources */,
 				DFB08E2229F7EC1A0074A86A /* LoginView.swift in Sources */,
 			);
@@ -410,6 +451,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.beatflux.BeatFlux;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OBJC_BRIDGING_HEADER = BeatFlux/Bridges/Bridge.h;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
@@ -440,6 +482,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.beatflux.BeatFlux;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OBJC_BRIDGING_HEADER = BeatFlux/Bridges/Bridge.h;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
@@ -483,6 +526,30 @@
 			requirement = {
 				kind = upToNextMajorVersion;
 				minimumVersion = 0.3.3;
+			};
+		};
+		DFBE88C02A0345F000572B47 /* XCRemoteSwiftPackageReference "SwiftyJSON" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/SwiftyJSON/SwiftyJSON.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 5.0.0;
+			};
+		};
+		DFBE88C32A03461800572B47 /* XCRemoteSwiftPackageReference "Alamofire" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/Alamofire/Alamofire.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 5.0.0;
+			};
+		};
+		DFBE88CB2A034B4A00572B47 /* XCRemoteSwiftPackageReference "AppAuth-iOS" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/openid/AppAuth-iOS.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.0.0;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */
@@ -547,6 +614,26 @@
 			isa = XCSwiftPackageProductDependency;
 			package = DF72E62229FEB487007A6306 /* XCRemoteSwiftPackageReference "CombineFirebase" */;
 			productName = CombineFirebaseStorage;
+		};
+		DFBE88C12A0345F000572B47 /* SwiftyJSON */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = DFBE88C02A0345F000572B47 /* XCRemoteSwiftPackageReference "SwiftyJSON" */;
+			productName = SwiftyJSON;
+		};
+		DFBE88C42A03461800572B47 /* Alamofire */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = DFBE88C32A03461800572B47 /* XCRemoteSwiftPackageReference "Alamofire" */;
+			productName = Alamofire;
+		};
+		DFBE88CC2A034B4A00572B47 /* AppAuth */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = DFBE88CB2A034B4A00572B47 /* XCRemoteSwiftPackageReference "AppAuth-iOS" */;
+			productName = AppAuth;
+		};
+		DFBE88CE2A034B4A00572B47 /* AppAuthCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = DFBE88CB2A034B4A00572B47 /* XCRemoteSwiftPackageReference "AppAuth-iOS" */;
+			productName = AppAuthCore;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

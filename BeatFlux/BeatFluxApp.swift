@@ -10,13 +10,19 @@ import FirebaseCore
 
 @main
 struct BeatFluxApp: App {
+    
+    @State var beatFluxViewModel = BeatFluxViewModel()
+    
     init() {
         FirebaseApp.configure()
+        beatFluxViewModel.authenticateSpotify()
     }
     
     var body: some Scene {
+        
         WindowGroup {
             InitializationPage()
+                .environmentObject(beatFluxViewModel)
         }
     }
 }
