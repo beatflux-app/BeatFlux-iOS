@@ -14,10 +14,13 @@ struct BeatFluxApp: App {
     
     @State var beatFluxViewModel = BeatFluxViewModel()
     
-    
     init() {
+        
+        beatFluxViewModel.checkAndRefreshTokens()
         FirebaseApp.configure()
+        
         beatFluxViewModel.authenticateSpotify()
+        
     }
     
     var body: some Scene {

@@ -29,6 +29,7 @@
 		DFAB03E12A045F2F006B5F7E /* AuthenticationResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFAB03E02A045F2F006B5F7E /* AuthenticationResponse.swift */; };
 		DFAB03E52A04610A006B5F7E /* PublicContants.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFAB03E42A04610A006B5F7E /* PublicContants.swift */; };
 		DFAB03E72A0461C2006B5F7E /* WebUIView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFAB03E62A0461C2006B5F7E /* WebUIView.swift */; };
+		DFAB03F02A090DAE006B5F7E /* SpotifyAPI in Frameworks */ = {isa = PBXBuildFile; productRef = DFAB03EF2A090DAE006B5F7E /* SpotifyAPI */; };
 		DFAD004729F5B6C000EE6874 /* BeatFluxApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFAD004629F5B6C000EE6874 /* BeatFluxApp.swift */; };
 		DFAD004929F5B6C000EE6874 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFAD004829F5B6C000EE6874 /* HomeView.swift */; };
 		DFAD004B29F5B6C100EE6874 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = DFAD004A29F5B6C100EE6874 /* Assets.xcassets */; };
@@ -91,6 +92,7 @@
 				DF72E62429FEB487007A6306 /* CombineFirebase in Frameworks */,
 				DF72E62E29FEB487007A6306 /* CombineFirebaseRemoteConfig in Frameworks */,
 				DF72E62629FEB487007A6306 /* CombineFirebaseAuth in Frameworks */,
+				DFAB03F02A090DAE006B5F7E /* SpotifyAPI in Frameworks */,
 				DF72E62A29FEB487007A6306 /* CombineFirebaseFirestore in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -264,6 +266,7 @@
 				DFBE88CC2A034B4A00572B47 /* AppAuth */,
 				DFBE88CE2A034B4A00572B47 /* AppAuthCore */,
 				DFAB03D82A03DFA4006B5F7E /* SpotifyiOS */,
+				DFAB03EF2A090DAE006B5F7E /* SpotifyAPI */,
 			);
 			productName = BeatFlux;
 			productReference = DFAD004329F5B6C000EE6874 /* BeatFlux.app */;
@@ -301,6 +304,7 @@
 				DFBE88C32A03461800572B47 /* XCRemoteSwiftPackageReference "Alamofire" */,
 				DFBE88CB2A034B4A00572B47 /* XCRemoteSwiftPackageReference "AppAuth-iOS" */,
 				DFAB03D72A03DFA4006B5F7E /* XCRemoteSwiftPackageReference "ios-sdk" */,
+				DFAB03EE2A090DAE006B5F7E /* XCRemoteSwiftPackageReference "SpotifyAPI" */,
 			);
 			productRefGroup = DFAD004429F5B6C000EE6874 /* Products */;
 			projectDirPath = "";
@@ -590,6 +594,14 @@
 				kind = branch;
 			};
 		};
+		DFAB03EE2A090DAE006B5F7E /* XCRemoteSwiftPackageReference "SpotifyAPI" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/Peter-Schorn/SpotifyAPI.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.0.0;
+			};
+		};
 		DFBE88C02A0345F000572B47 /* XCRemoteSwiftPackageReference "SwiftyJSON" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/SwiftyJSON/SwiftyJSON.git";
@@ -681,6 +693,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = DFAB03D72A03DFA4006B5F7E /* XCRemoteSwiftPackageReference "ios-sdk" */;
 			productName = SpotifyiOS;
+		};
+		DFAB03EF2A090DAE006B5F7E /* SpotifyAPI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = DFAB03EE2A090DAE006B5F7E /* XCRemoteSwiftPackageReference "SpotifyAPI" */;
+			productName = SpotifyAPI;
 		};
 		DFBE88C12A0345F000572B47 /* SwiftyJSON */ = {
 			isa = XCSwiftPackageProductDependency;

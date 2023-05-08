@@ -9,7 +9,7 @@ import SwiftUI
 
 struct InitializationPage: View {
     @StateObject var authHandler = AuthHandler()
-    @StateObject var spotifyAuthHandler = SpotifyAuth.shared
+    @StateObject var spotifyAuthHandler = SpotifyAuth()
 
     var body: some View {
         if authHandler.isUserLoggedIn {
@@ -17,7 +17,7 @@ struct InitializationPage: View {
         }
         else {
             WebUIView(url: spotifyAuthHandler.signInURL!)
-            //WelcomePageView(authHandler: authHandler)
+//            WelcomePageView(authHandler: authHandler)
         }
     }
 }

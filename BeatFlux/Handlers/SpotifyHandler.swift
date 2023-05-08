@@ -7,156 +7,106 @@
 
 import Foundation
 import SwiftUI
+import SpotifyWebAPI
+import Combine
 
 final class SpotifyAuth: ObservableObject {
-    @Published var isSpotifySignedIn = false
     static let shared = SpotifyAuth()
     
-    private var refreshingToken = false
+    let spotify = SpotifyAPI(authorizationManager: AuthorizationCodeFlowPKCEManager(clientId: "75706410f2a24590b90d6f2e443aac42"))
+    
+    @AppStorage(Constants.id_code_challenge) private var _codeChallenge: String = ""
+    @AppStorage("access_token") private var accessToken: String = ""
+    @AppStorage("refresh_token") private var refreshToken: String = ""
+    
+    
+    var cancellables = Set<AnyCancellable>()
+     
+    
     
     struct Constants {
-        private static var clientID : String = ""
-        private static var clientSecret: String = ""
-        static let tokenAPIURL: String = "https://accounts.spotify.com/api/token"
-        static let redirectURI = "https://apple.com"
-        static let scopes = "user-read-private%20playlist-modify-public%20playlist-read-private%20playlist-modify-private%20user-follow-read%20user-library-modify%20user-library-read%20user-read-email"
-        
-        static let id_accessToken = "access_token"
-        static let id_refreshToken = "refresh_token"
-        static let id_expirationDate = "expiration_date"
-        
-        static func getClientID() -> String {
-            if clientID.isEmpty {
-                var nsDictionary: NSDictionary?
-                if let path = Bundle.main.path(forResource: "ClientConfig", ofType: "plist") {
-                    nsDictionary = NSDictionary(contentsOfFile: path)
-                    if let id = nsDictionary?.value(forKey: "ClientID") {
-                        clientID = id as! String
-                    }
-                }
-            }
-            
-            return clientID
-        }
-        
-        static func getClientSecret() -> String {
-            if clientSecret.isEmpty {
-                var nsDictionary: NSDictionary?
-                if let path = Bundle.main.path(forResource: "ClientConfig", ofType: "plist") {
-                    nsDictionary = NSDictionary(contentsOfFile: path)
-                    if let id = nsDictionary?.value(forKey: "ClientSecret") {
-                        clientSecret = id as! String
-                    }
-                }
-            }
-            
-            return clientSecret
-        }
-        
-
+        static let codeVerifier = String.randomURLSafe(length: 128)
+        static let state: String = String.randomURLSafe(length: 128)
+        static let redirectURI: String = "https://beatflux.app"
+        static let id_code_challenge = "id_code_challenge"
     }
     
-    private init() {
-        let _accessToken = UserDefaults.standard.string(forKey: "access_token")
-        self.isSpotifySignedIn = checkAccessTokenNil()
+    var codeChallenge: String {
+        get {
+            if _codeChallenge.isEmpty {
+                DispatchQueue.main.async {
+                    self._codeChallenge = String.makeCodeChallenge(codeVerifier: Constants.codeVerifier)
+                }
+                
+            }
+            return _codeChallenge
+        }
+        set {
+            _codeChallenge = newValue
+        }
     }
-    
-    
     
     public var signInURL: URL? {
-        let base = "https://accounts.spotify.com/authorize"
-        let urlString = "\(base)?response_type=code&client_id=\(Constants.getClientID())&scope=\(Constants.scopes)&redirect_uri=\(Constants.redirectURI)&show_dialog=TRUE"
-        return URL(string: urlString)
+        return spotify.authorizationManager.makeAuthorizationURL(
+            redirectURI: URL(string: Constants.redirectURI)!,
+            codeChallenge: codeChallenge,
+            state: Constants.state,
+            scopes: [
+                .playlistModifyPrivate,
+                .userModifyPlaybackState,
+                .playlistReadCollaborative,
+                .userReadPlaybackPosition
+            ]
+        )!
     }
     
-    @AppStorage(Constants.id_accessToken) private var accessToken: String? {
-        didSet{
-            self.isSpotifySignedIn = checkAccessTokenNil()
-        }
-    }
-    
-    
-    
-    @AppStorage(Constants.id_refreshToken) private var refreshToken: String?
-    @AppStorage(Constants.id_expirationDate) private var expirationDate: Date?
-    
-    
-    private func checkAccessTokenNil() -> Bool {
-        return accessToken != nil
-    }
-    
-    private var shouldRefreshToken: Bool {
-        guard let expirationDate = expirationDate else { return false }
-        let currDate = Date()
-        let seconds: TimeInterval = 300 // 300sec = 5min
-        return currDate.addingTimeInterval(seconds) >= expirationDate
-    }
-    
-    //allow us to get the token
-    public func exchangeCodeForToken(code: String, completion: @escaping (Bool) -> Void) {
-        guard let url = URL(string: Constants.tokenAPIURL) else {return}
-       
-        var components = URLComponents()
-        components.queryItems = [
-            URLQueryItem(name: "grant_type", value: "authorization_code"),
-            URLQueryItem(name: "code", value: code),
-            URLQueryItem(name: "redirect_uri", value: Constants.redirectURI)
-        ]
-        
-        var req = URLRequest(url: url)
-        req.httpMethod = "POST"
-        req.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
-        let basicToken = Constants.getClientID() + ":" + Constants.getClientSecret()
-        let data = basicToken.data(using: .utf8)
-        guard let base64String = data?.base64EncodedString() else {
-            print("Err!: Failure to get base64String")
-            completion(false)
-            return
-        }
-        req.setValue("Basic \(base64String)", forHTTPHeaderField: "Authorization")
-        req.httpBody = components.query?.data(using: .utf8)
-        
-        let task = URLSession.shared.dataTask(with: req) {[weak self] data, urlResponse, error in
-            guard let data = data, error == nil else {
-                print("Err!: data error")
-                completion(false)
-                return
+    func requestAccessAndRefreshTokens() {
+        spotify.authorizationManager.requestAccessAndRefreshTokens(
+            redirectURIWithQuery: signInURL!,
+            // Must match the code verifier that was used to generate the
+            // code challenge when creating the authorization URL.
+            codeVerifier: Constants.codeVerifier,
+            // Must match the value used when creating the authorization URL.
+            state: Constants.state
+        )
+        .sink(receiveCompletion: { completion in
+            switch completion {
+                case .finished:
+                    print("successfully authorized")
+                case .failure(let error):
+                    if let authError = error as? SpotifyAuthorizationError, authError.accessWasDenied {
+                        print("The user denied the authorization request")
+                    }
+                    else {
+                        print("couldn't authorize application: \(error)")
+                    }
             }
-            do {
-                let result = try JSONDecoder().decode(AuthenticationResponse.self, from: data)
-                self?.cacheToken(result: result)
-                print(result.access_token)
-                
-                completion(true)
-            }
-            catch{
-                print("Err!: \(error.localizedDescription)")
-                completion(false)
-            }
-        }
-        task.resume()
+        })
+        .store(in: &cancellables)
     }
     
-    public func cacheToken(result: AuthenticationResponse) {
-        DispatchQueue.main.async {
-            withAnimation {
-                self.accessToken = result.access_token
-                if let refresh_Token = result.refresh_token {
-                    self.refreshToken = refresh_Token
-                }
-                self.expirationDate = Date().addingTimeInterval(TimeInterval(result.expires_in))
-            }
+    func checkAndRefreshTokens() {
+        if !accessToken.isEmpty, !refreshToken.isEmpty {
+//            spotify.authorizationManager.accessToken = accessToken
+//            spotify.authorizationManager.refreshToken = refreshToken
+
+            spotify.authorizationManager.refreshTokens(onlyIfExpired: true)
+                .sink(receiveCompletion: { completion in
+                    switch completion {
+                        case .finished:
+                            print("Tokens refreshed")
+                            // Save updated access token
+                            self.accessToken = self.spotify.authorizationManager.accessToken!
+                        case .failure(let error):
+                            print("Error refreshing tokens: \(error)")
+                            // Clear saved tokens
+                            self.accessToken = ""
+                            self.refreshToken = ""
+                    }
+                })
+                .store(in: &cancellables)
         }
     }
-    
-    public func signOut(completion: (Bool) -> Void) {
-        withAnimation {
-            accessToken = nil
-            refreshToken = nil
-            expirationDate = nil
-        }
-        UserDefaults.standard.setValue(nil, forKey: PublicConstants.id_login_user_id)
-        completion(true)
-    }
+
     
 }

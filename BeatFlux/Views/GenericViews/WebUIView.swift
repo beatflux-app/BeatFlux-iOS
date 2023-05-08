@@ -11,8 +11,9 @@ import WebKit
 // UIViewRepresentable
 struct WebUIView: UIViewRepresentable {
     
-    var url: URL
     @StateObject var spotifyAuth: SpotifyAuth = SpotifyAuth.shared
+    
+    var url: URL
     
     func makeCoordinator() -> WebUIViewCoordinator {
         WebUIViewCoordinator(self)
@@ -60,11 +61,8 @@ extension WebUIViewCoordinator: WKNavigationDelegate {
         guard let url = webView.url else { return }
         // Exchange the code for access token
         guard let code = URLComponents(string: url.absoluteString)?.queryItems?.first(where: { $0.value == "code"})?.value else { return }
-        parent.spotifyAuth.exchangeCodeForToken(code: code) { success in
-            DispatchQueue.main.async {
-                self.completionHandler?(success)
-            }
-        }
+        
+        parent.spotifyAuth.requestAccessAndRefreshTokens()
     }
 }
 
