@@ -13,10 +13,9 @@ struct BeatFluxApp: App {
     
     
     @State var beatFluxViewModel = BeatFluxViewModel()
+    @State var spotify = Spotify()
     
     init() {
-        
-        beatFluxViewModel.checkAndRefreshTokens()
         FirebaseApp.configure()
         
         beatFluxViewModel.authenticateSpotify()
@@ -28,6 +27,7 @@ struct BeatFluxApp: App {
         WindowGroup {
             InitializationPage()
                 .environmentObject(beatFluxViewModel)
+                .environmentObject(spotify)
         }
     }
 }

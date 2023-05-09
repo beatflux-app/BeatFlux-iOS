@@ -1,112 +1,228 @@
-//
-//  SpotifyHandler.swift
-//  BeatFlux
-//
-//  Created by Ari Reitman on 5/3/23.
-//
-
 import Foundation
-import SwiftUI
-import SpotifyWebAPI
 import Combine
+import UIKit
+import KeychainAccess
+import SpotifyWebAPI
 
-final class SpotifyAuth: ObservableObject {
-    static let shared = SpotifyAuth()
+final class Spotify: ObservableObject {
     
-    let spotify = SpotifyAPI(authorizationManager: AuthorizationCodeFlowPKCEManager(clientId: "75706410f2a24590b90d6f2e443aac42"))
+    private static let clientId: String = {
+        if let clientId = ProcessInfo.processInfo
+            .environment["CLIENT_ID"] {
+            return clientId
+        }
+        fatalError("Could not find 'CLIENT_ID' in environment variables")
+    }()
     
-    @AppStorage(Constants.id_code_challenge) private var _codeChallenge: String = ""
-    @AppStorage("access_token") private var accessToken: String = ""
-    @AppStorage("refresh_token") private var refreshToken: String = ""
+    private static let clientSecret: String = {
+        if let clientSecret = ProcessInfo.processInfo
+            .environment["CLIENT_SECRET"] {
+            return clientSecret
+        }
+        fatalError("Could not find 'CLIENT_SECRET' in environment variables")
+    }()
     
+    /// The key in the keychain that is used to store the authorization
+    /// information: "authorizationManager".
+    static let authorizationManagerKey = "authorizationManager"
     
-    var cancellables = Set<AnyCancellable>()
-     
+    /// The URL that Spotify will redirect to after the user either authorizes
+    /// or denies authorization for your application.
+    static let loginCallbackURL = URL(
+        string: "https://beatflux.app"
+    )!
     
+    /// A cryptographically-secure random string used to ensure than an incoming
+    /// redirect from Spotify was the result of a request made by this app, and
+    /// not an attacker. **This value should be regenerated after each**
+    /// **authorization process completes.**
+    var authorizationState = String.randomURLSafe(length: 128)
     
-    struct Constants {
-        static let codeVerifier = String.randomURLSafe(length: 128)
-        static let state: String = String.randomURLSafe(length: 128)
-        static let redirectURI: String = "https://beatflux.app"
-        static let id_code_challenge = "id_code_challenge"
-    }
+    /**
+     Whether or not the application has been authorized. If `true`, then you can
+     begin making requests to the Spotify web API using the `api` property of
+     this class, which contains an instance of `SpotifyAPI`.
+
+     This property provides a convenient way for the user interface to be
+     updated based on whether the user has logged in with their Spotify account
+     yet. For example, you could use this property disable UI elements that
+     require the user to be logged in.
+
+     This property is updated by `authorizationManagerDidChange()`, which is
+     called every time the authorization information changes, and
+     `authorizationManagerDidDeauthorize()`, which is called every time
+     `SpotifyAPI.authorizationManager.deauthorize()` is called.
+     */
+    @Published var isAuthorized = false
+    @Published var isRetrievingTokens = false
     
-    var codeChallenge: String {
-        get {
-            if _codeChallenge.isEmpty {
-                DispatchQueue.main.async {
-                    self._codeChallenge = String.makeCodeChallenge(codeVerifier: Constants.codeVerifier)
-                }
+    /// The keychain to store the authorization information in.
+    private let keychain = Keychain(service: "com.beatflux.BeatFlux")
+    
+    /// An instance of `SpotifyAPI` that you use to make requests to the Spotify
+    /// web API.
+    let api = SpotifyAPI(
+        authorizationManager: AuthorizationCodeFlowManager(
+            clientId: Spotify.clientId, clientSecret: Spotify.clientSecret
+        )
+    )
+    
+    var cancellables: [AnyCancellable] = []
+    
+    init() {
+        
+        // MARK: Important: Subscribe to `authorizationManagerDidChange` BEFORE
+        // MARK: retrieving `authorizationManager` from persistent storage
+        self.api.authorizationManagerDidChange
+            // We must receive on the main thread because we are updating the
+            // @Published `isAuthorized` property.
+            .receive(on: RunLoop.main)
+            .sink(receiveValue: authorizationManagerDidChange)
+            .store(in: &cancellables)
+        
+        self.api.authorizationManagerDidDeauthorize
+            .receive(on: RunLoop.main)
+            .sink(receiveValue: authorizationManagerDidDeauthorize)
+            .store(in: &cancellables)
+        
+        // Check to see if the authorization information is saved in the
+        // keychain.
+        if let authManagerData = keychain[data: Self.authorizationManagerKey] {
+            do {
+                // Try to decode the data.
+                let authorizationManager = try JSONDecoder().decode(
+                    AuthorizationCodeFlowManager.self,
+                    from: authManagerData
+                )
                 
+                /*
+                 This assignment causes `authorizationManagerDidChange` to emit
+                 a signal, meaning that `authorizationManagerDidChange()` will
+                 be called.
+
+                 Note that if you had subscribed to
+                 `authorizationManagerDidChange` after this line, then
+                 `authorizationManagerDidChange()` would not have been called
+                 and the @Published `isAuthorized` property would not have been
+                 properly updated.
+
+                 We do not need to update `self.isAuthorized` here because that
+                 is already handled in `authorizationManagerDidChange()`.
+                 */
+                self.api.authorizationManager = authorizationManager
+                
+            } catch {
+                print("could not decode authorizationManager from data:\n\(error)")
             }
-            return _codeChallenge
         }
-        set {
-            _codeChallenge = newValue
+        else {
+            print("did not find authorization information in keychain")
         }
+        
     }
     
-    public var signInURL: URL? {
-        return spotify.authorizationManager.makeAuthorizationURL(
-            redirectURI: URL(string: Constants.redirectURI)!,
-            codeChallenge: codeChallenge,
-            state: Constants.state,
+    func setAuthorizationValue(_ value: Bool) {
+        DispatchQueue.main.async {
+        
+            self.isAuthorized = value
+        }
+        
+    }
+    
+    func setIsRetrievingRefreshToken(_ value: Bool) {
+        DispatchQueue.main.async {
+            self.isRetrievingTokens = value
+        }
+        
+    }
+    
+    /**
+     A convenience method that creates the authorization URL and opens it in the
+     browser.
+
+     You could also configure it to accept parameters for the authorization
+     scopes
+     */
+    func authorize() -> URL {
+        
+        let authorizationURL = api.authorizationManager.makeAuthorizationURL(
+            redirectURI: Self.loginCallbackURL,
+            showDialog: true,
+            // This same value **MUST** be provided for the state parameter of
+            // `authorizationManager.requestAccessAndRefreshTokens(redirectURIWithQuery:state:)`.
+            // Otherwise, an error will be thrown.
+            state: self.authorizationState,
             scopes: [
-                .playlistModifyPrivate,
-                .userModifyPlaybackState,
-                .playlistReadCollaborative,
-                .userReadPlaybackPosition
+                .userReadPlaybackState, .userReadEmail, .userLibraryModify
             ]
         )!
+        
+        // You can open the URL however you like. For example, you could open it
+        // in a web view instead of the browser.
+        // See https://developer.apple.com/documentation/webkit/wkwebview
+        return authorizationURL
+        //UIApplication.shared.open(authorizationURL)
+        
     }
     
-    func requestAccessAndRefreshTokens() {
-        spotify.authorizationManager.requestAccessAndRefreshTokens(
-            redirectURIWithQuery: signInURL!,
-            // Must match the code verifier that was used to generate the
-            // code challenge when creating the authorization URL.
-            codeVerifier: Constants.codeVerifier,
-            // Must match the value used when creating the authorization URL.
-            state: Constants.state
-        )
-        .sink(receiveCompletion: { completion in
-            switch completion {
-                case .finished:
-                    print("successfully authorized")
-                case .failure(let error):
-                    if let authError = error as? SpotifyAuthorizationError, authError.accessWasDenied {
-                        print("The user denied the authorization request")
-                    }
-                    else {
-                        print("couldn't authorize application: \(error)")
-                    }
-            }
-        })
-        .store(in: &cancellables)
-    }
-    
-    func checkAndRefreshTokens() {
-        if !accessToken.isEmpty, !refreshToken.isEmpty {
-//            spotify.authorizationManager.accessToken = accessToken
-//            spotify.authorizationManager.refreshToken = refreshToken
+    /**
+     Saves changes to `api.authorizationManager` to the keychain.
 
-            spotify.authorizationManager.refreshTokens(onlyIfExpired: true)
-                .sink(receiveCompletion: { completion in
-                    switch completion {
-                        case .finished:
-                            print("Tokens refreshed")
-                            // Save updated access token
-                            self.accessToken = self.spotify.authorizationManager.accessToken!
-                        case .failure(let error):
-                            print("Error refreshing tokens: \(error)")
-                            // Clear saved tokens
-                            self.accessToken = ""
-                            self.refreshToken = ""
-                    }
-                })
-                .store(in: &cancellables)
+     This method is called every time the authorization information changes. For
+     example, when the access token gets automatically refreshed, (it expires
+     after an hour) this method will be called.
+
+     It will also be called after the access and refresh tokens are retrieved
+     using `requestAccessAndRefreshTokens(redirectURIWithQuery:state:)`.
+     */
+    func authorizationManagerDidChange() {
+        
+        // Update the @Published `isAuthorized` property.
+        self.isAuthorized = self.api.authorizationManager.isAuthorized()
+        
+        do {
+            // Encode the authorization information to data.
+            let authManagerData = try JSONEncoder().encode(self.api.authorizationManager)
+            
+            // Save the data to the keychain.
+            self.keychain[data: Self.authorizationManagerKey] = authManagerData
+            
+        } catch {
+            print(
+                "couldn't encode authorizationManager for storage in the " +
+                "keychain:\n\(error)"
+            )
+        }
+        
+    }
+    
+    /**
+     Removes `api.authorizationManager` from the keychain.
+     
+     This method is called every time `api.authorizationManager.deauthorize` is
+     called.
+     */
+    func authorizationManagerDidDeauthorize() {
+        
+        self.isAuthorized = false
+        
+        do {
+            /*
+             Remove the authorization information from the keychain.
+
+             If you don't do this, then the authorization information that you
+             just removed from memory by calling `deauthorize()` will be
+             retrieved again from persistent storage after this app is quit and
+             relaunched.
+             */
+            try self.keychain.remove(Self.authorizationManagerKey)
+            print("did remove authorization manager from keychain")
+            
+        } catch {
+            print(
+                "couldn't remove authorization manager from keychain: \(error)"
+            )
         }
     }
-
     
 }

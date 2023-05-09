@@ -30,6 +30,7 @@
 		DFAB03E52A04610A006B5F7E /* PublicContants.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFAB03E42A04610A006B5F7E /* PublicContants.swift */; };
 		DFAB03E72A0461C2006B5F7E /* WebUIView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFAB03E62A0461C2006B5F7E /* WebUIView.swift */; };
 		DFAB03F02A090DAE006B5F7E /* SpotifyAPI in Frameworks */ = {isa = PBXBuildFile; productRef = DFAB03EF2A090DAE006B5F7E /* SpotifyAPI */; };
+		DFAB03F32A09C871006B5F7E /* KeychainAccess in Frameworks */ = {isa = PBXBuildFile; productRef = DFAB03F22A09C871006B5F7E /* KeychainAccess */; };
 		DFAD004729F5B6C000EE6874 /* BeatFluxApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFAD004629F5B6C000EE6874 /* BeatFluxApp.swift */; };
 		DFAD004929F5B6C000EE6874 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFAD004829F5B6C000EE6874 /* HomeView.swift */; };
 		DFAD004B29F5B6C100EE6874 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = DFAD004A29F5B6C100EE6874 /* Assets.xcassets */; };
@@ -94,6 +95,7 @@
 				DF72E62629FEB487007A6306 /* CombineFirebaseAuth in Frameworks */,
 				DFAB03F02A090DAE006B5F7E /* SpotifyAPI in Frameworks */,
 				DF72E62A29FEB487007A6306 /* CombineFirebaseFirestore in Frameworks */,
+				DFAB03F32A09C871006B5F7E /* KeychainAccess in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -103,6 +105,7 @@
 		DF44EEA229FBDE480027E3DD /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				DF599E7529FD70A700EBF850 /* InitializationPage.swift */,
 				DFBE88BD29FF51BC00572B47 /* GenericViews */,
 				DF44EEA429FBDE5E0027E3DD /* AuthenticationViews */,
 				DFAD004829F5B6C000EE6874 /* HomeView.swift */,
@@ -125,7 +128,6 @@
 				DFB08E2129F7EC1A0074A86A /* LoginView.swift */,
 				DFC6661229FA0AA3003227FE /* SignupView.swift */,
 				DF44EEAA29FBE2720027E3DD /* WelcomePageView.swift */,
-				DF599E7529FD70A700EBF850 /* InitializationPage.swift */,
 			);
 			path = AuthenticationViews;
 			sourceTree = "<group>";
@@ -267,6 +269,7 @@
 				DFBE88CE2A034B4A00572B47 /* AppAuthCore */,
 				DFAB03D82A03DFA4006B5F7E /* SpotifyiOS */,
 				DFAB03EF2A090DAE006B5F7E /* SpotifyAPI */,
+				DFAB03F22A09C871006B5F7E /* KeychainAccess */,
 			);
 			productName = BeatFlux;
 			productReference = DFAD004329F5B6C000EE6874 /* BeatFlux.app */;
@@ -305,6 +308,7 @@
 				DFBE88CB2A034B4A00572B47 /* XCRemoteSwiftPackageReference "AppAuth-iOS" */,
 				DFAB03D72A03DFA4006B5F7E /* XCRemoteSwiftPackageReference "ios-sdk" */,
 				DFAB03EE2A090DAE006B5F7E /* XCRemoteSwiftPackageReference "SpotifyAPI" */,
+				DFAB03F12A09C871006B5F7E /* XCRemoteSwiftPackageReference "KeychainAccess" */,
 			);
 			productRefGroup = DFAD004429F5B6C000EE6874 /* Products */;
 			projectDirPath = "";
@@ -602,6 +606,14 @@
 				minimumVersion = 2.0.0;
 			};
 		};
+		DFAB03F12A09C871006B5F7E /* XCRemoteSwiftPackageReference "KeychainAccess" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/kishikawakatsumi/KeychainAccess";
+			requirement = {
+				branch = master;
+				kind = branch;
+			};
+		};
 		DFBE88C02A0345F000572B47 /* XCRemoteSwiftPackageReference "SwiftyJSON" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/SwiftyJSON/SwiftyJSON.git";
@@ -698,6 +710,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = DFAB03EE2A090DAE006B5F7E /* XCRemoteSwiftPackageReference "SpotifyAPI" */;
 			productName = SpotifyAPI;
+		};
+		DFAB03F22A09C871006B5F7E /* KeychainAccess */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = DFAB03F12A09C871006B5F7E /* XCRemoteSwiftPackageReference "KeychainAccess" */;
+			productName = KeychainAccess;
 		};
 		DFBE88C12A0345F000572B47 /* SwiftyJSON */ = {
 			isa = XCSwiftPackageProductDependency;
