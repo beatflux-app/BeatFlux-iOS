@@ -10,8 +10,11 @@ import UIKit
 import AuthenticationServices
 
 struct LoginView: View {
+    @EnvironmentObject var databaseHandler: DatabaseHandler
+    @EnvironmentObject var authHandler: AuthHandler
+    
+    
     @Environment(\.dismiss) var dismiss
-    @ObservedObject var authHandler: AuthHandler
     
     @FocusState private var focusedField: Field?
     
@@ -143,10 +146,12 @@ struct LoginView: View {
             
             do {
                 let _ = try await authHandler.loginUser(with: email, password: password)
+                databaseHandler.intializeSettings()
             }
             catch AuthHandler.AuthResult.error(let error) {
                 self.error = error
                 displayAlert.toggle()
+                
             }
             
             isLoading = false
@@ -158,6 +163,8 @@ struct LoginView: View {
 
 struct LoginView_Previews: PreviewProvider {
     static var previews: some View {
-        LoginView(authHandler: AuthHandler())
+        LoginView()
+            .environmentObject(AuthHandler())
+            .environmentObject(DatabaseHandler())
     }
 }

@@ -8,7 +8,8 @@
 import SwiftUI
 
 struct WelcomePageView: View {
-    @ObservedObject var authHandler: AuthHandler
+    @EnvironmentObject var databaseHandler: DatabaseHandler
+    @EnvironmentObject var authHandler: AuthHandler
     @State var loginPageShowing: Bool = false
     @State var signupPageShowing: Bool = false
     
@@ -120,7 +121,9 @@ struct WelcomePageView: View {
                         }
                 }
                 .fullScreenCover(isPresented: $loginPageShowing) {
-                    LoginView(authHandler: authHandler)
+                    LoginView()
+                        .environmentObject(authHandler)
+                        .environmentObject(databaseHandler)
                 }
                 
                 
@@ -138,7 +141,9 @@ struct WelcomePageView: View {
                     .fontWeight(.semibold)
                 }
                 .fullScreenCover(isPresented: $signupPageShowing) {
-                    SignupView(authHandler: authHandler)
+                    SignupView()
+                        .environmentObject(authHandler)
+                        .environmentObject(databaseHandler)
                 }
             }
             .padding(.bottom)
@@ -151,6 +156,7 @@ struct WelcomePageView: View {
 
 struct WelcomePageView_Previews: PreviewProvider {
     static var previews: some View {
-        WelcomePageView(authHandler: AuthHandler())
+        WelcomePageView()
+            .environmentObject(AuthHandler())
     }
 }

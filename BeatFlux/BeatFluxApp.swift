@@ -7,18 +7,20 @@
 
 import SwiftUI
 import FirebaseCore
+import SpotifyWebAPI
 
 @main
 struct BeatFluxApp: App {
-    
-    
-    @State var beatFluxViewModel = BeatFluxViewModel()
-    @State var spotify = Spotify()
+    @StateObject var authHandler = AuthHandler()
+    @StateObject var spotify = Spotify()
+    @StateObject var databaseHandler = DatabaseHandler()
     
     init() {
         FirebaseApp.configure()
         
-        beatFluxViewModel.authenticateSpotify()
+        SpotifyAPILogHandler.bootstrap()
+        
+        databaseHandler.intializeSettings()
         
     }
     
@@ -26,8 +28,9 @@ struct BeatFluxApp: App {
         
         WindowGroup {
             InitializationPage()
-                .environmentObject(beatFluxViewModel)
                 .environmentObject(spotify)
+                .environmentObject(databaseHandler)
+                .environmentObject(authHandler)
         }
     }
 }
