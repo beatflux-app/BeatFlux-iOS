@@ -13,7 +13,6 @@ import AuthenticationServices
 
 struct SignupView: View {
     @Environment(\.dismiss) var dismiss
-    @EnvironmentObject var databaseHandler: DatabaseHandler
     @EnvironmentObject var authHandler: AuthHandler
     
     @FocusState private var focusedField: Field?
@@ -155,7 +154,7 @@ struct SignupView: View {
             
             do {
                 let _ = try await authHandler.registerUser(with: email, password: password, confirmPassword: confirmPassword)
-                databaseHandler.intializeSettings()
+                DatabaseHandler.shared.intializeSettings()
             }
             catch AuthHandler.AuthResult.error(let error) {
                 self.error = error
@@ -172,6 +171,5 @@ struct SignupView_Previews: PreviewProvider {
     static var previews: some View {
         SignupView()
             .environmentObject(AuthHandler())
-            .environmentObject(DatabaseHandler())
     }
 }

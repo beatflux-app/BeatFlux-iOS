@@ -230,4 +230,18 @@ final class Spotify: ObservableObject {
             .store(in: &cancellables)
         
     }
+    
+    
+    public func getUserPlaylists() {
+        self.api.currentUserPlaylists()
+            .extendPages(self.api)
+            .sink(receiveCompletion: { completion in
+                print(completion)
+            }, receiveValue: { results in
+                print(results)
+            })
+            .store(in: &cancellables)
+    }
+    
+    
 }

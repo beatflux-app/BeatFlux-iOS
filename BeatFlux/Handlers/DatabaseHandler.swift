@@ -12,10 +12,12 @@ import FirebaseAuth
 import Combine
 import CombineFirebaseFirestore
 
-final class DatabaseHandler: ObservableObject {
+final class DatabaseHandler {
     
     private let db = Firestore.firestore()
     private var cancellables = Set<AnyCancellable>()
+    
+    static let shared = DatabaseHandler()
     
     private var user: User? {
         return Auth.auth().currentUser
@@ -37,7 +39,7 @@ final class DatabaseHandler: ObservableObject {
         
         
         if let user = user {
-            let userDefaultSettings = Settings(user_id: user.uid, email: user.email, refresh_token: "", is_spotify_linked: false)
+            let userDefaultSettings = SettingsDataModel(email: user.email, is_using_dark: false)
             
             (db.collection("users")
                 .document(user.uid)
@@ -47,9 +49,6 @@ final class DatabaseHandler: ObservableObject {
         }
     }
     
-    public func retrieveUserSettings(_ completion: @escaping (_ success: Bool, _ data: Settings?) -> Void) async {
-        
-    }
     
     
 }

@@ -11,7 +11,6 @@ import SpotifyWebAPI
 
 struct InitializationPage: View {
     @EnvironmentObject var authHandler: AuthHandler
-    @EnvironmentObject var databaseHandler: DatabaseHandler
     @EnvironmentObject var spotify: Spotify
     @State private var cancellables: Set<AnyCancellable> = []
 
@@ -35,7 +34,5 @@ struct InitializationPage_Previews: PreviewProvider {
     static var previews: some View {
         InitializationPage()
             .environmentObject(AuthHandler())
-            .environmentObject(Spotify())
-            .environmentObject(DatabaseHandler())
     }
 }

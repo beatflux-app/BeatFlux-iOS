@@ -34,7 +34,7 @@
 		DFC6661329FA0AA3003227FE /* SignupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFC6661229FA0AA3003227FE /* SignupView.swift */; };
 		DFC6661529FA0EA4003227FE /* Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFC6661429FA0EA4003227FE /* Extensions.swift */; };
 		DFFE94CE2A1963ED00615281 /* AuthTextLabel_Element.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFFE94CD2A1963ED00615281 /* AuthTextLabel_Element.swift */; };
-		DFFE94D02A19642200615281 /* Spotify.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFFE94CF2A19642200615281 /* Spotify.swift */; };
+		DFFE94D02A19642200615281 /* SpotifyHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFFE94CF2A19642200615281 /* SpotifyHandler.swift */; };
 		DFFE94D22A19659B00615281 /* DatabaseHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFFE94D12A19659B00615281 /* DatabaseHandler.swift */; };
 		DFFE94D42A19680E00615281 /* Settings.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFFE94D32A19680E00615281 /* Settings.swift */; };
 		DFFE94D72A1C4E3D00615281 /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = DFFE94D62A1C4E3D00615281 /* FirebaseAnalytics */; };
@@ -42,6 +42,7 @@
 		DFFE94DB2A1C4E3D00615281 /* FirebaseDatabase in Frameworks */ = {isa = PBXBuildFile; productRef = DFFE94DA2A1C4E3D00615281 /* FirebaseDatabase */; };
 		DFFE94DD2A1C4E3D00615281 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = DFFE94DC2A1C4E3D00615281 /* FirebaseFirestore */; };
 		DFFE94DF2A1C4E3D00615281 /* FirebaseStorage in Frameworks */ = {isa = PBXBuildFile; productRef = DFFE94DE2A1C4E3D00615281 /* FirebaseStorage */; };
+		DFFE94E12A1CD34E00615281 /* BeatFluxViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFFE94E02A1CD34E00615281 /* BeatFluxViewModel.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -60,9 +61,10 @@
 		DFC6661229FA0AA3003227FE /* SignupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignupView.swift; sourceTree = "<group>"; };
 		DFC6661429FA0EA4003227FE /* Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Extensions.swift; sourceTree = "<group>"; };
 		DFFE94CD2A1963ED00615281 /* AuthTextLabel_Element.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AuthTextLabel_Element.swift; sourceTree = "<group>"; };
-		DFFE94CF2A19642200615281 /* Spotify.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Spotify.swift; sourceTree = "<group>"; };
+		DFFE94CF2A19642200615281 /* SpotifyHandler.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SpotifyHandler.swift; sourceTree = "<group>"; };
 		DFFE94D12A19659B00615281 /* DatabaseHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatabaseHandler.swift; sourceTree = "<group>"; };
 		DFFE94D32A19680E00615281 /* Settings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Settings.swift; sourceTree = "<group>"; };
+		DFFE94E02A1CD34E00615281 /* BeatFluxViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BeatFluxViewModel.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -136,6 +138,7 @@
 		DF599E7229FC9A1E00EBF850 /* Handlers */ = {
 			isa = PBXGroup;
 			children = (
+				DFFE94CF2A19642200615281 /* SpotifyHandler.swift */,
 				DF599E7329FC9A3000EBF850 /* AuthHandler.swift */,
 				DFFE94D12A19659B00615281 /* DatabaseHandler.swift */,
 			);
@@ -145,7 +148,6 @@
 		DFAB03E22A045F32006B5F7E /* Model */ = {
 			isa = PBXGroup;
 			children = (
-				DFFE94CF2A19642200615281 /* Spotify.swift */,
 				DFFE94D32A19680E00615281 /* Settings.swift */,
 			);
 			path = Model;
@@ -203,6 +205,7 @@
 		DFBE88CA2A0349A600572B47 /* ViewModels */ = {
 			isa = PBXGroup;
 			children = (
+				DFFE94E02A1CD34E00615281 /* BeatFluxViewModel.swift */,
 			);
 			path = ViewModels;
 			sourceTree = "<group>";
@@ -310,7 +313,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				DFFE94D02A19642200615281 /* Spotify.swift in Sources */,
+				DFFE94D02A19642200615281 /* SpotifyHandler.swift in Sources */,
 				DFC6661529FA0EA4003227FE /* Extensions.swift in Sources */,
 				DFFE94D42A19680E00615281 /* Settings.swift in Sources */,
 				DFFE94CE2A1963ED00615281 /* AuthTextLabel_Element.swift in Sources */,
@@ -319,6 +322,7 @@
 				DFBE88BF29FF51DB00572B47 /* LoadingIndicator.swift in Sources */,
 				DFAD004929F5B6C000EE6874 /* HomeView.swift in Sources */,
 				DF599E7429FC9A3000EBF850 /* AuthHandler.swift in Sources */,
+				DFFE94E12A1CD34E00615281 /* BeatFluxViewModel.swift in Sources */,
 				DFAD004729F5B6C000EE6874 /* BeatFluxApp.swift in Sources */,
 				DF599E7629FD70A700EBF850 /* InitializationPage.swift in Sources */,
 				DF44EEAB29FBE2720027E3DD /* WelcomePageView.swift in Sources */,

@@ -8,7 +8,6 @@
 import SwiftUI
 
 struct WelcomePageView: View {
-    @EnvironmentObject var databaseHandler: DatabaseHandler
     @EnvironmentObject var authHandler: AuthHandler
     @State var loginPageShowing: Bool = false
     @State var signupPageShowing: Bool = false
@@ -123,7 +122,6 @@ struct WelcomePageView: View {
                 .fullScreenCover(isPresented: $loginPageShowing) {
                     LoginView()
                         .environmentObject(authHandler)
-                        .environmentObject(databaseHandler)
                 }
                 
                 
@@ -143,7 +141,6 @@ struct WelcomePageView: View {
                 .fullScreenCover(isPresented: $signupPageShowing) {
                     SignupView()
                         .environmentObject(authHandler)
-                        .environmentObject(databaseHandler)
                 }
             }
             .padding(.bottom)

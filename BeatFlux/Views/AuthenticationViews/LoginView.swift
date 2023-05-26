@@ -10,7 +10,6 @@ import UIKit
 import AuthenticationServices
 
 struct LoginView: View {
-    @EnvironmentObject var databaseHandler: DatabaseHandler
     @EnvironmentObject var authHandler: AuthHandler
     
     
@@ -146,7 +145,7 @@ struct LoginView: View {
             
             do {
                 let _ = try await authHandler.loginUser(with: email, password: password)
-                databaseHandler.intializeSettings()
+                DatabaseHandler.shared.intializeSettings()
             }
             catch AuthHandler.AuthResult.error(let error) {
                 self.error = error
@@ -165,6 +164,5 @@ struct LoginView_Previews: PreviewProvider {
     static var previews: some View {
         LoginView()
             .environmentObject(AuthHandler())
-            .environmentObject(DatabaseHandler())
     }
 }
