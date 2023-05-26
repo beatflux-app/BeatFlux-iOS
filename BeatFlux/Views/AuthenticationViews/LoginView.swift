@@ -145,7 +145,7 @@ struct LoginView: View {
             
             do {
                 let _ = try await authHandler.loginUser(with: email, password: password)
-                DatabaseHandler.shared.intializeSettings()
+                DatabaseHandler.shared.checkForSettingsUpdate()
             }
             catch AuthHandler.AuthResult.error(let error) {
                 self.error = error

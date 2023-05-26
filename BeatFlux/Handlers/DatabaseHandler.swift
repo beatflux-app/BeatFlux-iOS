@@ -17,6 +17,7 @@ final class DatabaseHandler {
     private let db = Firestore.firestore()
     private var cancellables = Set<AnyCancellable>()
     
+    
     static let shared = DatabaseHandler()
     
     private var user: User? {
@@ -39,16 +40,39 @@ final class DatabaseHandler {
         
         
         if let user = user {
-            let userDefaultSettings = SettingsDataModel(email: user.email, is_using_dark: false)
+            
             
             (db.collection("users")
                 .document(user.uid)
-                .setData(from: userDefaultSettings, merge: true) as AnyPublisher<Void, Error>)
+                .setData(from: SettingsDataModel(email: user.email, is_using_dark: false), merge: true) as AnyPublisher<Void, Error>)
                     .sink(receiveCompletion: onErrorCompletion, receiveValue: onValue)
                     .store(in: &cancellables)
         }
     }
     
-    
-    
+    func getSettingsData() -> SettingsDataModel? {
+        var settingDataRetrieved: SettingsDataModel?
+        
+        if let user = user {
+            let onErrorCompletion: ((Subscribers.Completion<Error>) -> Void) = { completion in
+                switch completion {
+                case .finished:
+                    return
+                case .failure(let error): print("ERROR: Reading data failed: \(error)")
+                }
+            }
+            
+            let onValue: (SettingsDataModel?) -> Void = { document in
+                settingDataRetrieved = document ?? SettingsDataModel(email: user.email, is_using_dark: false)
+            }
+            
+            (db.collection("users")
+                .document(user.uid)
+                .getDocument(as: SettingsDataModel.self)
+                .sink(receiveCompletion: onErrorCompletion, receiveValue: onValue)
+                .store(in: &cancellables))
+        }
+        
+        return settingDataRetrieved
+    }
 }

@@ -18,7 +18,6 @@
 		DF72E62C29FEB487007A6306 /* CombineFirebaseFunctions in Frameworks */ = {isa = PBXBuildFile; productRef = DF72E62B29FEB487007A6306 /* CombineFirebaseFunctions */; };
 		DF72E62E29FEB487007A6306 /* CombineFirebaseRemoteConfig in Frameworks */ = {isa = PBXBuildFile; productRef = DF72E62D29FEB487007A6306 /* CombineFirebaseRemoteConfig */; };
 		DF72E63029FEB487007A6306 /* CombineFirebaseStorage in Frameworks */ = {isa = PBXBuildFile; productRef = DF72E62F29FEB487007A6306 /* CombineFirebaseStorage */; };
-		DFAB03D92A03DFA4006B5F7E /* SpotifyiOS in Frameworks */ = {isa = PBXBuildFile; productRef = DFAB03D82A03DFA4006B5F7E /* SpotifyiOS */; };
 		DFAB03F02A090DAE006B5F7E /* SpotifyAPI in Frameworks */ = {isa = PBXBuildFile; productRef = DFAB03EF2A090DAE006B5F7E /* SpotifyAPI */; };
 		DFAB03F32A09C871006B5F7E /* KeychainAccess in Frameworks */ = {isa = PBXBuildFile; productRef = DFAB03F22A09C871006B5F7E /* KeychainAccess */; };
 		DFAD004729F5B6C000EE6874 /* BeatFluxApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFAD004629F5B6C000EE6874 /* BeatFluxApp.swift */; };
@@ -27,10 +26,6 @@
 		DFAD004E29F5B6C100EE6874 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = DFAD004D29F5B6C100EE6874 /* Preview Assets.xcassets */; };
 		DFB08E2229F7EC1A0074A86A /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFB08E2129F7EC1A0074A86A /* LoginView.swift */; };
 		DFBE88BF29FF51DB00572B47 /* LoadingIndicator.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFBE88BE29FF51DB00572B47 /* LoadingIndicator.swift */; };
-		DFBE88C22A0345F000572B47 /* SwiftyJSON in Frameworks */ = {isa = PBXBuildFile; productRef = DFBE88C12A0345F000572B47 /* SwiftyJSON */; };
-		DFBE88C52A03461800572B47 /* Alamofire in Frameworks */ = {isa = PBXBuildFile; productRef = DFBE88C42A03461800572B47 /* Alamofire */; };
-		DFBE88CD2A034B4A00572B47 /* AppAuth in Frameworks */ = {isa = PBXBuildFile; productRef = DFBE88CC2A034B4A00572B47 /* AppAuth */; };
-		DFBE88CF2A034B4A00572B47 /* AppAuthCore in Frameworks */ = {isa = PBXBuildFile; productRef = DFBE88CE2A034B4A00572B47 /* AppAuthCore */; };
 		DFC6661329FA0AA3003227FE /* SignupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFC6661229FA0AA3003227FE /* SignupView.swift */; };
 		DFC6661529FA0EA4003227FE /* Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFC6661429FA0EA4003227FE /* Extensions.swift */; };
 		DFFE94CE2A1963ED00615281 /* AuthTextLabel_Element.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFFE94CD2A1963ED00615281 /* AuthTextLabel_Element.swift */; };
@@ -72,14 +67,9 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				DFBE88CD2A034B4A00572B47 /* AppAuth in Frameworks */,
-				DFAB03D92A03DFA4006B5F7E /* SpotifyiOS in Frameworks */,
-				DFBE88C22A0345F000572B47 /* SwiftyJSON in Frameworks */,
-				DFBE88C52A03461800572B47 /* Alamofire in Frameworks */,
 				DF72E63029FEB487007A6306 /* CombineFirebaseStorage in Frameworks */,
 				DFFE94DD2A1C4E3D00615281 /* FirebaseFirestore in Frameworks */,
 				DF72E62C29FEB487007A6306 /* CombineFirebaseFunctions in Frameworks */,
-				DFBE88CF2A034B4A00572B47 /* AppAuthCore in Frameworks */,
 				DFFE94DB2A1C4E3D00615281 /* FirebaseDatabase in Frameworks */,
 				DFFE94DF2A1C4E3D00615281 /* FirebaseStorage in Frameworks */,
 				DF72E62829FEB487007A6306 /* CombineFirebaseDatabase in Frameworks */,
@@ -172,8 +162,8 @@
 		DFAD004529F5B6C000EE6874 /* BeatFlux */ = {
 			isa = PBXGroup;
 			children = (
-				DFAB03E22A045F32006B5F7E /* Model */,
 				DFBE88D72A03CAB900572B47 /* Info.plist */,
+				DFAB03E22A045F32006B5F7E /* Model */,
 				DFBE88CA2A0349A600572B47 /* ViewModels */,
 				DF599E7229FC9A1E00EBF850 /* Handlers */,
 				DF44EEA329FBDE530027E3DD /* Extensions */,
@@ -234,11 +224,6 @@
 				DF72E62B29FEB487007A6306 /* CombineFirebaseFunctions */,
 				DF72E62D29FEB487007A6306 /* CombineFirebaseRemoteConfig */,
 				DF72E62F29FEB487007A6306 /* CombineFirebaseStorage */,
-				DFBE88C12A0345F000572B47 /* SwiftyJSON */,
-				DFBE88C42A03461800572B47 /* Alamofire */,
-				DFBE88CC2A034B4A00572B47 /* AppAuth */,
-				DFBE88CE2A034B4A00572B47 /* AppAuthCore */,
-				DFAB03D82A03DFA4006B5F7E /* SpotifyiOS */,
 				DFAB03EF2A090DAE006B5F7E /* SpotifyAPI */,
 				DFAB03F22A09C871006B5F7E /* KeychainAccess */,
 				DFFE94D62A1C4E3D00615281 /* FirebaseAnalytics */,
@@ -278,10 +263,6 @@
 			mainGroup = DFAD003A29F5B6C000EE6874;
 			packageReferences = (
 				DF72E62229FEB487007A6306 /* XCRemoteSwiftPackageReference "CombineFirebase" */,
-				DFBE88C02A0345F000572B47 /* XCRemoteSwiftPackageReference "SwiftyJSON" */,
-				DFBE88C32A03461800572B47 /* XCRemoteSwiftPackageReference "Alamofire" */,
-				DFBE88CB2A034B4A00572B47 /* XCRemoteSwiftPackageReference "AppAuth-iOS" */,
-				DFAB03D72A03DFA4006B5F7E /* XCRemoteSwiftPackageReference "ios-sdk" */,
 				DFAB03EE2A090DAE006B5F7E /* XCRemoteSwiftPackageReference "SpotifyAPI" */,
 				DFAB03F12A09C871006B5F7E /* XCRemoteSwiftPackageReference "KeychainAccess" */,
 				DFFE94D52A1C4E3D00615281 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
@@ -556,14 +537,6 @@
 				minimumVersion = 0.3.3;
 			};
 		};
-		DFAB03D72A03DFA4006B5F7E /* XCRemoteSwiftPackageReference "ios-sdk" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/spotify/ios-sdk.git";
-			requirement = {
-				branch = master;
-				kind = branch;
-			};
-		};
 		DFAB03EE2A090DAE006B5F7E /* XCRemoteSwiftPackageReference "SpotifyAPI" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/Peter-Schorn/SpotifyAPI.git";
@@ -578,30 +551,6 @@
 			requirement = {
 				branch = master;
 				kind = branch;
-			};
-		};
-		DFBE88C02A0345F000572B47 /* XCRemoteSwiftPackageReference "SwiftyJSON" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/SwiftyJSON/SwiftyJSON.git";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 5.0.0;
-			};
-		};
-		DFBE88C32A03461800572B47 /* XCRemoteSwiftPackageReference "Alamofire" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/Alamofire/Alamofire.git";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 5.0.0;
-			};
-		};
-		DFBE88CB2A034B4A00572B47 /* XCRemoteSwiftPackageReference "AppAuth-iOS" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/openid/AppAuth-iOS.git";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 1.0.0;
 			};
 		};
 		DFFE94D52A1C4E3D00615281 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
@@ -650,11 +599,6 @@
 			package = DF72E62229FEB487007A6306 /* XCRemoteSwiftPackageReference "CombineFirebase" */;
 			productName = CombineFirebaseStorage;
 		};
-		DFAB03D82A03DFA4006B5F7E /* SpotifyiOS */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = DFAB03D72A03DFA4006B5F7E /* XCRemoteSwiftPackageReference "ios-sdk" */;
-			productName = SpotifyiOS;
-		};
 		DFAB03EF2A090DAE006B5F7E /* SpotifyAPI */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = DFAB03EE2A090DAE006B5F7E /* XCRemoteSwiftPackageReference "SpotifyAPI" */;
@@ -664,26 +608,6 @@
 			isa = XCSwiftPackageProductDependency;
 			package = DFAB03F12A09C871006B5F7E /* XCRemoteSwiftPackageReference "KeychainAccess" */;
 			productName = KeychainAccess;
-		};
-		DFBE88C12A0345F000572B47 /* SwiftyJSON */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = DFBE88C02A0345F000572B47 /* XCRemoteSwiftPackageReference "SwiftyJSON" */;
-			productName = SwiftyJSON;
-		};
-		DFBE88C42A03461800572B47 /* Alamofire */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = DFBE88C32A03461800572B47 /* XCRemoteSwiftPackageReference "Alamofire" */;
-			productName = Alamofire;
-		};
-		DFBE88CC2A034B4A00572B47 /* AppAuth */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = DFBE88CB2A034B4A00572B47 /* XCRemoteSwiftPackageReference "AppAuth-iOS" */;
-			productName = AppAuth;
-		};
-		DFBE88CE2A034B4A00572B47 /* AppAuthCore */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = DFBE88CB2A034B4A00572B47 /* XCRemoteSwiftPackageReference "AppAuth-iOS" */;
-			productName = AppAuthCore;
 		};
 		DFFE94D62A1C4E3D00615281 /* FirebaseAnalytics */ = {
 			isa = XCSwiftPackageProductDependency;

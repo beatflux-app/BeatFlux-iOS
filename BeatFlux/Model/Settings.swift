@@ -50,8 +50,9 @@ struct SpotifyExternalUrls: Codable {
 
 
 struct SpotifyAlbumImage: Codable {
-    // The Image object's properties would go here.
-    // As there's no detailed information about it, I'll leave it empty.
+    var height: Int
+    var url: String
+    var width: Int
 }
 
 struct SpotifyAlbum: Codable {
