@@ -6,22 +6,33 @@
 //
 
 import SwiftUI
+import Combine
+import SpotifyWebAPI
 
 struct InitializationPage: View {
-    @StateObject var authHandler = AuthHandler()
+    @EnvironmentObject var authHandler: AuthHandler
+    @EnvironmentObject var spotify: Spotify
+    @State private var cancellables: Set<AnyCancellable> = []
+
+
     
     var body: some View {
         if authHandler.isUserLoggedIn {
             HomeView(authHandler: authHandler)
         }
         else {
-            WelcomePageView(authHandler: authHandler)
+            WelcomePageView()
+                .environmentObject(authHandler)
         }
     }
+    
+    
 }
 
 struct InitializationPage_Previews: PreviewProvider {
+    
     static var previews: some View {
         InitializationPage()
+            .environmentObject(AuthHandler())
     }
 }
