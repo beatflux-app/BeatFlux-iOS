@@ -93,8 +93,6 @@ class AuthHandler: ObservableObject {
         
         if (!isValidEmail(email)) { throw AuthResult.error("Please enter a valid email") }
         
-        
-        
         return try await withCheckedThrowingContinuation { continutation in
             auth.signIn(withEmail: email, password: password)
                 .sink(

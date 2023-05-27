@@ -9,7 +9,7 @@ import SwiftUI
 
 
 struct HomeView: View {
-    @ObservedObject var authHandler: AuthHandler
+    @EnvironmentObject var authHandler: AuthHandler
     
     
     var size: CGFloat = 170
@@ -60,7 +60,8 @@ struct HomeView: View {
 
 struct HomeView_Previews: PreviewProvider {
     static var previews: some View {
-        HomeView(authHandler: AuthHandler())
+        HomeView()
+            .environmentObject(AuthHandler())
     }
 }
 

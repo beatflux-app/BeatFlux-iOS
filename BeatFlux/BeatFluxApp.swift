@@ -11,22 +11,21 @@ import SpotifyWebAPI
 
 @main
 struct BeatFluxApp: App {
+    @StateObject var beatFluxViewModel = BeatFluxViewModel()
     @StateObject var authHandler = AuthHandler()
     @StateObject var spotify = Spotify()
     
     init() {
         FirebaseApp.configure()
         
-        SpotifyAPILogHandler.bootstrap()
-        
-        DatabaseHandler.shared.intializeSettings()
-        
+        SpotifyAPILogHandler.bootstrap()        
     }
     
     var body: some Scene {
         
         WindowGroup {
             InitializationPage()
+                .environmentObject(beatFluxViewModel)
                 .environmentObject(spotify)
                 .environmentObject(authHandler)
         }
