@@ -25,54 +25,45 @@ final class DatabaseHandler {
     }
     
     
-    func intializeSettings() {
+    func initializeSettings() {
+        guard let user = user else { return }
+        
+        db.collection("users")
+            .document(user.uid)
+            .setData(from: SettingsDataModel(email: user.email, is_using_dark: false), merge: true)
+            .sink(
+                receiveCompletion: { completion in
+                    if case let .failure(error) = completion {
+                        print("ERROR: Writing data failed: \(error)")
+                    }
+                },
+                receiveValue: {
+                    print("SUCCESS: Value was successfully written")
+                }
+            )
+            .store(in: &cancellables)
+    }
+    
+    func getSettingsData(completion: @escaping (SettingsDataModel?) -> Void) {
+        guard let user = user else { return completion(nil) }
+        
+
         let onErrorCompletion: ((Subscribers.Completion<Error>) -> Void) = { completion in
             switch completion {
             case .finished:
-                return
-            case .failure(let error): print("ERROR: Writing data failed: \(error)")
+                break
+            case .failure(let error): print("ERROR: Reading data failed: \(error)")
             }
         }
-
-        let onValue: () -> Void = {
-            print("SUCCCESS: Value was succesfully written")
+        
+        let onValue: (SettingsDataModel?) -> Void = { document in
+            completion(document ?? SettingsDataModel(email: user.email, is_using_dark: false))
         }
         
-        
-        if let user = user {
-            
-            
-            (db.collection("users")
-                .document(user.uid)
-                .setData(from: SettingsDataModel(email: user.email, is_using_dark: false), merge: true) as AnyPublisher<Void, Error>)
-                    .sink(receiveCompletion: onErrorCompletion, receiveValue: onValue)
-                    .store(in: &cancellables)
-        }
-    }
-    
-    func getSettingsData() -> SettingsDataModel? {
-        var settingDataRetrieved: SettingsDataModel?
-        
-        if let user = user {
-            let onErrorCompletion: ((Subscribers.Completion<Error>) -> Void) = { completion in
-                switch completion {
-                case .finished:
-                    return
-                case .failure(let error): print("ERROR: Reading data failed: \(error)")
-                }
-            }
-            
-            let onValue: (SettingsDataModel?) -> Void = { document in
-                settingDataRetrieved = document ?? SettingsDataModel(email: user.email, is_using_dark: false)
-            }
-            
-            (db.collection("users")
-                .document(user.uid)
-                .getDocument(as: SettingsDataModel.self)
-                .sink(receiveCompletion: onErrorCompletion, receiveValue: onValue)
-                .store(in: &cancellables))
-        }
-        
-        return settingDataRetrieved
+        (db.collection("users")
+            .document(user.uid)
+            .getDocument(as: SettingsDataModel.self)
+            .sink(receiveCompletion: onErrorCompletion, receiveValue: onValue)
+            .store(in: &cancellables))
     }
 }

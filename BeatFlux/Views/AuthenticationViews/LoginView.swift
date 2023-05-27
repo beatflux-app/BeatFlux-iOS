@@ -10,6 +10,7 @@ import UIKit
 import AuthenticationServices
 
 struct LoginView: View {
+    @EnvironmentObject var beatFluxViewModel: BeatFluxViewModel
     @EnvironmentObject var authHandler: AuthHandler
     
     
@@ -145,7 +146,7 @@ struct LoginView: View {
             
             do {
                 let _ = try await authHandler.loginUser(with: email, password: password)
-                DatabaseHandler.shared.checkForSettingsUpdate()
+                beatFluxViewModel.refreshUserSettings()
             }
             catch AuthHandler.AuthResult.error(let error) {
                 self.error = error
@@ -163,6 +164,7 @@ struct LoginView: View {
 struct LoginView_Previews: PreviewProvider {
     static var previews: some View {
         LoginView()
+            .environmentObject(BeatFluxViewModel())
             .environmentObject(AuthHandler())
     }
 }

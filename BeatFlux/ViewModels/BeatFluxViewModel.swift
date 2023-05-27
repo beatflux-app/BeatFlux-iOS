@@ -10,5 +10,16 @@ import Foundation
 
 
 class BeatFluxViewModel: ObservableObject {
-
+    @Published var userSettings: SettingsDataModel?
+    
+    init() {
+        refreshUserSettings()
+    }
+    
+    
+    func refreshUserSettings() {
+        DatabaseHandler.shared.getSettingsData { data in
+            self.userSettings = data
+        }
+    }
 }
