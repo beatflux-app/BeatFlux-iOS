@@ -11,7 +11,18 @@ import Foundation
 
 class BeatFluxViewModel: ObservableObject {
     @Published var isViewModelFullyLoaded: Bool = false
-    @Published var userSettings: SettingsDataModel?
+    @Published var userSettings: SettingsDataModel? {
+        didSet {
+            Task {
+                do {
+                    try await uploadUserSettings()
+                    print("Successfully updated")
+                } catch {
+                    print("ERROR: Failed to upload user settings: \(error.localizedDescription)")
+                }
+            }
+        }
+    }
     
     enum UserError: Error {
         case nilUserSettings
@@ -20,9 +31,10 @@ class BeatFluxViewModel: ObservableObject {
     init() {
         Task {
             await retrieveUserSettings()
+            DispatchQueue.main.async {
+                self.isViewModelFullyLoaded = true
+            }
         }
-        
-        
     }
 
     func retrieveUserSettings() async {

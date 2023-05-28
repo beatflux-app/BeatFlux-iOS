@@ -52,16 +52,22 @@ struct HomeView: View {
                 
             }
         }
-        .onAppear {
-            if let userSettings = beatFluxViewModel.userSettings {
-                if !userSettings.spotify_link_shown {
-                    showSpotifyLinkPrompt = true
+        .onChange(of: beatFluxViewModel.isViewModelFullyLoaded, perform: { newValue in
+            if newValue {
+                if let userSettings = beatFluxViewModel.userSettings {
+                    if !userSettings.spotify_link_shown {
+                        showSpotifyLinkPrompt = true
+                    }
                 }
             }
-        }
-        .sheet(isPresented: $showSpotifyLinkPrompt) {
+        })
+
+        .sheet(isPresented: $showSpotifyLinkPrompt, onDismiss: {
+            beatFluxViewModel.userSettings?.spotify_link_shown = true
+        }) {
             Text("Here is the spotify popup")
         }
+        
     }
 }
 
