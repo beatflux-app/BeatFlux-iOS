@@ -9,8 +9,10 @@ import SwiftUI
 
 
 struct HomeView: View {
+    @EnvironmentObject var beatFluxViewModel: BeatFluxViewModel
     @EnvironmentObject var authHandler: AuthHandler
     
+    @State var showSpotifyLinkPrompt = false
     
     var size: CGFloat = 170
     
@@ -49,11 +51,16 @@ struct HomeView: View {
 
                 
             }
-
-
-            
-            
-            
+        }
+        .onAppear {
+            if let userSettings = beatFluxViewModel.userSettings {
+                if !userSettings.spotify_link_shown {
+                    showSpotifyLinkPrompt = true
+                }
+            }
+        }
+        .sheet(isPresented: $showSpotifyLinkPrompt) {
+            Text("Here is the spotify popup")
         }
     }
 }
@@ -61,6 +68,7 @@ struct HomeView: View {
 struct HomeView_Previews: PreviewProvider {
     static var previews: some View {
         HomeView()
+            .environmentObject(BeatFluxViewModel())
             .environmentObject(AuthHandler())
     }
 }

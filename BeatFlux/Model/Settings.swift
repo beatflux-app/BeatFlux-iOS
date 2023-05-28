@@ -16,8 +16,9 @@ struct BeatFluxUserModel: Codable {
 struct SettingsDataModel: Codable {
     var email: String?
     var is_using_dark: Bool = false
+    var spotify_link_shown = false
     
-    static let defaultData = SettingsDataModel(email: nil, is_using_dark: false)
+    static let defaultData = SettingsDataModel(email: nil, is_using_dark: false, spotify_link_shown: false)
 }
 
 struct SpotifyDataModel: Codable {

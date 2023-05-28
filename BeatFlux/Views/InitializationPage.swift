@@ -20,6 +20,7 @@ struct InitializationPage: View {
     var body: some View {
         if authHandler.isUserLoggedIn {
             HomeView()
+                .environmentObject(beatFluxViewModel)
                 .environmentObject(authHandler)
         }
         else {

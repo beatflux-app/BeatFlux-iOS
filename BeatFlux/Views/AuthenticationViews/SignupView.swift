@@ -155,7 +155,7 @@ struct SignupView: View {
             
             do {
                 let _ = try await authHandler.registerUser(with: email, password: password, confirmPassword: confirmPassword)
-                beatFluxViewModel.refreshUserSettings()
+                try await beatFluxViewModel.retrieveUserSettings()
             }
             catch AuthHandler.AuthResult.error(let error) {
                 self.error = error

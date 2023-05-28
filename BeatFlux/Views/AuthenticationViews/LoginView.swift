@@ -146,7 +146,7 @@ struct LoginView: View {
             
             do {
                 let _ = try await authHandler.loginUser(with: email, password: password)
-                beatFluxViewModel.refreshUserSettings()
+                try await beatFluxViewModel.retrieveUserSettings()
             }
             catch AuthHandler.AuthResult.error(let error) {
                 self.error = error
