@@ -10,6 +10,7 @@ import SwiftUI
 
 struct HomeView: View {
     @EnvironmentObject var beatFluxViewModel: BeatFluxViewModel
+    @EnvironmentObject var spotify: Spotify
     
     @State var showSpotifyLinkPrompt = false
     
@@ -21,7 +22,6 @@ struct HomeView: View {
         VStack {
             TopBarView()
                 .environmentObject(beatFluxViewModel)
-            
 
             ScrollView {
                 
@@ -54,6 +54,13 @@ struct HomeView: View {
                 
             }
         }
+        .sheet(isPresented: $showSpotifyLinkPrompt, onDismiss: {
+            beatFluxViewModel.userSettings?.account_link_shown = true
+        }) {
+            SpotifyPopup(showSpotifyLinkPrompt: $showSpotifyLinkPrompt)
+                .environmentObject(spotify)
+                .environmentObject(beatFluxViewModel)
+        }
         .onChange(of: beatFluxViewModel.isViewModelFullyLoaded, perform: { newValue in
             if beatFluxViewModel.isViewModelFullyLoaded == true {
                 
@@ -64,11 +71,7 @@ struct HomeView: View {
                 }
             }
         })
-        .sheet(isPresented: $showSpotifyLinkPrompt, onDismiss: {
-            beatFluxViewModel.userSettings?.account_link_shown = true
-        }) {
-            Text("Here is the spotify popup")
-        }
+
         
     }
 }
@@ -77,6 +80,7 @@ struct HomeView_Previews: PreviewProvider {
     static var previews: some View {
         HomeView()
             .environmentObject(BeatFluxViewModel())
+            .environmentObject(Spotify())
     }
 }
 

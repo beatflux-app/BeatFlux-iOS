@@ -20,6 +20,7 @@ struct InitializationPage: View {
         if beatFluxViewModel.isUserLoggedIn {
             HomeView()
                 .environmentObject(beatFluxViewModel)
+                .environmentObject(spotify)
         }
         else {
             WelcomePageView()

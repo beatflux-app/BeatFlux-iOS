@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		DF10E66D2A242EA100D9EFD7 /* SpotifyPopup.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF10E66C2A242EA100D9EFD7 /* SpotifyPopup.swift */; };
+		DF10E66F2A24E89300D9EFD7 /* WebView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF10E66E2A24E89300D9EFD7 /* WebView.swift */; };
 		DF44EEAB29FBE2720027E3DD /* WelcomePageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF44EEAA29FBE2720027E3DD /* WelcomePageView.swift */; };
 		DF599E6629FC990A00EBF850 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = DF599E6529FC990A00EBF850 /* GoogleService-Info.plist */; };
 		DF599E7429FC9A3000EBF850 /* AuthHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF599E7329FC9A3000EBF850 /* AuthHandler.swift */; };
@@ -41,6 +43,8 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		DF10E66C2A242EA100D9EFD7 /* SpotifyPopup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpotifyPopup.swift; sourceTree = "<group>"; };
+		DF10E66E2A24E89300D9EFD7 /* WebView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebView.swift; sourceTree = "<group>"; };
 		DF44EEAA29FBE2720027E3DD /* WelcomePageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WelcomePageView.swift; sourceTree = "<group>"; };
 		DF599E6529FC990A00EBF850 /* GoogleService-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		DF599E7329FC9A3000EBF850 /* AuthHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthHandler.swift; sourceTree = "<group>"; };
@@ -94,6 +98,7 @@
 				DFBE88BD29FF51BC00572B47 /* GenericViews */,
 				DF44EEA429FBDE5E0027E3DD /* AuthenticationViews */,
 				DFAD004829F5B6C000EE6874 /* HomeView.swift */,
+				DF10E66C2A242EA100D9EFD7 /* SpotifyPopup.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -188,6 +193,7 @@
 			isa = PBXGroup;
 			children = (
 				DFBE88BE29FF51DB00572B47 /* LoadingIndicator.swift */,
+				DF10E66E2A24E89300D9EFD7 /* WebView.swift */,
 			);
 			path = GenericViews;
 			sourceTree = "<group>";
@@ -295,12 +301,14 @@
 			buildActionMask = 2147483647;
 			files = (
 				DFFE94D02A19642200615281 /* SpotifyHandler.swift in Sources */,
+				DF10E66F2A24E89300D9EFD7 /* WebView.swift in Sources */,
 				DFC6661529FA0EA4003227FE /* Extensions.swift in Sources */,
 				DFFE94D42A19680E00615281 /* Settings.swift in Sources */,
 				DFFE94CE2A1963ED00615281 /* AuthTextLabel_Element.swift in Sources */,
 				DFFE94D22A19659B00615281 /* DatabaseHandler.swift in Sources */,
 				DFC6661329FA0AA3003227FE /* SignupView.swift in Sources */,
 				DFBE88BF29FF51DB00572B47 /* LoadingIndicator.swift in Sources */,
+				DF10E66D2A242EA100D9EFD7 /* SpotifyPopup.swift in Sources */,
 				DFAD004929F5B6C000EE6874 /* HomeView.swift in Sources */,
 				DF599E7429FC9A3000EBF850 /* AuthHandler.swift in Sources */,
 				DFFE94E12A1CD34E00615281 /* BeatFluxViewModel.swift in Sources */,

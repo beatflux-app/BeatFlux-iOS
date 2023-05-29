@@ -178,7 +178,6 @@ final class Spotify: ObservableObject {
             // Save the data to the keychain.
             keychain[data: self.authorizationManagerKey] = authManagerData
             print("did save authorization manager to keychain")
-            
         } catch {
             print(
                 "couldn't encode authorizationManager for storage " +
