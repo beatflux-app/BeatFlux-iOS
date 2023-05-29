@@ -58,7 +58,7 @@ final class DatabaseHandler {
                 if let err = err {
                     print("ERROR: Error updating document: \(err)")
                 } else {
-                    print("Document successfully updated")
+                    print("SUCCESS: Document successfully updated")
                 }
             }
         }
@@ -74,13 +74,13 @@ final class DatabaseHandler {
             docRef.getDocument { (document, error) in
                 if let document = document, document.exists {
                     self.updateFieldIfNil(docRef: docRef, document: document, fieldName: "is_using_dark", defaultValue: SettingsDataModel.defaultData.is_using_dark)
-                    self.updateFieldIfNil(docRef: docRef, document: document, fieldName: "spotify_link_shown", defaultValue: SettingsDataModel.defaultData.spotify_link_shown)
+                    self.updateFieldIfNil(docRef: docRef, document: document, fieldName: "account_link_shown", defaultValue: SettingsDataModel.defaultData.account_link_shown)
                     
                     
                     let returnValue = SettingsDataModel(
                         email: document.get("email") as? String,
                         is_using_dark: document.get("is_using_dark") as? Bool ?? SettingsDataModel.defaultData.is_using_dark,
-                        spotify_link_shown: document.get("spotify_link_shown") as? Bool ?? SettingsDataModel.defaultData.spotify_link_shown)
+                        account_link_shown: document.get("spotify_link_shown") as? Bool ?? SettingsDataModel.defaultData.account_link_shown)
                     
                     continuation.resume(returning: returnValue)
                 } else {

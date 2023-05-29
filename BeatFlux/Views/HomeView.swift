@@ -58,14 +58,14 @@ struct HomeView: View {
             if beatFluxViewModel.isViewModelFullyLoaded == true {
                 
                 if let userSettings = beatFluxViewModel.userSettings {
-                    if !userSettings.spotify_link_shown {
+                    if !userSettings.account_link_shown {
                         showSpotifyLinkPrompt = true
                     }
                 }
             }
         })
         .sheet(isPresented: $showSpotifyLinkPrompt, onDismiss: {
-            beatFluxViewModel.userSettings?.spotify_link_shown = true
+            beatFluxViewModel.userSettings?.account_link_shown = true
         }) {
             Text("Here is the spotify popup")
         }
