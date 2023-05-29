@@ -14,7 +14,6 @@ import AuthenticationServices
 struct SignupView: View {
     @Environment(\.dismiss) var dismiss
     @EnvironmentObject var beatFluxViewModel: BeatFluxViewModel
-    @EnvironmentObject var authHandler: AuthHandler
     
     @FocusState private var focusedField: Field?
     
@@ -154,8 +153,7 @@ struct SignupView: View {
             isLoading = true
             
             do {
-                let _ = try await authHandler.registerUser(with: email, password: password, confirmPassword: confirmPassword)
-                try await beatFluxViewModel.retrieveUserSettings()
+                let _ = try await AuthHandler.shared.registerUser(with: email, password: password, confirmPassword: confirmPassword)
             }
             catch AuthHandler.AuthResult.error(let error) {
                 self.error = error
@@ -172,6 +170,5 @@ struct SignupView_Previews: PreviewProvider {
     static var previews: some View {
         SignupView()
             .environmentObject(BeatFluxViewModel())
-            .environmentObject(AuthHandler())
     }
 }

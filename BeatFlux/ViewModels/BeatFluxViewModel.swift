@@ -7,16 +7,37 @@
 
 import SwiftUI
 import Foundation
+import FirebaseCore
+import FirebaseFirestore
+import FirebaseAuth
 
 
 class BeatFluxViewModel: ObservableObject {
     @Published var isViewModelFullyLoaded: Bool = false
+    @Published var isUserLoggedIn: Bool = false {
+        didSet {
+            Task {
+                DispatchQueue.main.async {
+                    self.userSettings = nil
+                    self.isViewModelFullyLoaded = false
+                }
+                if self.isUserLoggedIn {
+                    await self.loadUserData()
+                }
+                
+            }
+            
+            
+        }
+    }
     @Published var userSettings: SettingsDataModel? {
         didSet {
             Task {
                 do {
-                    try await uploadUserSettings()
-                    print("Successfully updated")
+                    if userSettings != nil {
+                        try await uploadUserSettings()
+                    }
+                    
                 } catch {
                     print("ERROR: Failed to upload user settings: \(error.localizedDescription)")
                 }
@@ -28,14 +49,29 @@ class BeatFluxViewModel: ObservableObject {
         case nilUserSettings
     }
     
+    private var user: User? {
+        return Auth.auth().currentUser
+    }
+    
     init() {
-        Task {
-            await retrieveUserSettings()
-            DispatchQueue.main.async {
-                self.isViewModelFullyLoaded = true
+        Auth.auth().addStateDidChangeListener { auth, user in
+            if let _ = user {
+                self.isUserLoggedIn = true
+            } else {
+                self.isUserLoggedIn = false
             }
         }
     }
+
+    // Call this function once the user is signed in/up
+    func loadUserData() async {
+        await retrieveUserSettings()
+        DispatchQueue.main.async {
+            self.isViewModelFullyLoaded = true
+        }
+    }
+    
+
 
     func retrieveUserSettings() async {
         do {

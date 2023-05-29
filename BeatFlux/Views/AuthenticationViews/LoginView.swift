@@ -11,7 +11,6 @@ import AuthenticationServices
 
 struct LoginView: View {
     @EnvironmentObject var beatFluxViewModel: BeatFluxViewModel
-    @EnvironmentObject var authHandler: AuthHandler
     
     
     @Environment(\.dismiss) var dismiss
@@ -145,8 +144,7 @@ struct LoginView: View {
             isLoading = true
             
             do {
-                let _ = try await authHandler.loginUser(with: email, password: password)
-                try await beatFluxViewModel.retrieveUserSettings()
+                let _ = try await AuthHandler.shared.loginUser(with: email, password: password)
             }
             catch AuthHandler.AuthResult.error(let error) {
                 self.error = error
@@ -165,6 +163,5 @@ struct LoginView_Previews: PreviewProvider {
     static var previews: some View {
         LoginView()
             .environmentObject(BeatFluxViewModel())
-            .environmentObject(AuthHandler())
     }
 }

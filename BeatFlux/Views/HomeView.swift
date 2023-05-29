@@ -10,15 +10,17 @@ import SwiftUI
 
 struct HomeView: View {
     @EnvironmentObject var beatFluxViewModel: BeatFluxViewModel
-    @EnvironmentObject var authHandler: AuthHandler
     
     @State var showSpotifyLinkPrompt = false
+    
+    @State var isLoading = false
     
     var size: CGFloat = 170
     
     var body: some View {
         VStack {
-            TopBarView(authHandler: authHandler)
+            TopBarView()
+                .environmentObject(beatFluxViewModel)
             
 
             ScrollView {
@@ -53,7 +55,8 @@ struct HomeView: View {
             }
         }
         .onChange(of: beatFluxViewModel.isViewModelFullyLoaded, perform: { newValue in
-            if newValue {
+            if beatFluxViewModel.isViewModelFullyLoaded == true {
+                
                 if let userSettings = beatFluxViewModel.userSettings {
                     if !userSettings.spotify_link_shown {
                         showSpotifyLinkPrompt = true
@@ -61,7 +64,6 @@ struct HomeView: View {
                 }
             }
         })
-
         .sheet(isPresented: $showSpotifyLinkPrompt, onDismiss: {
             beatFluxViewModel.userSettings?.spotify_link_shown = true
         }) {
@@ -75,7 +77,6 @@ struct HomeView_Previews: PreviewProvider {
     static var previews: some View {
         HomeView()
             .environmentObject(BeatFluxViewModel())
-            .environmentObject(AuthHandler())
     }
 }
 
@@ -101,7 +102,7 @@ private struct PlaylistGridSquare: View {
 }
 
 private struct TopBarView: View {
-    @ObservedObject var authHandler: AuthHandler
+    @EnvironmentObject var beatFluxViewModel: BeatFluxViewModel
     
     var body: some View {
         HStack {
@@ -121,13 +122,14 @@ private struct TopBarView: View {
         
         .overlay(alignment: .trailing) {
             Button {
-                authHandler.signOut()
+                AuthHandler.shared.signOut()
             } label: {
                 Circle()
                     .frame(width: 35)
                     .padding(.trailing)
                     .foregroundColor(Color(UIColor.systemGray5))
             }
+            .disabled(!beatFluxViewModel.isViewModelFullyLoaded)
 
             
         }

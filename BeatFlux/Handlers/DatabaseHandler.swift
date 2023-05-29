@@ -56,7 +56,7 @@ final class DatabaseHandler {
         if data[fieldName] == nil {
             docRef.updateData([fieldName: defaultValue]) { err in
                 if let err = err {
-                    print("Error updating document: \(err)")
+                    print("ERROR: Error updating document: \(err)")
                 } else {
                     print("Document successfully updated")
                 }

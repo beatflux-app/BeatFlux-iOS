@@ -12,7 +12,6 @@ import SpotifyWebAPI
 @main
 struct BeatFluxApp: App {
     @StateObject var beatFluxViewModel = BeatFluxViewModel()
-    @StateObject var authHandler = AuthHandler()
     @StateObject var spotify = Spotify()
     
     init() {
@@ -27,7 +26,6 @@ struct BeatFluxApp: App {
             InitializationPage()
                 .environmentObject(beatFluxViewModel)
                 .environmentObject(spotify)
-                .environmentObject(authHandler)
         }
     }
 }

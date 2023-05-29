@@ -9,14 +9,17 @@ import Foundation
 import FirebaseAuth
 import Combine
 import CombineFirebaseAuth
+import FirebaseAuth
 import SwiftUI
 
 
-class AuthHandler: ObservableObject {
+final class AuthHandler {
 
     var cancelBag = Set<AnyCancellable>()
     
-    let auth = Auth.auth()
+    private let auth = Auth.auth()
+    
+    static let shared = AuthHandler()
     
     enum AuthResult: Error, Equatable {
         case success
@@ -28,18 +31,7 @@ class AuthHandler: ObservableObject {
         case needsMoreCharacters
     }
     
-    @Published var isUserLoggedIn: Bool = false
     
-    init() {
-        Auth.auth().addStateDidChangeListener { auth, user in
-
-            if let _ = user {
-                self.isUserLoggedIn = true
-            } else {
-                self.isUserLoggedIn = false
-            }
-        }
-    }
     
     func signOut() {
         do {
@@ -79,6 +71,7 @@ class AuthHandler: ObservableObject {
                         
                     },
                     receiveValue: {_ in
+                        DatabaseHandler.shared.initializeSettings()
                         continutation.resume(returning: AuthResult.success)
                     }
                 )

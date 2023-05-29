@@ -9,7 +9,6 @@ import SwiftUI
 
 struct WelcomePageView: View {
     @EnvironmentObject var beatFluxViewModel: BeatFluxViewModel
-    @EnvironmentObject var authHandler: AuthHandler
     @State var loginPageShowing: Bool = false
     @State var signupPageShowing: Bool = false
     
@@ -123,7 +122,6 @@ struct WelcomePageView: View {
                 .fullScreenCover(isPresented: $loginPageShowing) {
                     LoginView()
                         .environmentObject(beatFluxViewModel)
-                        .environmentObject(authHandler)
                 }
                 
                 
@@ -143,7 +141,6 @@ struct WelcomePageView: View {
                 .fullScreenCover(isPresented: $signupPageShowing) {
                     SignupView()
                         .environmentObject(beatFluxViewModel)
-                        .environmentObject(authHandler)
                 }
             }
             .padding(.bottom)
@@ -158,6 +155,5 @@ struct WelcomePageView_Previews: PreviewProvider {
     static var previews: some View {
         WelcomePageView()
             .environmentObject(BeatFluxViewModel())
-            .environmentObject(AuthHandler())
     }
 }
