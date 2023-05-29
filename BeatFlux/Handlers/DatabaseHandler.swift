@@ -71,6 +71,8 @@ final class DatabaseHandler {
         }
         return try await withCheckedThrowingContinuation { continuation in
             let docRef = db.collection("users").document(user.uid)
+            
+            
             docRef.getDocument { (document, error) in
                 if let document = document, document.exists {
                     self.updateFieldIfNil(docRef: docRef, document: document, fieldName: "is_using_dark", defaultValue: SettingsDataModel.defaultData.is_using_dark)
@@ -78,13 +80,14 @@ final class DatabaseHandler {
                     
                     
                     let returnValue = SettingsDataModel(
-                        email: document.get("email") as? String,
+                        email: document.get("email") as? String ?? "",
                         is_using_dark: document.get("is_using_dark") as? Bool ?? SettingsDataModel.defaultData.is_using_dark,
-                        account_link_shown: document.get("spotify_link_shown") as? Bool ?? SettingsDataModel.defaultData.account_link_shown)
+                        account_link_shown: document.get("account_link_shown") as? Bool ?? SettingsDataModel.defaultData.account_link_shown)
                     
                     continuation.resume(returning: returnValue)
                 } else {
-                    print("Document does not exist")
+                    print("Document does not exist, initlizing settings (ERROR HANDLED)")
+                    self.initializeSettings()
                     continuation.resume(throwing: error ?? UserError.nilUser)
                 }
             }

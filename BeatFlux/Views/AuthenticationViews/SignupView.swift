@@ -153,7 +153,7 @@ struct SignupView: View {
             isLoading = true
             
             do {
-                let _ = try await AuthHandler.shared.registerUser(with: email, password: password, confirmPassword: confirmPassword)
+                try await AuthHandler.shared.registerUser(with: email, password: password, confirmPassword: confirmPassword)
             }
             catch AuthHandler.AuthResult.error(let error) {
                 self.error = error

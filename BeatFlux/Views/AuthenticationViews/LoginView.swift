@@ -144,7 +144,7 @@ struct LoginView: View {
             isLoading = true
             
             do {
-                let _ = try await AuthHandler.shared.loginUser(with: email, password: password)
+                try await AuthHandler.shared.loginUser(with: email, password: password)
             }
             catch AuthHandler.AuthResult.error(let error) {
                 self.error = error

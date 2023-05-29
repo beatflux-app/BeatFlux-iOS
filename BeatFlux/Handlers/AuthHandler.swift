@@ -43,7 +43,7 @@ final class AuthHandler {
         
     }
     
-    func registerUser(with email: String, password: String, confirmPassword: String) async throws -> AuthResult  {
+    func registerUser(with email: String, password: String, confirmPassword: String) async throws  {
         let minCharacterCount = 6
         if (password != confirmPassword) { throw AuthResult.error("Passwords do not match")}
         if (!isValidEmail(email)) { throw AuthResult.error("Please enter a valid email") }
@@ -72,7 +72,7 @@ final class AuthHandler {
                     },
                     receiveValue: {_ in
                         DatabaseHandler.shared.initializeSettings()
-                        continutation.resume(returning: AuthResult.success)
+                        continutation.resume()
                     }
                 )
                 .store(in: &cancelBag)
@@ -82,7 +82,7 @@ final class AuthHandler {
     
     
     
-    func loginUser(with email: String, password: String) async throws -> AuthResult {
+    func loginUser(with email: String, password: String) async throws {
         
         if (!isValidEmail(email)) { throw AuthResult.error("Please enter a valid email") }
         
@@ -101,7 +101,7 @@ final class AuthHandler {
                         
                     },
                     receiveValue: {_ in
-                        continutation.resume(returning: AuthResult.success)
+                        continutation.resume()
                     }
                 )
                 .store(in: &cancelBag)

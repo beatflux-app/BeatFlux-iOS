@@ -82,7 +82,7 @@ class BeatFluxViewModel: ObservableObject {
             
         }
         catch {
-            print("ERROR: Failed to retrive user settings: \(error.localizedDescription)")
+            print("ERROR: Failed to retrieve user settings: \(error.localizedDescription)")
         }
 
     }
