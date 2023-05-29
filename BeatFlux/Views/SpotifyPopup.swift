@@ -161,7 +161,7 @@ struct SpotifyAuthenticationView: View {
                 }
                 else {
                     showSpotifyLinkPrompt = false
-                    beatFluxViewModel.userSettings.spoti
+                
                 }
             })
             .store(in: &cancellables)

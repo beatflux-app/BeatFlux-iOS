@@ -55,7 +55,7 @@ struct HomeView: View {
             }
         }
         .sheet(isPresented: $showSpotifyLinkPrompt, onDismiss: {
-            beatFluxViewModel.userSettings?.account_link_shown = true
+            beatFluxViewModel.userData?.account_link_shown = true
         }) {
             SpotifyPopup(showSpotifyLinkPrompt: $showSpotifyLinkPrompt)
                 .environmentObject(spotify)
@@ -64,8 +64,8 @@ struct HomeView: View {
         .onChange(of: beatFluxViewModel.isViewModelFullyLoaded, perform: { newValue in
             if beatFluxViewModel.isViewModelFullyLoaded == true {
                 
-                if let userSettings = beatFluxViewModel.userSettings {
-                    if !userSettings.account_link_shown {
+                if let userData = beatFluxViewModel.userData {
+                    if !userData.account_link_shown {
                         showSpotifyLinkPrompt = true
                     }
                 }

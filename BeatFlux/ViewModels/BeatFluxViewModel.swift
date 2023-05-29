@@ -18,7 +18,7 @@ class BeatFluxViewModel: ObservableObject {
         didSet {
             Task {
                 DispatchQueue.main.async {
-                    self.userSettings = nil
+                    self.userData = nil
                     self.isViewModelFullyLoaded = false
                 }
                 if self.isUserLoggedIn {
@@ -30,23 +30,23 @@ class BeatFluxViewModel: ObservableObject {
             
         }
     }
-    @Published var userSettings: SettingsDataModel? {
+    @Published var userData: UserModel? {
         didSet {
             Task {
                 do {
-                    if userSettings != nil {
-                        try await uploadUserSettings()
+                    if userData != nil {
+                        try await uploadUserData()
                     }
                     
                 } catch {
-                    print("ERROR: Failed to upload user settings: \(error.localizedDescription)")
+                    print("ERROR: Failed to upload user data: \(error.localizedDescription)")
                 }
             }
         }
     }
     
     enum UserError: Error {
-        case nilUserSettings
+        case nilUserData
     }
     
     private var user: User? {
@@ -65,7 +65,7 @@ class BeatFluxViewModel: ObservableObject {
 
     // Call this function once the user is signed in/up
     func loadUserData() async {
-        await retrieveUserSettings()
+        await retrieveUserData()
         DispatchQueue.main.async {
             self.isViewModelFullyLoaded = true
         }
@@ -73,31 +73,31 @@ class BeatFluxViewModel: ObservableObject {
     
 
 
-    func retrieveUserSettings() async {
+    func retrieveUserData() async {
         do {
-            let data = try await DatabaseHandler.shared.getSettingsData()
+            let data = try await DatabaseHandler.shared.getUserData()
             DispatchQueue.main.async {
-                self.userSettings = data
+                self.userData = data
             }
             
         }
         catch {
-            print("ERROR: Failed to retrieve user settings: \(error.localizedDescription)")
+            print("ERROR: Failed to retrieve user data: \(error.localizedDescription)")
         }
 
     }
     
-    func uploadUserSettings() async throws {
-        guard let userSettings = userSettings else {
-            print("ERROR: User settings is nil")
-            throw UserError.nilUserSettings
+    func uploadUserData() async throws {
+        guard let userData = userData else {
+            print("ERROR: User data is nil")
+            throw UserError.nilUserData
         }
         
         do {
-            try await DatabaseHandler.shared.uploadSettingsData(from: userSettings)
+            try await DatabaseHandler.shared.uploadUserData(from: userData)
         }
         catch {
-            print("ERROR: Failed to upload user settings: \(error.localizedDescription)")
+            print("ERROR: Failed to upload user data: \(error.localizedDescription)")
         }
             
 

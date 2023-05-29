@@ -71,7 +71,7 @@ final class AuthHandler {
                         
                     },
                     receiveValue: {_ in
-                        DatabaseHandler.shared.initializeSettings()
+                        DatabaseHandler.shared.initializeUser()
                         continutation.resume()
                     }
                 )
