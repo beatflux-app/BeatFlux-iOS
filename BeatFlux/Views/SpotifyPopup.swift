@@ -143,8 +143,29 @@ struct SpotifyAuthenticationView: View {
             .sink(receiveCompletion: { completion in
                 self.spotify.isRetrievingTokens = false
                 
-
-                if case .failure(let error) = completion {
+                switch completion {
+                case .finished:
+                    var userPlaylists: [Playlist<PlaylistItemsReference>]?
+                    
+                    spotify.getUserPlaylists { playlists in
+                        guard let playlists = playlists else {
+                            print("No playlists")
+                            return
+                            
+                        }
+                        
+                        userPlaylists = playlists.items
+                        
+                        let spotifyData = SpotifyDataModel(user_id: spotify.currentUser?.id, authorization_manager: spotify.api.authorizationManager, playlists: userPlaylists)
+                        
+                        DispatchQueue.main.async {
+                            beatFluxViewModel.userData?.spotify_data = spotifyData
+                        }
+                        
+                    }
+                    
+                    showSpotifyLinkPrompt = false
+                case .failure(let error):
                     print("couldn't retrieve access and refresh tokens:\n\(error)")
                     if let authError = error as? SpotifyAuthorizationError,
                        authError.accessWasDenied {
@@ -159,10 +180,7 @@ struct SpotifyAuthenticationView: View {
                         showAlert = true
                     }
                 }
-                else {
-                    showSpotifyLinkPrompt = false
-                
-                }
+
             })
             .store(in: &cancellables)
             

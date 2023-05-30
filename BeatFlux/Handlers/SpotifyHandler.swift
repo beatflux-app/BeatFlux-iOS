@@ -176,6 +176,13 @@ final class Spotify: ObservableObject {
             )
             
             // Save the data to the keychain.
+            Task {
+                let userData = try await DatabaseHandler.shared.getUserData()
+                if let userData = userData {
+                    
+                }
+            }
+            
             keychain[data: self.authorizationManagerKey] = authManagerData
             print("did save authorization manager to keychain")
         } catch {
@@ -231,14 +238,14 @@ final class Spotify: ObservableObject {
     }
     
     
-    public func getUserPlaylists() {
+    public func getUserPlaylists(completion: @escaping (PagingObject<Playlist<PlaylistItemsReference>>?) -> Void) {
+
         self.api.currentUserPlaylists()
             .extendPages(self.api)
-            .sink(receiveCompletion: { completion in
-                print(completion)
-            }, receiveValue: { results in
-                print(results)
-            })
+            .sink(receiveCompletion: { _ in },
+              receiveValue: { results in
+                  completion(results)
+              })
             .store(in: &cancellables)
     }
     

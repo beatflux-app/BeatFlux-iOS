@@ -96,6 +96,8 @@ final class DatabaseHandler {
 
     
     
+    
+    
     func uploadUserData(from data: UserModel) async throws {
         guard let user = user else {
             print("ERROR: Failed to upload data to database because the user is nil")
