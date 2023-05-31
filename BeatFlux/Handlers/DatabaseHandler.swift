@@ -42,7 +42,7 @@ final class DatabaseHandler {
                     }
                 },
                 receiveValue: {
-                    print("SUCCESS: Value was successfully written")
+                    print("SUCCESS: Value was successfully initialized to database")
                 }
             )
             .store(in: &cancellables)
@@ -122,6 +122,7 @@ final class DatabaseHandler {
     
     
     
+    
     func uploadUserData(from data: UserModel) async throws {
         guard let user = user else {
             print("ERROR: Failed to upload data to database because the user is nil")
@@ -129,23 +130,17 @@ final class DatabaseHandler {
         }
         
         return try await withCheckedThrowingContinuation { continuation in
-            var dictionaryToAdd: [String: Any] = ["email": data.email,
-                                                  "is_using_dark": data.is_using_dark,
-                                                  "account_link_shown": data.account_link_shown,]
-            var dataString: String?
-            
-            if (data.spotify_data != nil) {
-                do {
-                    let encoder = JSONEncoder()
-                    let dataEncoded = try encoder.encode(data.spotify_data?.authorization_manager)
-                    dataString = String(data: dataEncoded, encoding: .utf8)
+            var dictionaryToAdd: [String: Any] = [:]
+            do {
+                dictionaryToAdd = try data.asDictionary()
+                if let spotifyData = data.spotify_data {
+                    let encodedManager = try JSONEncoder().encode(spotifyData.authorization_manager)
+                    let dataString = String(data: encodedManager, encoding: .utf8)
                     dictionaryToAdd.updateValue(["authorization_manager": dataString], forKey: "spotify_data")
                 }
-                catch {
-                    print("Unable to encode")
-                }
+            } catch {
+                print("Unable to encode")
             }
-            
             
             db.collection("users")
                 .document(user.uid)
@@ -167,5 +162,15 @@ final class DatabaseHandler {
                 )
                 .store(in: &cancellables)
         }
+    }
+}
+
+extension Encodable {
+    func asDictionary() throws -> [String: Any] {
+        let data = try JSONEncoder().encode(self)
+        guard let dictionary = try JSONSerialization.jsonObject(with: data, options: .allowFragments) as? [String: Any] else {
+            throw NSError()
+        }
+        return dictionary
     }
 }

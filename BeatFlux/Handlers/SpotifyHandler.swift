@@ -62,38 +62,38 @@ final class Spotify: ObservableObject {
             .store(in: &cancellables)
         Task {
             do {
-                if let authManagerData = try await DatabaseHandler.shared.getUserData()?.spotify_data?.authorization_manager {
-                    
-                        print("found authorization information in database")
-                        
-                        self.api.authorizationManager = authManagerData
-                    
-                    
-                        if !self.api.authorizationManager.accessTokenIsExpired() {
-                            self.autoRefreshTokensWhenExpired()
-                        }
-                        self.api.authorizationManager.refreshTokens(
-                            onlyIfExpired: true
-                        )
-                        .sink(receiveCompletion: { completion in
-                            switch completion {
-                                case .finished:
-                                    break
-                                case .failure(let error):
-                                    print(
-                                        "Spotify.init: couldn't refresh tokens:\n\(error)"
-                                    )
-                            }
-                        })
-                        .store(in: &self.cancellables)
-                    }
-
-                else {
-                    print("did NOT find authorization information in keychain")
+                guard let authManagerData = try await DatabaseHandler.shared.getUserData()?.spotify_data?.authorization_manager else {
+                    print("Did NOT find authorization information in keychain")
+                    return
                 }
+
+                print("Found authorization information in database")
+                
+                self.api.authorizationManager = authManagerData
+            
+            
+                if !self.api.authorizationManager.accessTokenIsExpired() {
+                    self.autoRefreshTokensWhenExpired()
+                }
+                self.api.authorizationManager.refreshTokens(
+                    onlyIfExpired: true
+                )
+                .sink(receiveCompletion: { completion in
+                    switch completion {
+                        case .finished:
+                            break
+                        case .failure(let error):
+                            print(
+                                "ERROR: Spotify.init: couldn't refresh tokens:\n\(error)"
+                            )
+                    }
+                })
+                .store(in: &self.cancellables)
+                    
+
             }
             catch {
-                print("Unable to get user data from database")
+                print("ERROR: Unable to get user data from database")
             }
             
         }
@@ -178,14 +178,14 @@ final class Spotify: ObservableObject {
                     if var userData = userData {
                         userData.spotify_data?.authorization_manager = self.api.authorizationManager
                         try await DatabaseHandler.shared.uploadUserData(from: userData)
-                        print("did save authorization manager to database")
+                        print("SUCCESS: Did save authorization manager to database")
                     }
                     else {
-                        print("user data is invalid")
+                        print("ERROR: User data is invalid")
                     }
                 } catch {
                     print(
-                        "couldn't encode authorizationManager for storage " +
+                        "ERROR: Couldn't encode authorizationManager for storage " +
                             "in keychain:\n\(error)"
                     )
                 }
@@ -207,22 +207,23 @@ final class Spotify: ObservableObject {
         
         Task {
             do {
-                if var userModel = try await DatabaseHandler.shared.getUserData() {
-                    userModel.spotify_data?.authorization_manager = nil
-                    try await DatabaseHandler.shared.uploadUserData(from: userModel)
-                    print("did remove authorization manager from database")
+                guard var userModel = try await DatabaseHandler.shared.getUserData() else {
+                    print("ERROR: Unable to retrive user data from the database")
+                    return
                 }
+                
+                userModel.spotify_data?.authorization_manager = nil
+                try await DatabaseHandler.shared.uploadUserData(from: userModel)
+                print("SUCCESS: Did remove authorization manager from database")
+                
             }
             catch {
                 print(
-                    "couldn't remove authorization manager " +
-                    "from keychain: \(error)"
+                    "ERROR: Couldn't remove authorization manager " +
+                    "from database: \(error)"
                 )
             }
         }
-            
-            
-        
     }
     
     func retrieveCurrentUser(onlyIfNil: Bool = true) {
@@ -237,7 +238,7 @@ final class Spotify: ObservableObject {
             .sink(
                 receiveCompletion: { completion in
                     if case .failure(let error) = completion {
-                        print("couldn't retrieve current user: \(error)")
+                        print("ERROR: Couldn't retrieve current user: \(error)")
                     }
                 },
                 receiveValue: { user in
