@@ -14,10 +14,11 @@ import AuthenticationServices
 struct SignupView: View {
     @Environment(\.dismiss) var dismiss
     @EnvironmentObject var beatFluxViewModel: BeatFluxViewModel
-    @EnvironmentObject var authHandler: AuthHandler
     
     @FocusState private var focusedField: Field?
     
+    @State private var firstName = ""
+    @State private var lastName = ""
     @State private var email = ""
     @State private var password = ""
     @State private var confirmPassword = ""
@@ -29,6 +30,8 @@ struct SignupView: View {
         case email
         case password
         case confirmPassword
+        case firstName
+        case lastName
     }
     
     var body: some View {
@@ -73,7 +76,7 @@ struct SignupView: View {
                             .submitLabel(.next)
                             .focused($focusedField, equals: .email)
                             .onSubmit {
-                                focusedField = .password
+                                focusedField = .firstName
                             }
                             .onAppear {
                                 focusedField = .email
@@ -81,6 +84,38 @@ struct SignupView: View {
                             .disabled(isLoading)
                     }
                     .padding(.horizontal)
+                    
+                    HStack {
+                        //MARK: First Name
+                        AuthTextLabel_Element(text: firstName, placeholderText: "First Name") {
+                            TextField("", text: $firstName)
+                                .autocorrectionDisabled()
+                                .textInputAutocapitalization(.never)
+                                .submitLabel(.next)
+                                .focused($focusedField, equals: .firstName)
+                                .onSubmit {
+                                    focusedField = .lastName
+                                }
+                                .disabled(isLoading)
+                        }
+                        
+                        
+                        //MARK: Last Name
+                        AuthTextLabel_Element(text: lastName, placeholderText: "Last Name") {
+                            TextField("", text: $lastName)
+                                .autocorrectionDisabled()
+                                .textInputAutocapitalization(.never)
+                                .submitLabel(.next)
+                                .focused($focusedField, equals: .lastName)
+                                .onSubmit {
+                                    focusedField = .password
+                                }
+                                .disabled(isLoading)
+                        }
+                        
+                    }
+                    .padding(.horizontal)
+                    
                     
                     //MARK: Password
                     AuthTextLabel_Element(text: password, placeholderText: "Password") {
@@ -154,8 +189,7 @@ struct SignupView: View {
             isLoading = true
             
             do {
-                let _ = try await authHandler.registerUser(with: email, password: password, confirmPassword: confirmPassword)
-                beatFluxViewModel.refreshUserSettings()
+                try await AuthHandler.shared.registerUser(with: email, password: password, confirmPassword: confirmPassword, firstName: firstName, lastName: lastName)
             }
             catch AuthHandler.AuthResult.error(let error) {
                 self.error = error
@@ -172,6 +206,5 @@ struct SignupView_Previews: PreviewProvider {
     static var previews: some View {
         SignupView()
             .environmentObject(BeatFluxViewModel())
-            .environmentObject(AuthHandler())
     }
 }

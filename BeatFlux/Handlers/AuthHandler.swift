@@ -9,14 +9,17 @@ import Foundation
 import FirebaseAuth
 import Combine
 import CombineFirebaseAuth
+import FirebaseAuth
 import SwiftUI
 
 
-class AuthHandler: ObservableObject {
+final class AuthHandler {
 
     var cancelBag = Set<AnyCancellable>()
     
-    let auth = Auth.auth()
+    private let auth = Auth.auth()
+    
+    static let shared = AuthHandler()
     
     enum AuthResult: Error, Equatable {
         case success
@@ -28,18 +31,7 @@ class AuthHandler: ObservableObject {
         case needsMoreCharacters
     }
     
-    @Published var isUserLoggedIn: Bool = false
     
-    init() {
-        Auth.auth().addStateDidChangeListener { auth, user in
-
-            if let _ = user {
-                self.isUserLoggedIn = true
-            } else {
-                self.isUserLoggedIn = false
-            }
-        }
-    }
     
     func signOut() {
         do {
@@ -51,10 +43,12 @@ class AuthHandler: ObservableObject {
         
     }
     
-    func registerUser(with email: String, password: String, confirmPassword: String) async throws -> AuthResult  {
+    func registerUser(with email: String, password: String, confirmPassword: String, firstName: String, lastName: String) async throws  {
         let minCharacterCount = 6
         if (password != confirmPassword) { throw AuthResult.error("Passwords do not match")}
         if (!isValidEmail(email)) { throw AuthResult.error("Please enter a valid email") }
+        if (firstName.isEmpty) { throw AuthResult.error("Please enter a valid first name") }
+        if (lastName.isEmpty) { throw AuthResult.error("Please enter a valid last name") }
         
         switch (checkRequiredPasswordParams(password: password, minCharacterCount: minCharacterCount)) {
         case .needsMoreCharacters:
@@ -79,7 +73,8 @@ class AuthHandler: ObservableObject {
                         
                     },
                     receiveValue: {_ in
-                        continutation.resume(returning: AuthResult.success)
+                        DatabaseHandler.shared.initializeUser(firstName: firstName, lastName: lastName)
+                        continutation.resume()
                     }
                 )
                 .store(in: &cancelBag)
@@ -89,7 +84,7 @@ class AuthHandler: ObservableObject {
     
     
     
-    func loginUser(with email: String, password: String) async throws -> AuthResult {
+    func loginUser(with email: String, password: String) async throws {
         
         if (!isValidEmail(email)) { throw AuthResult.error("Please enter a valid email") }
         
@@ -108,7 +103,7 @@ class AuthHandler: ObservableObject {
                         
                     },
                     receiveValue: {_ in
-                        continutation.resume(returning: AuthResult.success)
+                        continutation.resume()
                     }
                 )
                 .store(in: &cancelBag)

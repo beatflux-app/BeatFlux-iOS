@@ -34,7 +34,6 @@ final class Spotify: ObservableObject {
     @Published var isRetrievingTokens = false
     @Published var currentUser: SpotifyUser? = nil
     
-    let keychain = Keychain(service: "com.beatflux.BeatFlux")
     
     let api = SpotifyAPI(
         authorizationManager: AuthorizationCodeFlowManager(
@@ -61,17 +60,18 @@ final class Spotify: ObservableObject {
             .receive(on: RunLoop.main)
             .sink(receiveValue: authorizationManagerDidDeauthorize)
             .store(in: &cancellables)
-        
-        if let authManagerData = keychain[data: self.authorizationManagerKey] {
+        Task {
             do {
-                let authorizationManager = try JSONDecoder().decode(
-                    AuthorizationCodeFlowManager.self,
-                    from: authManagerData
-                )
-                print("found authorization information in keychain")
+                guard let authManagerData = try await DatabaseHandler.shared.getUserData()?.spotify_data?.authorization_manager else {
+                    print("Did NOT find authorization information in keychain")
+                    return
+                }
+
+                print("Found authorization information in database")
                 
-                self.api.authorizationManager = authorizationManager
-                                
+                self.api.authorizationManager = authManagerData
+            
+            
                 if !self.api.authorizationManager.accessTokenIsExpired() {
                     self.autoRefreshTokensWhenExpired()
                 }
@@ -84,19 +84,20 @@ final class Spotify: ObservableObject {
                             break
                         case .failure(let error):
                             print(
-                                "Spotify.init: couldn't refresh tokens:\n\(error)"
+                                "ERROR: Spotify.init: couldn't refresh tokens:\n\(error)"
                             )
                     }
                 })
                 .store(in: &self.cancellables)
+                    
+
             }
             catch {
-                print("could not decode authorizationManager from data:\n\(error)")
+                print("ERROR: Unable to get user data from database")
             }
+            
         }
-        else {
-            print("did NOT find authorization information in keychain")
-        }
+
     }
     
     private func autoRefreshTokensWhenExpired() {
@@ -169,22 +170,28 @@ final class Spotify: ObservableObject {
         
         self.retrieveCurrentUser()
         
-        do {
-            // Encode the authorization information to data.
-            let authManagerData = try JSONEncoder().encode(
-                self.api.authorizationManager
-            )
-            
+        
             // Save the data to the keychain.
-            keychain[data: self.authorizationManagerKey] = authManagerData
-            print("did save authorization manager to keychain")
+            Task {
+                do {
+                    let userData = try await DatabaseHandler.shared.getUserData()
+                    if var userData = userData {
+                        userData.spotify_data?.authorization_manager = self.api.authorizationManager
+                        try await DatabaseHandler.shared.uploadUserData(from: userData)
+                        print("SUCCESS: Did save authorization manager to database")
+                    }
+                    else {
+                        print("ERROR: User data is invalid")
+                    }
+                } catch {
+                    print(
+                        "ERROR: Couldn't encode authorizationManager for storage " +
+                            "in keychain:\n\(error)"
+                    )
+                }
+            }
             
-        } catch {
-            print(
-                "couldn't encode authorizationManager for storage " +
-                    "in keychain:\n\(error)"
-            )
-        }
+        
         
     }
     
@@ -196,15 +203,26 @@ final class Spotify: ObservableObject {
         self.currentUser = nil
         self.refreshTokensCancellable = nil
         
-        do {
-            try keychain.remove(self.authorizationManagerKey)
-            print("did remove authorization manager from keychain")
-            
-        } catch {
-            print(
-                "couldn't remove authorization manager " +
-                "from keychain: \(error)"
-            )
+        
+        
+        Task {
+            do {
+                guard var userModel = try await DatabaseHandler.shared.getUserData() else {
+                    print("ERROR: Unable to retrive user data from the database")
+                    return
+                }
+                
+                userModel.spotify_data?.authorization_manager = nil
+                try await DatabaseHandler.shared.uploadUserData(from: userModel)
+                print("SUCCESS: Did remove authorization manager from database")
+                
+            }
+            catch {
+                print(
+                    "ERROR: Couldn't remove authorization manager " +
+                    "from database: \(error)"
+                )
+            }
         }
     }
     
@@ -220,7 +238,7 @@ final class Spotify: ObservableObject {
             .sink(
                 receiveCompletion: { completion in
                     if case .failure(let error) = completion {
-                        print("couldn't retrieve current user: \(error)")
+                        print("ERROR: Couldn't retrieve current user: \(error)")
                     }
                 },
                 receiveValue: { user in
@@ -232,14 +250,14 @@ final class Spotify: ObservableObject {
     }
     
     
-    public func getUserPlaylists() {
+    public func getUserPlaylists(completion: @escaping (PagingObject<Playlist<PlaylistItemsReference>>?) -> Void) {
+
         self.api.currentUserPlaylists()
             .extendPages(self.api)
-            .sink(receiveCompletion: { completion in
-                print(completion)
-            }, receiveValue: { results in
-                print(results)
-            })
+            .sink(receiveCompletion: { _ in },
+              receiveValue: { results in
+                  completion(results)
+              })
             .store(in: &cancellables)
     }
     

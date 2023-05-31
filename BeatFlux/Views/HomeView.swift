@@ -9,15 +9,20 @@ import SwiftUI
 
 
 struct HomeView: View {
-    @EnvironmentObject var authHandler: AuthHandler
+    @EnvironmentObject var beatFluxViewModel: BeatFluxViewModel
+    @EnvironmentObject var spotify: Spotify
     
+    @State var showSpotifyLinkPrompt = false
+    
+    @State var isLoading = false
+    @State var showSettings = false
     
     var size: CGFloat = 170
     
     var body: some View {
         VStack {
-            TopBarView(authHandler: authHandler)
-            
+            TopBarView(showSettings: $showSettings)
+                .environmentObject(beatFluxViewModel)
 
             ScrollView {
                 
@@ -49,19 +54,37 @@ struct HomeView: View {
 
                 
             }
-
-
-            
-            
-            
         }
+        .sheet(isPresented: $showSpotifyLinkPrompt, onDismiss: {
+            beatFluxViewModel.userData?.account_link_shown = true
+        }) {
+            SpotifyPopup(showSpotifyLinkPrompt: $showSpotifyLinkPrompt)
+                .environmentObject(spotify)
+                .environmentObject(beatFluxViewModel)
+        }
+        .onChange(of: beatFluxViewModel.isViewModelFullyLoaded, perform: { newValue in
+            if beatFluxViewModel.isViewModelFullyLoaded == true {
+                
+                if let userData = beatFluxViewModel.userData {
+                    if !userData.account_link_shown {
+                        showSpotifyLinkPrompt = true
+                    }
+                }
+            }
+        })
+        .fullScreenCover(isPresented: $showSettings) {
+            SettingsView(showSettings: $showSettings)
+        }
+
+        
     }
 }
 
 struct HomeView_Previews: PreviewProvider {
     static var previews: some View {
         HomeView()
-            .environmentObject(AuthHandler())
+            .environmentObject(BeatFluxViewModel())
+            .environmentObject(Spotify())
     }
 }
 
@@ -87,7 +110,8 @@ private struct PlaylistGridSquare: View {
 }
 
 private struct TopBarView: View {
-    @ObservedObject var authHandler: AuthHandler
+    @EnvironmentObject var beatFluxViewModel: BeatFluxViewModel
+    @Binding var showSettings: Bool
     
     var body: some View {
         HStack {
@@ -107,13 +131,15 @@ private struct TopBarView: View {
         
         .overlay(alignment: .trailing) {
             Button {
-                authHandler.signOut()
+                showSettings.toggle()
+//                AuthHandler.shared.signOut()
             } label: {
                 Circle()
                     .frame(width: 35)
                     .padding(.trailing)
                     .foregroundColor(Color(UIColor.systemGray5))
             }
+            .disabled(!beatFluxViewModel.isViewModelFullyLoaded)
 
             
         }

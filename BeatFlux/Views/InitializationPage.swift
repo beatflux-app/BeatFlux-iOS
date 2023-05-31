@@ -11,21 +11,20 @@ import SpotifyWebAPI
 
 struct InitializationPage: View {
     @EnvironmentObject var beatFluxViewModel: BeatFluxViewModel
-    @EnvironmentObject var authHandler: AuthHandler
     @EnvironmentObject var spotify: Spotify
     @State private var cancellables: Set<AnyCancellable> = []
 
 
     
     var body: some View {
-        if authHandler.isUserLoggedIn {
+        if beatFluxViewModel.isUserLoggedIn {
             HomeView()
-                .environmentObject(authHandler)
+                .environmentObject(beatFluxViewModel)
+                .environmentObject(spotify)
         }
         else {
             WelcomePageView()
                 .environmentObject(beatFluxViewModel)
-                .environmentObject(authHandler)
         }
     }
     
@@ -38,6 +37,5 @@ struct InitializationPage_Previews: PreviewProvider {
         InitializationPage()
             .environmentObject(BeatFluxViewModel())
             .environmentObject(Spotify())
-            .environmentObject(AuthHandler())
     }
 }
