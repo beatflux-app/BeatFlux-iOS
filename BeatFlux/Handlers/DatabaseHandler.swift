@@ -11,6 +11,7 @@ import FirebaseFirestore
 import FirebaseAuth
 import Combine
 import CombineFirebaseFirestore
+import SpotifyWebAPI
 
 final class DatabaseHandler {
     
@@ -78,11 +79,34 @@ final class DatabaseHandler {
                     self.updateFieldIfNil(docRef: docRef, document: document, fieldName: "is_using_dark", defaultValue: UserModel.defaultData.is_using_dark)
                     self.updateFieldIfNil(docRef: docRef, document: document, fieldName: "account_link_shown", defaultValue: UserModel.defaultData.account_link_shown)
                     
+                    var returnValue: UserModel?
+
+                    //MARK: NEED TO MAKE BETTER
                     
-                    let returnValue = UserModel(
-                        email: document.get("email") as? String ?? "",
-                        is_using_dark: document.get("is_using_dark") as? Bool ?? UserModel.defaultData.is_using_dark,
-                        account_link_shown: document.get("account_link_shown") as? Bool ?? UserModel.defaultData.account_link_shown)
+                    if let spotifyData = document.get("spotify_data") as? [String: Any], let authorizationManager = spotifyData["authorization_manager"] as? String {
+                        let data = Data(authorizationManager.utf8)
+                        do {
+                            let decoder = JSONDecoder()
+                            let authManager = try decoder.decode(AuthorizationCodeFlowManager.self, from: data)
+                            
+                            returnValue = UserModel(
+                                email: document.get("email") as? String ?? "",
+                                is_using_dark: document.get("is_using_dark") as? Bool ?? UserModel.defaultData.is_using_dark,
+                                account_link_shown: document.get("account_link_shown") as? Bool ?? UserModel.defaultData.account_link_shown, spotify_data: SpotifyDataModel(authorization_manager: authManager))
+                        } catch {
+                            print("Error encoding AuthorizationCodeFlowManager: \(error)")
+                        }
+                        
+                       
+                    }
+                    else {
+                        //If no spotify data exists
+                        returnValue = UserModel(
+                            email: document.get("email") as? String ?? "",
+                            is_using_dark: document.get("is_using_dark") as? Bool ?? UserModel.defaultData.is_using_dark,
+                            account_link_shown: document.get("account_link_shown") as? Bool ?? UserModel.defaultData.account_link_shown)
+                    }
+                
                     
                     continuation.resume(returning: returnValue)
                 } else {
@@ -105,9 +129,28 @@ final class DatabaseHandler {
         }
         
         return try await withCheckedThrowingContinuation { continuation in
+            var dictionaryToAdd: [String: Any] = ["email": data.email,
+                                                  "is_using_dark": data.is_using_dark,
+                                                  "account_link_shown": data.account_link_shown,]
+            var dataString: String?
+            
+            if (data.spotify_data != nil) {
+                do {
+                    let encoder = JSONEncoder()
+                    let dataEncoded = try encoder.encode(data.spotify_data?.authorization_manager)
+                    dataString = String(data: dataEncoded, encoding: .utf8)
+                    dictionaryToAdd.updateValue(["authorization_manager": dataString], forKey: "spotify_data")
+                }
+                catch {
+                    print("Unable to encode")
+                }
+            }
+            
+            
             db.collection("users")
                 .document(user.uid)
-                .setData(from: data, merge: true)
+                .setData(dictionaryToAdd)
+                
                 .sink(
                     receiveCompletion: { completion in
                         switch completion {

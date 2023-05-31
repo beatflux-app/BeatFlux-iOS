@@ -156,7 +156,7 @@ struct SpotifyAuthenticationView: View {
                         
                         userPlaylists = playlists.items
                         
-                        let spotifyData = SpotifyDataModel(user_id: spotify.currentUser?.id, authorization_manager: spotify.api.authorizationManager, playlists: userPlaylists)
+                        let spotifyData = SpotifyDataModel(authorization_manager: spotify.api.authorizationManager)
                         
                         DispatchQueue.main.async {
                             beatFluxViewModel.userData?.spotify_data = spotifyData

@@ -34,7 +34,6 @@ final class Spotify: ObservableObject {
     @Published var isRetrievingTokens = false
     @Published var currentUser: SpotifyUser? = nil
     
-    let keychain = Keychain(service: "com.beatflux.BeatFlux")
     
     let api = SpotifyAPI(
         authorizationManager: AuthorizationCodeFlowManager(
@@ -61,42 +60,44 @@ final class Spotify: ObservableObject {
             .receive(on: RunLoop.main)
             .sink(receiveValue: authorizationManagerDidDeauthorize)
             .store(in: &cancellables)
-        
-        if let authManagerData = keychain[data: self.authorizationManagerKey] {
+        Task {
             do {
-                let authorizationManager = try JSONDecoder().decode(
-                    AuthorizationCodeFlowManager.self,
-                    from: authManagerData
-                )
-                print("found authorization information in keychain")
-                
-                self.api.authorizationManager = authorizationManager
-                                
-                if !self.api.authorizationManager.accessTokenIsExpired() {
-                    self.autoRefreshTokensWhenExpired()
-                }
-                self.api.authorizationManager.refreshTokens(
-                    onlyIfExpired: true
-                )
-                .sink(receiveCompletion: { completion in
-                    switch completion {
-                        case .finished:
-                            break
-                        case .failure(let error):
-                            print(
-                                "Spotify.init: couldn't refresh tokens:\n\(error)"
-                            )
+                if let authManagerData = try await DatabaseHandler.shared.getUserData()?.spotify_data?.authorization_manager {
+                    
+                        print("found authorization information in database")
+                        
+                        self.api.authorizationManager = authManagerData
+                    
+                    
+                        if !self.api.authorizationManager.accessTokenIsExpired() {
+                            self.autoRefreshTokensWhenExpired()
+                        }
+                        self.api.authorizationManager.refreshTokens(
+                            onlyIfExpired: true
+                        )
+                        .sink(receiveCompletion: { completion in
+                            switch completion {
+                                case .finished:
+                                    break
+                                case .failure(let error):
+                                    print(
+                                        "Spotify.init: couldn't refresh tokens:\n\(error)"
+                                    )
+                            }
+                        })
+                        .store(in: &self.cancellables)
                     }
-                })
-                .store(in: &self.cancellables)
+
+                else {
+                    print("did NOT find authorization information in keychain")
+                }
             }
             catch {
-                print("could not decode authorizationManager from data:\n\(error)")
+                print("Unable to get user data from database")
             }
+            
         }
-        else {
-            print("did NOT find authorization information in keychain")
-        }
+
     }
     
     private func autoRefreshTokensWhenExpired() {
@@ -169,28 +170,28 @@ final class Spotify: ObservableObject {
         
         self.retrieveCurrentUser()
         
-        do {
-            // Encode the authorization information to data.
-            let authManagerData = try JSONEncoder().encode(
-                self.api.authorizationManager
-            )
-            
+        
             // Save the data to the keychain.
             Task {
-                let userData = try await DatabaseHandler.shared.getUserData()
-                if let userData = userData {
-                    
+                do {
+                    let userData = try await DatabaseHandler.shared.getUserData()
+                    if var userData = userData {
+                        userData.spotify_data?.authorization_manager = self.api.authorizationManager
+                        try await DatabaseHandler.shared.uploadUserData(from: userData)
+                        print("did save authorization manager to database")
+                    }
+                    else {
+                        print("user data is invalid")
+                    }
+                } catch {
+                    print(
+                        "couldn't encode authorizationManager for storage " +
+                            "in keychain:\n\(error)"
+                    )
                 }
             }
             
-            keychain[data: self.authorizationManagerKey] = authManagerData
-            print("did save authorization manager to keychain")
-        } catch {
-            print(
-                "couldn't encode authorizationManager for storage " +
-                    "in keychain:\n\(error)"
-            )
-        }
+        
         
     }
     
@@ -202,16 +203,26 @@ final class Spotify: ObservableObject {
         self.currentUser = nil
         self.refreshTokensCancellable = nil
         
-        do {
-            try keychain.remove(self.authorizationManagerKey)
-            print("did remove authorization manager from keychain")
-            
-        } catch {
-            print(
-                "couldn't remove authorization manager " +
-                "from keychain: \(error)"
-            )
+        
+        
+        Task {
+            do {
+                if var userModel = try await DatabaseHandler.shared.getUserData() {
+                    userModel.spotify_data?.authorization_manager = nil
+                    try await DatabaseHandler.shared.uploadUserData(from: userModel)
+                    print("did remove authorization manager from database")
+                }
+            }
+            catch {
+                print(
+                    "couldn't remove authorization manager " +
+                    "from keychain: \(error)"
+                )
+            }
         }
+            
+            
+        
     }
     
     func retrieveCurrentUser(onlyIfNil: Bool = true) {
