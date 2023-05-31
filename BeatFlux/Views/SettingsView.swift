@@ -24,52 +24,39 @@ struct SettingsView: View {
                                 .foregroundColor(Color(UIColor.secondarySystemFill))
                                 .overlay {
                                     
-                                    Text(beatFluxViewModel.userData?.first_name.prefix(1) ?? "?")
+                                    Text(beatFluxViewModel.userData?.first_name.isBlank == false ? beatFluxViewModel.userData?.first_name.prefix(1) ?? "?" : "?")
                                         .foregroundColor(.secondary)
                                         .font(.title)
                                         .fontWeight(.bold)
+                                    
+                                        
                                 }
                             
-
-                            if let userData = beatFluxViewModel.userData, let _ = beatFluxViewModel.user {
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Group {
-                                        if (!userData.first_name.isEmpty && userData.first_name != " ") {
-                                            Text(userData.first_name + " " + userData.last_name)
-                                        }
-                                        else if let email = userData.email {
-                                            Text(email)
-                                        }
-                                        else {
-                                            Text("Setup your profile")
-                                        }
+                            VStack(alignment: .leading, spacing: 2) {
+                                Group {
+                                    if beatFluxViewModel.isUserValid, let firstName = beatFluxViewModel.userData?.first_name, !firstName.isBlank {
+                                        let lastName = beatFluxViewModel.userData?.last_name ?? ""
+                                        Text("\(firstName) \(lastName)")
+                                    } else {
+                                        Text("Setup your profile")
                                     }
-                                    .foregroundColor(.primary)
-                                    .font(.headline)
-
-                                    Text("Edit user profile")
-                                        .font(.caption)
-                                        .foregroundColor(.secondary)
                                 }
-                                
-                                
-                            }
-                            else {
-                                Text("No user found")
+                                .foregroundColor(.primary)
+                                .font(.headline)
+
+                                Text(beatFluxViewModel.isUserValid ? "Edit user profile" : "No user found")
+                                    .font(beatFluxViewModel.isUserValid ? .caption : .headline)
+                                    .foregroundColor(.secondary)
                             }
                             
                             Spacer()
-                            
-                            
-                            
+ 
                         }
                         .font(.title3)
                         .frame(maxWidth: .infinity)
-                        //.background(Color(UIColor.tertiarySystemFill))
-//                        .cornerRadius(20)
-
                     }
-                    .disabled((beatFluxViewModel.userData == nil) && (beatFluxViewModel.user == nil))
+                    .disabled(!beatFluxViewModel.isUserValid)
+                    
                 }
                 
                 
@@ -96,6 +83,14 @@ struct SettingsView: View {
                 }
             }
         }
+    }
+}
+
+
+
+private extension BeatFluxViewModel {
+    var isUserValid: Bool {
+        userData != nil && user != nil
     }
 }
 
