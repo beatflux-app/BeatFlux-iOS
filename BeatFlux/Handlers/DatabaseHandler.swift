@@ -29,12 +29,12 @@ final class DatabaseHandler {
         case nilUser
     }
     
-    func initializeUser() {
+    func initializeUser(firstName: String, lastName: String) {
         guard let user = user else { return }
         
         db.collection("users")
             .document(user.uid)
-            .setData(from: UserModel(email: user.email, is_using_dark: false), merge: true)
+            .setData(from: UserModel(first_name: firstName, last_name: lastName, email: user.email, is_using_dark: false), merge: true)
             .sink(
                 receiveCompletion: { completion in
                     if case let .failure(error) = completion {
@@ -76,42 +76,44 @@ final class DatabaseHandler {
             
             docRef.getDocument { (document, error) in
                 if let document = document, document.exists {
+                    self.updateFieldIfNil(docRef: docRef, document: document, fieldName: "first_name", defaultValue: UserModel.defaultData.first_name)
+                    self.updateFieldIfNil(docRef: docRef, document: document, fieldName: "last_name", defaultValue: UserModel.defaultData.last_name)
                     self.updateFieldIfNil(docRef: docRef, document: document, fieldName: "is_using_dark", defaultValue: UserModel.defaultData.is_using_dark)
                     self.updateFieldIfNil(docRef: docRef, document: document, fieldName: "account_link_shown", defaultValue: UserModel.defaultData.account_link_shown)
                     
-                    var returnValue: UserModel?
+                    let firstName = document.get("first_name") as? String ?? UserModel.defaultData.first_name
+                    let last_name = document.get("last_name") as? String ?? UserModel.defaultData.last_name
+                    let email = document.get("email") as? String
+                    let isUsingDark = document.get("is_using_dark") as? Bool ?? UserModel.defaultData.is_using_dark
+                    let accountLinkShown = document.get("account_link_shown") as? Bool ?? UserModel.defaultData.account_link_shown
 
-                    //MARK: NEED TO MAKE BETTER
-                    
-                    if let spotifyData = document.get("spotify_data") as? [String: Any], let authorizationManager = spotifyData["authorization_manager"] as? String {
+                    var spotifyDataModel: SpotifyDataModel? = nil
+
+                    if let spotifyData = document.get("spotify_data") as? [String: Any],
+                       let authorizationManager = spotifyData["authorization_manager"] as? String {
+
                         let data = Data(authorizationManager.utf8)
                         do {
                             let decoder = JSONDecoder()
                             let authManager = try decoder.decode(AuthorizationCodeFlowManager.self, from: data)
-                            
-                            returnValue = UserModel(
-                                email: document.get("email") as? String ?? "",
-                                is_using_dark: document.get("is_using_dark") as? Bool ?? UserModel.defaultData.is_using_dark,
-                                account_link_shown: document.get("account_link_shown") as? Bool ?? UserModel.defaultData.account_link_shown, spotify_data: SpotifyDataModel(authorization_manager: authManager))
+                            spotifyDataModel = SpotifyDataModel(authorization_manager: authManager)
                         } catch {
-                            print("Error encoding AuthorizationCodeFlowManager: \(error)")
+                            print("ERROR: decoding AuthorizationCodeFlowManager: \(error)")
                         }
-                        
-                       
                     }
-                    else {
-                        //If no spotify data exists
-                        returnValue = UserModel(
-                            email: document.get("email") as? String ?? "",
-                            is_using_dark: document.get("is_using_dark") as? Bool ?? UserModel.defaultData.is_using_dark,
-                            account_link_shown: document.get("account_link_shown") as? Bool ?? UserModel.defaultData.account_link_shown)
-                    }
-                
+
+                    let returnValue = UserModel(
+                        first_name: firstName,
+                        last_name: last_name,
+                        email: email,
+                        is_using_dark: isUsingDark,
+                        account_link_shown: accountLinkShown,
+                        spotify_data: spotifyDataModel)
                     
                     continuation.resume(returning: returnValue)
                 } else {
                     print("Document does not exist, initlizing data (ERROR HANDLED)")
-                    self.initializeUser()
+                    self.initializeUser(firstName: UserModel.defaultData.first_name, lastName: UserModel.defaultData.first_name)
                     continuation.resume(throwing: error ?? UserError.nilUser)
                 }
             }

@@ -15,12 +15,13 @@ struct HomeView: View {
     @State var showSpotifyLinkPrompt = false
     
     @State var isLoading = false
+    @State var showSettings = false
     
     var size: CGFloat = 170
     
     var body: some View {
         VStack {
-            TopBarView()
+            TopBarView(showSettings: $showSettings)
                 .environmentObject(beatFluxViewModel)
 
             ScrollView {
@@ -71,6 +72,9 @@ struct HomeView: View {
                 }
             }
         })
+        .fullScreenCover(isPresented: $showSettings) {
+            SettingsView(showSettings: $showSettings)
+        }
 
         
     }
@@ -107,6 +111,7 @@ private struct PlaylistGridSquare: View {
 
 private struct TopBarView: View {
     @EnvironmentObject var beatFluxViewModel: BeatFluxViewModel
+    @Binding var showSettings: Bool
     
     var body: some View {
         HStack {
@@ -126,7 +131,8 @@ private struct TopBarView: View {
         
         .overlay(alignment: .trailing) {
             Button {
-                AuthHandler.shared.signOut()
+                showSettings.toggle()
+//                AuthHandler.shared.signOut()
             } label: {
                 Circle()
                     .frame(width: 35)

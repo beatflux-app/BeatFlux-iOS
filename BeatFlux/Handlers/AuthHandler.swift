@@ -43,10 +43,12 @@ final class AuthHandler {
         
     }
     
-    func registerUser(with email: String, password: String, confirmPassword: String) async throws  {
+    func registerUser(with email: String, password: String, confirmPassword: String, firstName: String, lastName: String) async throws  {
         let minCharacterCount = 6
         if (password != confirmPassword) { throw AuthResult.error("Passwords do not match")}
         if (!isValidEmail(email)) { throw AuthResult.error("Please enter a valid email") }
+        if (firstName.isEmpty) { throw AuthResult.error("Please enter a valid first name") }
+        if (lastName.isEmpty) { throw AuthResult.error("Please enter a valid last name") }
         
         switch (checkRequiredPasswordParams(password: password, minCharacterCount: minCharacterCount)) {
         case .needsMoreCharacters:
@@ -71,7 +73,7 @@ final class AuthHandler {
                         
                     },
                     receiveValue: {_ in
-                        DatabaseHandler.shared.initializeUser()
+                        DatabaseHandler.shared.initializeUser(firstName: firstName, lastName: lastName)
                         continutation.resume()
                     }
                 )

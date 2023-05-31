@@ -49,7 +49,7 @@ class BeatFluxViewModel: ObservableObject {
         case nilUserData
     }
     
-    private var user: User? {
+    var user: User? {
         return Auth.auth().currentUser
     }
     
