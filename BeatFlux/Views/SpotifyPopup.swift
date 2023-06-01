@@ -58,7 +58,7 @@ struct SpotifyPopup: View {
                         Rectangle()
                             .cornerRadius(30)
                             .frame(height: 50)
-                            .foregroundColor(.spotifyGreen)
+                            .foregroundColor(.accentColor)
                             .overlay {
                                 Text("Sign In With Spotify")
                                     .foregroundColor(.white)
@@ -88,7 +88,6 @@ struct SpotifyPopup: View {
                     } label: {
                         Text("Not Now")
                             .fontWeight(.bold)
-                            .foregroundColor(.spotifyGreen)
                     }
 
                 }

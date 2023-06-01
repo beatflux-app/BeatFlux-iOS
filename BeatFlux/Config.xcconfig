@@ -1,0 +1,12 @@
+//
+//  Config.xcconfig
+//  BeatFlux
+//
+//  Created by Ari Reitman on 6/1/23.
+//
+
+// Configuration settings file format documentation can be found at:
+// https://help.apple.com/xcode/#/dev745c5c974
+
+CLIENT_ID = 75706410f2a24590b90d6f2e443aac42
+CLIENT_SECRET = 27554a67347b473f8aa875218396fcf3
