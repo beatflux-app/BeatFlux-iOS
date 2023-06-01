@@ -59,6 +59,23 @@ struct SettingsView: View {
                     
                 }
                 
+                Section {
+                    NavigationLink(destination: SpotifySettingsView().environmentObject(beatFluxViewModel).environmentObject(spotify)) {
+                        HStack(spacing: 15) {
+                            Image("SpotifyLogo")
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .frame(width: 25)
+                            Text("Spotify")
+                        }
+                    }
+                    
+                } header: {
+                    Text("Connections")
+                }
+
+                
+                
                 
                 Button {
                     AuthHandler.shared.signOut()

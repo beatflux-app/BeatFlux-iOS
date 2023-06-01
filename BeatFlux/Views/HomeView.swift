@@ -66,7 +66,7 @@ struct HomeView: View {
             if beatFluxViewModel.isViewModelFullyLoaded == true {
                 
                 if let userData = beatFluxViewModel.userData {
-                    if !userData.account_link_shown {
+                    if !userData.account_link_shown && userData.spotify_data?.authorization_manager == nil {
                         showSpotifyLinkPrompt = true
                     }
                 }

@@ -36,3 +36,7 @@ extension Encodable {
         return dictionary
     }
 }
+
+extension Color {
+    static var spotifyGreen = Color(red: 30/255, green: 215/255, blue: 96/255)
+}
