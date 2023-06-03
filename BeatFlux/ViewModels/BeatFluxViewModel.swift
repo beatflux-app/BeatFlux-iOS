@@ -9,11 +9,17 @@ import SwiftUI
 import Foundation
 import FirebaseCore
 import FirebaseFirestore
+import Network
 import FirebaseAuth
 
 
 class BeatFluxViewModel: ObservableObject {
+    
+    let monitor = NWPathMonitor()
+    let queue = DispatchQueue(label: "NetworkManager")
+    
     @Published var isViewModelFullyLoaded: Bool = false
+    @Published var isConnected = true
     @Published var isUserLoggedIn: Bool = false {
         didSet {
             Task {
@@ -44,6 +50,9 @@ class BeatFluxViewModel: ObservableObject {
             }
         }
     }
+
+
+    
     
     enum UserError: Error {
         case nilUserData
@@ -54,13 +63,39 @@ class BeatFluxViewModel: ObservableObject {
     }
     
     init() {
-        Auth.auth().addStateDidChangeListener { auth, user in
-            if let _ = user {
-                self.isUserLoggedIn = true
-            } else {
-                self.isUserLoggedIn = false
+        monitor.pathUpdateHandler = { path in
+            DispatchQueue.main.async {
+                if path.status == .satisfied {
+                    if path.usesInterfaceType(.wifi) || path.usesInterfaceType(.cellular) {
+                        withAnimation(.none) {
+                            self.isConnected = true
+                        }
+                        
+                    } else {
+                        withAnimation(.none) {
+                            self.isConnected = false
+                        }
+                    }
+                }
+                else {
+                    withAnimation(.none) {
+                        self.isConnected = false
+                    }
+                }
+                
             }
         }
+        
+        monitor.start(queue: queue)
+        
+        Auth.auth().addStateDidChangeListener { [weak self] auth, user in
+            if let _ = user {
+                self?.isUserLoggedIn = true
+            } else {
+                self?.isUserLoggedIn = false
+            }
+        }
+        
     }
 
     // Call this function once the user is signed in/up

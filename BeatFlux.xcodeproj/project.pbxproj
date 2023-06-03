@@ -32,6 +32,9 @@
 		DFBE88BF29FF51DB00572B47 /* LoadingIndicator.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFBE88BE29FF51DB00572B47 /* LoadingIndicator.swift */; };
 		DFC6661329FA0AA3003227FE /* SignupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFC6661229FA0AA3003227FE /* SignupView.swift */; };
 		DFC6661529FA0EA4003227FE /* Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFC6661429FA0EA4003227FE /* Extensions.swift */; };
+		DFFA143A2A298152009F9275 /* Shimmer in Frameworks */ = {isa = PBXBuildFile; productRef = DFFA14392A298152009F9275 /* Shimmer */; };
+		DFFA143C2A298218009F9275 /* RedactedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFFA143B2A298218009F9275 /* RedactedView.swift */; };
+		DFFA14412A2A01CF009F9275 /* NetworkStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFFA14402A2A01CF009F9275 /* NetworkStatus.swift */; };
 		DFFE94CE2A1963ED00615281 /* AuthTextLabel_Element.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFFE94CD2A1963ED00615281 /* AuthTextLabel_Element.swift */; };
 		DFFE94D02A19642200615281 /* SpotifyHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFFE94CF2A19642200615281 /* SpotifyHandler.swift */; };
 		DFFE94D22A19659B00615281 /* DatabaseHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFFE94D12A19659B00615281 /* DatabaseHandler.swift */; };
@@ -64,6 +67,8 @@
 		DFC6661229FA0AA3003227FE /* SignupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignupView.swift; sourceTree = "<group>"; };
 		DFC6661429FA0EA4003227FE /* Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Extensions.swift; sourceTree = "<group>"; };
 		DFFA14372A298007009F9275 /* Config.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config.xcconfig; sourceTree = "<group>"; };
+		DFFA143B2A298218009F9275 /* RedactedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RedactedView.swift; sourceTree = "<group>"; };
+		DFFA14402A2A01CF009F9275 /* NetworkStatus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkStatus.swift; sourceTree = "<group>"; };
 		DFFE94CD2A1963ED00615281 /* AuthTextLabel_Element.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AuthTextLabel_Element.swift; sourceTree = "<group>"; };
 		DFFE94CF2A19642200615281 /* SpotifyHandler.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SpotifyHandler.swift; sourceTree = "<group>"; };
 		DFFE94D12A19659B00615281 /* DatabaseHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatabaseHandler.swift; sourceTree = "<group>"; };
@@ -82,6 +87,7 @@
 				DFFE94DB2A1C4E3D00615281 /* FirebaseDatabase in Frameworks */,
 				DFFE94DF2A1C4E3D00615281 /* FirebaseStorage in Frameworks */,
 				DF72E62829FEB487007A6306 /* CombineFirebaseDatabase in Frameworks */,
+				DFFA143A2A298152009F9275 /* Shimmer in Frameworks */,
 				DFFE94D72A1C4E3D00615281 /* FirebaseAnalytics in Frameworks */,
 				DF72E62429FEB487007A6306 /* CombineFirebase in Frameworks */,
 				DF72E62E29FEB487007A6306 /* CombineFirebaseRemoteConfig in Frameworks */,
@@ -174,6 +180,7 @@
 		DFAD004529F5B6C000EE6874 /* BeatFlux */ = {
 			isa = PBXGroup;
 			children = (
+				DFFA143D2A29830A009F9275 /* Utilities */,
 				DFBE88D72A03CAB900572B47 /* Info.plist */,
 				DFAB03E22A045F32006B5F7E /* Model */,
 				DFBE88CA2A0349A600572B47 /* ViewModels */,
@@ -202,6 +209,7 @@
 			children = (
 				DFBE88BE29FF51DB00572B47 /* LoadingIndicator.swift */,
 				DF10E66E2A24E89300D9EFD7 /* WebView.swift */,
+				DFFA143B2A298218009F9275 /* RedactedView.swift */,
 			);
 			path = GenericViews;
 			sourceTree = "<group>";
@@ -212,6 +220,14 @@
 				DFFE94E02A1CD34E00615281 /* BeatFluxViewModel.swift */,
 			);
 			path = ViewModels;
+			sourceTree = "<group>";
+		};
+		DFFA143D2A29830A009F9275 /* Utilities */ = {
+			isa = PBXGroup;
+			children = (
+				DFFA14402A2A01CF009F9275 /* NetworkStatus.swift */,
+			);
+			path = Utilities;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -245,6 +261,7 @@
 				DFFE94DA2A1C4E3D00615281 /* FirebaseDatabase */,
 				DFFE94DC2A1C4E3D00615281 /* FirebaseFirestore */,
 				DFFE94DE2A1C4E3D00615281 /* FirebaseStorage */,
+				DFFA14392A298152009F9275 /* Shimmer */,
 			);
 			productName = BeatFlux;
 			productReference = DFAD004329F5B6C000EE6874 /* BeatFlux.app */;
@@ -280,6 +297,7 @@
 				DFAB03EE2A090DAE006B5F7E /* XCRemoteSwiftPackageReference "SpotifyAPI" */,
 				DFAB03F12A09C871006B5F7E /* XCRemoteSwiftPackageReference "KeychainAccess" */,
 				DFFE94D52A1C4E3D00615281 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
+				DFFA14382A298152009F9275 /* XCRemoteSwiftPackageReference "SwiftUI-Shimmer" */,
 			);
 			productRefGroup = DFAD004429F5B6C000EE6874 /* Products */;
 			projectDirPath = "";
@@ -316,7 +334,9 @@
 				DF0BDE2B2A27CA2A00C917FA /* SettingsView.swift in Sources */,
 				DFFE94D22A19659B00615281 /* DatabaseHandler.swift in Sources */,
 				DFC6661329FA0AA3003227FE /* SignupView.swift in Sources */,
+				DFFA14412A2A01CF009F9275 /* NetworkStatus.swift in Sources */,
 				DFBE88BF29FF51DB00572B47 /* LoadingIndicator.swift in Sources */,
+				DFFA143C2A298218009F9275 /* RedactedView.swift in Sources */,
 				DF10E66D2A242EA100D9EFD7 /* SpotifyPopup.swift in Sources */,
 				DFAD004929F5B6C000EE6874 /* HomeView.swift in Sources */,
 				DF599E7429FC9A3000EBF850 /* AuthHandler.swift in Sources */,
@@ -573,6 +593,14 @@
 				kind = branch;
 			};
 		};
+		DFFA14382A298152009F9275 /* XCRemoteSwiftPackageReference "SwiftUI-Shimmer" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/markiv/SwiftUI-Shimmer";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.0.0;
+			};
+		};
 		DFFE94D52A1C4E3D00615281 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/firebase/firebase-ios-sdk";
@@ -628,6 +656,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = DFAB03F12A09C871006B5F7E /* XCRemoteSwiftPackageReference "KeychainAccess" */;
 			productName = KeychainAccess;
+		};
+		DFFA14392A298152009F9275 /* Shimmer */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = DFFA14382A298152009F9275 /* XCRemoteSwiftPackageReference "SwiftUI-Shimmer" */;
+			productName = Shimmer;
 		};
 		DFFE94D62A1C4E3D00615281 /* FirebaseAnalytics */ = {
 			isa = XCSwiftPackageProductDependency;

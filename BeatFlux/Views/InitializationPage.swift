@@ -27,8 +27,6 @@ struct InitializationPage: View {
                 .environmentObject(beatFluxViewModel)
         }
     }
-    
-    
 }
 
 struct InitializationPage_Previews: PreviewProvider {

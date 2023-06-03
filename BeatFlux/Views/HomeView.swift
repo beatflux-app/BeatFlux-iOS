@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import Shimmer
 
 
 struct HomeView: View {
@@ -34,7 +35,7 @@ struct HomeView: View {
                 }
                 .padding(.leading)
                 
-                Grid(alignment: .center, horizontalSpacing: 15, verticalSpacing: 15) {
+                Grid(alignment: .center) {
                     ForEach(0..<10) { index in
                         GridRow {
                             
@@ -44,6 +45,9 @@ struct HomeView: View {
 
                             
                         }
+                        .shimmering()
+                        .padding(.horizontal)
+                        .padding(.bottom)
                         
                         
                     }
@@ -52,6 +56,11 @@ struct HomeView: View {
                     
                 }
 
+                
+            }
+            .refreshable {
+                await beatFluxViewModel.retrieveUserData()
+                
                 
             }
         }

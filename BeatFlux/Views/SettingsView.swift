@@ -55,7 +55,7 @@ struct SettingsView: View {
                         .font(.title3)
                         .frame(maxWidth: .infinity)
                     }
-                    .disabled(!beatFluxViewModel.isUserValid)
+                    .disabled(!beatFluxViewModel.isUserValid || !beatFluxViewModel.isConnected)
                     
                 }
                 
@@ -69,6 +69,7 @@ struct SettingsView: View {
                             Text("Spotify")
                         }
                     }
+                    .disabled(!beatFluxViewModel.isConnected)
                     
                 } header: {
                     Text("Connections")

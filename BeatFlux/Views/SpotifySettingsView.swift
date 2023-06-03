@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import Shimmer
 
 struct SpotifySettingsView: View {
     @EnvironmentObject var beatFluxViewModel: BeatFluxViewModel
@@ -22,8 +23,8 @@ struct SpotifySettingsView: View {
                     .frame(width: 45)
                 
                 VStack(alignment: .leading) {
-                    Text(spotify.currentUser?.displayName ?? "Account Not Linked")
-                        .fontWeight(.semibold)
+                    RedactedView(isRedacted: !beatFluxViewModel.isConnected, text: Text(spotify.currentUser?.displayName ?? "Account Not Linked").fontWeight(.semibold))
+                        
                     Text("Spotify")
                         .foregroundColor(.secondary)
                         .font(.caption)
