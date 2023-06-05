@@ -15,8 +15,8 @@ struct BeatFluxApp: App {
     @StateObject var spotify = Spotify()
     
     init() {
-        
 
+        
         
         FirebaseApp.configure()
         

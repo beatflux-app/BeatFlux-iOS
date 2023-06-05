@@ -46,7 +46,7 @@ final class AuthHandler {
     func registerUser(with email: String, password: String, confirmPassword: String, firstName: String, lastName: String) async throws  {
         let minCharacterCount = 6
         if (password != confirmPassword) { throw AuthResult.error("Passwords do not match")}
-        if (!isValidEmail(email)) { throw AuthResult.error("Please enter a valid email") }
+        if (!email.isValidEmail()) { throw AuthResult.error("Please enter a valid email") }
         if (firstName.isEmpty) { throw AuthResult.error("Please enter a valid first name") }
         if (lastName.isEmpty) { throw AuthResult.error("Please enter a valid last name") }
         
@@ -86,7 +86,7 @@ final class AuthHandler {
     
     func loginUser(with email: String, password: String) async throws {
         
-        if (!isValidEmail(email)) { throw AuthResult.error("Please enter a valid email") }
+        if (!email.isValidEmail()) { throw AuthResult.error("Please enter a valid email") }
         
         return try await withCheckedThrowingContinuation { continutation in
             auth.signIn(withEmail: email, password: password)
@@ -141,11 +141,4 @@ final class AuthHandler {
         
     }
     
-    private func isValidEmail(_ email: String) -> Bool {
-        let emailValidationRegex = "^[\\p{L}0-9!#$%&'*+\\/=?^_`{|}~-][\\p{L}0-9.!#$%&'*+\\/=?^_`{|}~-]{0,63}@[\\p{L}0-9-]+(?:\\.[\\p{L}0-9-]{2,7})*$"
-
-          let emailValidationPredicate = NSPredicate(format: "SELF MATCHES %@", emailValidationRegex)
-
-          return emailValidationPredicate.evaluate(with: email)
-    }
 }

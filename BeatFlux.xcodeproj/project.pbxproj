@@ -22,6 +22,8 @@
 		DF72E62C29FEB487007A6306 /* CombineFirebaseFunctions in Frameworks */ = {isa = PBXBuildFile; productRef = DF72E62B29FEB487007A6306 /* CombineFirebaseFunctions */; };
 		DF72E62E29FEB487007A6306 /* CombineFirebaseRemoteConfig in Frameworks */ = {isa = PBXBuildFile; productRef = DF72E62D29FEB487007A6306 /* CombineFirebaseRemoteConfig */; };
 		DF72E63029FEB487007A6306 /* CombineFirebaseStorage in Frameworks */ = {isa = PBXBuildFile; productRef = DF72E62F29FEB487007A6306 /* CombineFirebaseStorage */; };
+		DFA5BCA92A2D71A6004DB4A3 /* ProfileSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFA5BCA82A2D71A6004DB4A3 /* ProfileSettingsView.swift */; };
+		DFA5BCAC2A2D73D1004DB4A3 /* SettingsTextLabel_Element.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFA5BCAB2A2D73D1004DB4A3 /* SettingsTextLabel_Element.swift */; };
 		DFAB03F02A090DAE006B5F7E /* SpotifyAPI in Frameworks */ = {isa = PBXBuildFile; productRef = DFAB03EF2A090DAE006B5F7E /* SpotifyAPI */; };
 		DFAB03F32A09C871006B5F7E /* KeychainAccess in Frameworks */ = {isa = PBXBuildFile; productRef = DFAB03F22A09C871006B5F7E /* KeychainAccess */; };
 		DFAD004729F5B6C000EE6874 /* BeatFluxApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFAD004629F5B6C000EE6874 /* BeatFluxApp.swift */; };
@@ -56,6 +58,8 @@
 		DF599E7329FC9A3000EBF850 /* AuthHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthHandler.swift; sourceTree = "<group>"; };
 		DF599E7529FD70A700EBF850 /* InitializationPage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InitializationPage.swift; sourceTree = "<group>"; };
 		DF67A34C2A28162100E3BF89 /* SpotifySettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpotifySettingsView.swift; sourceTree = "<group>"; };
+		DFA5BCA82A2D71A6004DB4A3 /* ProfileSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileSettingsView.swift; sourceTree = "<group>"; };
+		DFA5BCAB2A2D73D1004DB4A3 /* SettingsTextLabel_Element.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsTextLabel_Element.swift; sourceTree = "<group>"; };
 		DFAD004329F5B6C000EE6874 /* BeatFlux.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BeatFlux.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		DFAD004629F5B6C000EE6874 /* BeatFluxApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BeatFluxApp.swift; sourceTree = "<group>"; };
 		DFAD004829F5B6C000EE6874 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
@@ -107,11 +111,10 @@
 			children = (
 				DF599E7529FD70A700EBF850 /* InitializationPage.swift */,
 				DFBE88BD29FF51BC00572B47 /* GenericViews */,
+				DFA5BCA72A2D7187004DB4A3 /* SettingsViews */,
 				DF44EEA429FBDE5E0027E3DD /* AuthenticationViews */,
 				DFAD004829F5B6C000EE6874 /* HomeView.swift */,
 				DF10E66C2A242EA100D9EFD7 /* SpotifyPopup.swift */,
-				DF0BDE2A2A27CA2A00C917FA /* SettingsView.swift */,
-				DF67A34C2A28162100E3BF89 /* SpotifySettingsView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -151,6 +154,25 @@
 				DFFE94D12A19659B00615281 /* DatabaseHandler.swift */,
 			);
 			path = Handlers;
+			sourceTree = "<group>";
+		};
+		DFA5BCA72A2D7187004DB4A3 /* SettingsViews */ = {
+			isa = PBXGroup;
+			children = (
+				DFA5BCAA2A2D73C1004DB4A3 /* Elements */,
+				DF0BDE2A2A27CA2A00C917FA /* SettingsView.swift */,
+				DF67A34C2A28162100E3BF89 /* SpotifySettingsView.swift */,
+				DFA5BCA82A2D71A6004DB4A3 /* ProfileSettingsView.swift */,
+			);
+			path = SettingsViews;
+			sourceTree = "<group>";
+		};
+		DFA5BCAA2A2D73C1004DB4A3 /* Elements */ = {
+			isa = PBXGroup;
+			children = (
+				DFA5BCAB2A2D73D1004DB4A3 /* SettingsTextLabel_Element.swift */,
+			);
+			path = Elements;
 			sourceTree = "<group>";
 		};
 		DFAB03E22A045F32006B5F7E /* Model */ = {
@@ -332,8 +354,10 @@
 				DFFE94D42A19680E00615281 /* Model.swift in Sources */,
 				DFFE94CE2A1963ED00615281 /* AuthTextLabel_Element.swift in Sources */,
 				DF0BDE2B2A27CA2A00C917FA /* SettingsView.swift in Sources */,
+				DFA5BCA92A2D71A6004DB4A3 /* ProfileSettingsView.swift in Sources */,
 				DFFE94D22A19659B00615281 /* DatabaseHandler.swift in Sources */,
 				DFC6661329FA0AA3003227FE /* SignupView.swift in Sources */,
+				DFA5BCAC2A2D73D1004DB4A3 /* SettingsTextLabel_Element.swift in Sources */,
 				DFFA14412A2A01CF009F9275 /* NetworkStatus.swift in Sources */,
 				DFBE88BF29FF51DB00572B47 /* LoadingIndicator.swift in Sources */,
 				DFFA143C2A298218009F9275 /* RedactedView.swift in Sources */,

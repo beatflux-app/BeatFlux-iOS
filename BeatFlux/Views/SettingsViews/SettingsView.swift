@@ -17,7 +17,7 @@ struct SettingsView: View {
         NavigationView {
             Form {
                 Section {
-                    NavigationLink(destination: Text("TEST")) {
+                    NavigationLink(destination: ProfileSettingsView().environmentObject(beatFluxViewModel)) {
                         HStack(spacing: 15) {
                             Circle()
                                 .frame(height: 55)
