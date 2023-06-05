@@ -18,52 +18,62 @@ struct HomeView: View {
     @State var isLoading = false
     @State var showSettings = false
     
+    @State var didScrollUp: Bool = false
+    
     var size: CGFloat = 170
     
     var body: some View {
         VStack {
-            TopBarView(showSettings: $showSettings)
+            TopBarView(showSettings: $showSettings, minimizeTile: $didScrollUp)
                 .environmentObject(beatFluxViewModel)
 
             ScrollView {
-                
-                HStack {
-                    Text("Playlists")
-                        .font(.largeTitle)
-                        .fontWeight(.bold)
-                    Spacer()
-                }
-                .padding(.leading)
-                
-                Grid(alignment: .center) {
-                    ForEach(0..<10) { index in
-                        GridRow {
-                            
-                            PlaylistGridSquare(size: size)
-                            
-                            PlaylistGridSquare(size: size)
+                VStack {
+                    Grid(alignment: .center) {
+                        ForEach(0..<10) { index in
+                            GridRow {
+                                
+                                PlaylistGridSquare(size: size)
+                                
+                                PlaylistGridSquare(size: size)
 
+                                
+                            }
+                            .shimmering()
+                            .padding(.horizontal)
+                            .padding(.bottom)
+                            
                             
                         }
-                        .shimmering()
-                        .padding(.horizontal)
-                        .padding(.bottom)
+                        
                         
                         
                     }
-                    
-                    
+                }
+                .background(GeometryReader {
+                    Color.clear.preference(key: ViewOffsetKey.self,
+                                           value: -$0.frame(in: .named("scroll")).origin.y)
+                })
+                .onPreferenceChange(ViewOffsetKey.self) { offset in
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        didScrollUp = offset > 5 ? true : false
+                    }
                     
                 }
+                
+                
 
                 
+                
             }
+            .coordinateSpace(name: "scroll")
             .refreshable {
                 await beatFluxViewModel.retrieveUserData()
-                
-                
             }
+  
         }
+
+        
         .sheet(isPresented: $showSpotifyLinkPrompt, onDismiss: {
             beatFluxViewModel.userData?.account_link_shown = true
         }) {
@@ -97,6 +107,14 @@ struct HomeView_Previews: PreviewProvider {
     }
 }
 
+private struct ViewOffsetKey: PreferenceKey {
+    typealias Value = CGFloat
+    static var defaultValue = CGFloat.zero
+    static func reduce(value: inout Value, nextValue: () -> Value) {
+        value += nextValue()
+    }
+}
+
 private struct PlaylistGridSquare: View {
     var size: CGFloat
     var body: some View {
@@ -121,35 +139,45 @@ private struct PlaylistGridSquare: View {
 private struct TopBarView: View {
     @EnvironmentObject var beatFluxViewModel: BeatFluxViewModel
     @Binding var showSettings: Bool
+    @Binding var minimizeTile: Bool
     
     var body: some View {
-        HStack {
-            Image("BeatFluxLogo")
-                .resizable()
-                .aspectRatio(contentMode: .fit)
-                .frame(width: 40)
-                .cornerRadius(16)
-        }
-        .frame(maxWidth: .infinity)
-        .overlay(alignment: .leading) {
-            Circle()
-                .frame(width: 35)
-                .padding(.leading)
-                .foregroundColor(Color(UIColor.systemGray5))
-        }
-        
-        .overlay(alignment: .trailing) {
-            Button {
-                showSettings.toggle()
-//                AuthHandler.shared.signOut()
-            } label: {
+        VStack {
+            HStack {
+                Image("BeatFluxLogo")
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: 40)
+                    .cornerRadius(16)
+            }
+            .frame(maxWidth: .infinity)
+            .overlay(alignment: .leading) {
                 Circle()
                     .frame(width: 35)
-                    .padding(.trailing)
+                    .padding(.leading)
                     .foregroundColor(Color(UIColor.systemGray5))
             }
-            .disabled(!beatFluxViewModel.isViewModelFullyLoaded)
+            
+            .overlay(alignment: .trailing) {
+                Button {
+                    showSettings.toggle()
+                } label: {
+                    Circle()
+                        .frame(width: 35)
+                        .padding(.trailing)
+                        .foregroundColor(Color(UIColor.systemGray5))
+                }
+                .disabled(!beatFluxViewModel.isViewModelFullyLoaded)
 
+                
+        }
+            HStack {
+                Text("Playlists")
+                    .font(minimizeTile ? .title3 : .largeTitle)
+                    .fontWeight(minimizeTile ? .semibold : .bold)
+                    .padding(.leading)
+                Spacer()
+            }
             
         }
     }

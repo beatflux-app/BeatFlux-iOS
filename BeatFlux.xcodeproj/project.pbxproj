@@ -354,7 +354,6 @@
 /* Begin XCBuildConfiguration section */
 		DFAD004F29F5B6C100EE6874 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = DFFA14372A298007009F9275 /* Config.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;
@@ -415,7 +414,6 @@
 		};
 		DFAD005029F5B6C100EE6874 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = DFFA14372A298007009F9275 /* Config.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;

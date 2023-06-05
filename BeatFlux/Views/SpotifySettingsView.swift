@@ -76,6 +76,7 @@ struct SpotifySettingsView: View {
                     
                     
                 }
+                .disabled(!beatFluxViewModel.isConnected)
                 
             }
             

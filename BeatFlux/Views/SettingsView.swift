@@ -69,7 +69,7 @@ struct SettingsView: View {
                             Text("Spotify")
                         }
                     }
-                    .disabled(!beatFluxViewModel.isConnected)
+                    .disabled(!beatFluxViewModel.isUserValid || !beatFluxViewModel.isConnected)
                     
                 } header: {
                     Text("Connections")
