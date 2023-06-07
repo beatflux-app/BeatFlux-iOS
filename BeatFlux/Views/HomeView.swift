@@ -20,55 +20,96 @@ struct HomeView: View {
     
     @State var didScrollUp: Bool = false
     
+    @State var didResetToTop: Bool = true
+    
+    @State var showRefreshingIcon: Bool = false
+    
+    @State var offset: CGFloat = 0.0
+    
+    var hasReachedMaxPoint: Bool {
+        return offset > 0
+    }
+    
     var size: CGFloat = 170
     
     var body: some View {
         VStack {
-            TopBarView(showSettings: $showSettings, minimizeTile: $didScrollUp)
+            TopBarView(showSettings: $showSettings, minimizeTile: didScrollUp)
                 .environmentObject(beatFluxViewModel)
 
-            ScrollView {
-                VStack {
-                    Grid(alignment: .center) {
-                        ForEach(0..<10) { index in
-                            GridRow {
-                                
-                                PlaylistGridSquare(size: size)
-                                
-                                PlaylistGridSquare(size: size)
-
+            ScrollViewReader { scrollView in
+                ScrollView {
+                        VStack {
+                            if (showRefreshingIcon) {
+                                GeometryReader { proxy in
+                                    
+                                    ProgressView()
+                                        .frame(width: proxy.size.width,
+                                               height: proxy.size.height + max(0, offset))
+                                        .offset(CGSize(width: 0, height: min(0, -offset)))
+                                    
+                                    
+                                }
+                                .padding(.top, 5)
+                                .background(
+                                    GeometryReader { proxy in
+                                        let offset = proxy.frame(in: .named("scroll")).minY
+                                        Color.clear.preference(key: ViewOffsetKey.self, value: offset)
+                                    }
+                                )
                                 
                             }
-                            .shimmering()
-                            .padding(.horizontal)
-                            .padding(.bottom)
-                            
-                            
+
+                            Grid(alignment: .center) {
+                                ForEach(0..<10) { index in
+                                    GridRow {
+                                        
+                                        PlaylistGridSquare(size: size)
+                                        
+                                        PlaylistGridSquare(size: size)
+
+                                        
+                                    }
+                                    .shimmering()
+                                    .padding(.horizontal)
+                                    .padding(.bottom)
+                                    
+                                    
+                                }
+                                
+                                
+                                
+                            }
                         }
-                        
-                        
-                        
-                    }
+                        .background(
+                            GeometryReader { proxy in
+                                let offset = proxy.frame(in: .named("scroll")).minY
+                                Color.clear.preference(key: ViewOffsetKey.self, value: offset)
+                            }
+                        )
                 }
-                .background(GeometryReader {
-                    Color.clear.preference(key: ViewOffsetKey.self,
-                                           value: -$0.frame(in: .named("scroll")).origin.y)
-                })
-                .onPreferenceChange(ViewOffsetKey.self) { offset in
-                    withAnimation(.easeInOut(duration: 0.2)) {
-                        didScrollUp = offset > 5 ? true : false
-                    }
+                .onChange(of: offset) { newValue in
+                    if showRefreshingIcon { didResetToTop = newValue <= 0 }
+                    else { didResetToTop = true }
                     
                 }
-                
-                
+                .coordinateSpace(name: "scroll")
+                .onPreferenceChange(ViewOffsetKey.self) { offset in
+                    self.offset = offset
+                    if offset >= 135 {
+                        if didResetToTop {
+                            Task {
+                                await fetchData()
+                            }
+                        }
 
-                
-                
+                    }
+                    
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        if offset < -135 { didScrollUp = true }
+                        else { didScrollUp = false }
+                    }
             }
-            .coordinateSpace(name: "scroll")
-            .refreshable {
-                await beatFluxViewModel.retrieveUserData()
             }
   
         }
@@ -96,6 +137,14 @@ struct HomeView: View {
         }
 
         
+    }
+    
+    func fetchData() async {
+        UIImpactFeedbackGenerator(style: .soft).impactOccurred()
+        withAnimation(.easeOut(duration: 0.3)) { showRefreshingIcon = true }
+        await beatFluxViewModel.retrieveUserData()
+        try? await Task.sleep(nanoseconds: 1 * 1_000_000_000)
+        withAnimation(.easeOut(duration: 0.3)) { showRefreshingIcon = false }
     }
 }
 
@@ -139,7 +188,7 @@ private struct PlaylistGridSquare: View {
 private struct TopBarView: View {
     @EnvironmentObject var beatFluxViewModel: BeatFluxViewModel
     @Binding var showSettings: Bool
-    @Binding var minimizeTile: Bool
+    var minimizeTile: Bool
     
     var body: some View {
         VStack {

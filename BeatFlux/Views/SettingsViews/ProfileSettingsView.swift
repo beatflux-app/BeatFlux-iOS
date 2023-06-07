@@ -10,6 +10,16 @@ import SwiftUI
 struct ProfileSettingsView: View {
     @Environment(\.dismiss) var dismiss
     @EnvironmentObject var beatFluxViewModel: BeatFluxViewModel
+    @State private var originalFirstName: String = "" {
+        didSet { firstName = originalFirstName }
+    }
+    @State private var originalLastName: String = "" {
+        didSet { lastName = originalLastName }
+    }
+    @State private var originalEmail: String = "" {
+        didSet { email = originalEmail }
+    }
+    
     @State var firstName: String = ""
     @State var lastName: String = ""
     @State var email: String = ""
@@ -69,9 +79,7 @@ struct ProfileSettingsView: View {
                         .textInputAutocapitalization(.never)
                         .submitLabel(.done)
                         .focused($focusedField, equals: .firstName)
-                        .onChange(of: firstName, perform: { newValue in
-                            didChangeProfile = true
-                        })
+                        .onChange(of: firstName, perform: { newValue in checkForModifiedValues() })
                         .onSubmit {
                             UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
                             focusedField = .lastName
@@ -83,9 +91,7 @@ struct ProfileSettingsView: View {
                         .textInputAutocapitalization(.never)
                         .submitLabel(.done)
                         .focused($focusedField, equals: .lastName)
-                        .onChange(of: lastName, perform: { newValue in
-                            didChangeProfile = true
-                        })
+                        .onChange(of: lastName, perform: { newValue in checkForModifiedValues() })
                         .onSubmit {
                             UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
                             focusedField = .email
@@ -103,9 +109,7 @@ struct ProfileSettingsView: View {
                         .textInputAutocapitalization(.never)
                         .submitLabel(.done)
                         .focused($focusedField, equals: .email)
-                        .onChange(of: email, perform: { newValue in
-                            didChangeProfile = true
-                        })
+                        .onChange(of: email, perform: { newValue in checkForModifiedValues() })
                         .onSubmit {
                             UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
                         }
@@ -115,10 +119,11 @@ struct ProfileSettingsView: View {
             }
         }
         .onAppear {
+            
             if let userData = beatFluxViewModel.userData {
-                email = userData.email ?? ""
-                firstName = userData.first_name
-                lastName = userData.last_name
+                originalFirstName = userData.first_name
+                originalLastName = userData.last_name
+                originalEmail = userData.email ?? ""
             }
             
         }
@@ -145,33 +150,49 @@ struct ProfileSettingsView: View {
         })
         .navigationTitle("Profile")
         .navigationBarTitleDisplayMode(.inline)
-        .navigationBarBackButtonHidden()
+        .navigationBarBackButtonHidden(true)
         .toolbar {
             ToolbarItem(placement: .navigationBarLeading) {
                 Button {
-                    if didChangeProfile {
-                        showConfirmationToCancel.toggle()
-                    }
-                    else {
+//                    if didChangeProfile {
+//                        showConfirmationToCancel.toggle()
+//                    }
+//                    else {
                         dismiss()
-                    }
-                    
+//                    }
+
                 } label: {
                     Text("Cancel")
                         .fontWeight(.semibold)
                 }
             }
             ToolbarItem {
-                Button {
-                    saveProfile()
-                    
-                } label: {
-                    Text("Save")
-                        .fontWeight(.semibold)
+                if beatFluxViewModel.isConnected {
+                    Button {
+                        saveProfile()
+                        
+                    } label: {
+                        Text("Save")
+                            .fontWeight(.semibold)
+                    }
+                    .disabled(!didChangeProfile)
                 }
-                .disabled(!didChangeProfile)
+                else {
+                    LoadingIndicator()
+                }
+                
+                
 
             }
+        }
+    }
+    
+    func checkForModifiedValues() {
+        if email != originalEmail || firstName != originalFirstName || lastName != originalLastName {
+            didChangeProfile = true
+        }
+        else {
+            didChangeProfile = false
         }
     }
     

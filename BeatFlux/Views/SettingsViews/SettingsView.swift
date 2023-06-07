@@ -7,6 +7,7 @@
 
 import SwiftUI
 
+
 struct SettingsView: View {
     @Binding var showSettings: Bool
     @EnvironmentObject var beatFluxViewModel: BeatFluxViewModel
@@ -55,6 +56,7 @@ struct SettingsView: View {
                         .font(.title3)
                         .frame(maxWidth: .infinity)
                     }
+                    
                     .disabled(!beatFluxViewModel.isUserValid || !beatFluxViewModel.isConnected)
                     
                 }
