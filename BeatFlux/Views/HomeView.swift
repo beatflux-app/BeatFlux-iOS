@@ -31,14 +31,14 @@ struct HomeView: View {
             
             ScrollView {
                 VStack {
-                    if (showRefreshingIcon) {
+                    //if (showRefreshingIcon) {
                         GeometryReader { proxy in
                             ProgressView()
-                                .frame(width: proxy.size.width,
-                                       height: proxy.size.height + max(0, offset))
+                                .opacity(showRefreshingIcon ? 1 : 0)
+                                .frame(width: proxy.size.width, height: proxy.size.height + max(0, offset))
                                 .offset(CGSize(width: 0, height: min(0, -offset)))
                         }
-                        .padding(.top, 5)
+                        .padding(.top, showRefreshingIcon ? 5 : 0)
                         .background(
                             GeometryReader { proxy in
                                 let offset = proxy.frame(in: .named("scroll")).minY
@@ -46,7 +46,7 @@ struct HomeView: View {
                             }
                         )
                         
-                    }
+                    //}
                     
                     Grid(alignment: .center) {
                         ForEach(0..<10) { index in
@@ -75,7 +75,7 @@ struct HomeView: View {
             .onPreferenceChange(ViewOffsetKey.self) { offset in
                 self.offset = offset
                 
-                if offset == 0 { didResetToTop = true }
+                if offset <= 0 { didResetToTop = true }
                 else { didResetToTop = false }
                 
                 if offset >= 135 {
@@ -142,10 +142,12 @@ struct HomeView_Previews: PreviewProvider {
     }
 }
 
+//TODO: Preference tried to update multiple times (SwiftUI) (FIX ERROR)
+
 private struct ViewOffsetKey: PreferenceKey {
-    typealias Value = CGFloat
-    static var defaultValue = CGFloat.zero
-    static func reduce(value: inout Value, nextValue: () -> Value) {
+    static let defaultValue: CGFloat = 0.0
+    
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
         value += nextValue()
     }
 }

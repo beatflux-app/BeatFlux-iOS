@@ -22,15 +22,14 @@
 		DF72E62C29FEB487007A6306 /* CombineFirebaseFunctions in Frameworks */ = {isa = PBXBuildFile; productRef = DF72E62B29FEB487007A6306 /* CombineFirebaseFunctions */; };
 		DF72E62E29FEB487007A6306 /* CombineFirebaseRemoteConfig in Frameworks */ = {isa = PBXBuildFile; productRef = DF72E62D29FEB487007A6306 /* CombineFirebaseRemoteConfig */; };
 		DF72E63029FEB487007A6306 /* CombineFirebaseStorage in Frameworks */ = {isa = PBXBuildFile; productRef = DF72E62F29FEB487007A6306 /* CombineFirebaseStorage */; };
+		DF7F9A852A30F4010017E561 /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = DF7F9A842A30F4010017E561 /* FirebaseAnalytics */; };
+		DF7F9A872A30F4010017E561 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = DF7F9A862A30F4010017E561 /* FirebaseAuth */; };
+		DF7F9A892A30F4010017E561 /* FirebaseDatabase in Frameworks */ = {isa = PBXBuildFile; productRef = DF7F9A882A30F4010017E561 /* FirebaseDatabase */; };
+		DF7F9A8B2A30F4010017E561 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = DF7F9A8A2A30F4010017E561 /* FirebaseFirestore */; };
+		DF7F9A8D2A30F4010017E561 /* FirebaseStorage in Frameworks */ = {isa = PBXBuildFile; productRef = DF7F9A8C2A30F4010017E561 /* FirebaseStorage */; };
 		DFA5BCA92A2D71A6004DB4A3 /* ProfileSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFA5BCA82A2D71A6004DB4A3 /* ProfileSettingsView.swift */; };
 		DFA5BCAC2A2D73D1004DB4A3 /* SettingsTextLabel_Element.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFA5BCAB2A2D73D1004DB4A3 /* SettingsTextLabel_Element.swift */; };
 		DFA5BCAF2A2DFAD2004DB4A3 /* NonDismissableNavigationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFA5BCAE2A2DFAD2004DB4A3 /* NonDismissableNavigationView.swift */; };
-		DFA5BCB22A2DFFDF004DB4A3 /* Introspect in Frameworks */ = {isa = PBXBuildFile; productRef = DFA5BCB12A2DFFDF004DB4A3 /* Introspect */; };
-		DFA5BCB42A2DFFDF004DB4A3 /* Introspect-Dynamic in Frameworks */ = {isa = PBXBuildFile; productRef = DFA5BCB32A2DFFDF004DB4A3 /* Introspect-Dynamic */; };
-		DFA5BCB62A2DFFDF004DB4A3 /* Introspect-Static in Frameworks */ = {isa = PBXBuildFile; productRef = DFA5BCB52A2DFFDF004DB4A3 /* Introspect-Static */; };
-		DFA5BCB82A2DFFDF004DB4A3 /* SwiftUIIntrospect in Frameworks */ = {isa = PBXBuildFile; productRef = DFA5BCB72A2DFFDF004DB4A3 /* SwiftUIIntrospect */; };
-		DFA5BCBA2A2DFFDF004DB4A3 /* SwiftUIIntrospect-Dynamic in Frameworks */ = {isa = PBXBuildFile; productRef = DFA5BCB92A2DFFDF004DB4A3 /* SwiftUIIntrospect-Dynamic */; };
-		DFA5BCBC2A2DFFDF004DB4A3 /* SwiftUIIntrospect-Static in Frameworks */ = {isa = PBXBuildFile; productRef = DFA5BCBB2A2DFFDF004DB4A3 /* SwiftUIIntrospect-Static */; };
 		DFAB03F02A090DAE006B5F7E /* SpotifyAPI in Frameworks */ = {isa = PBXBuildFile; productRef = DFAB03EF2A090DAE006B5F7E /* SpotifyAPI */; };
 		DFAB03F32A09C871006B5F7E /* KeychainAccess in Frameworks */ = {isa = PBXBuildFile; productRef = DFAB03F22A09C871006B5F7E /* KeychainAccess */; };
 		DFAD004729F5B6C000EE6874 /* BeatFluxApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFAD004629F5B6C000EE6874 /* BeatFluxApp.swift */; };
@@ -48,11 +47,6 @@
 		DFFE94D02A19642200615281 /* SpotifyHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFFE94CF2A19642200615281 /* SpotifyHandler.swift */; };
 		DFFE94D22A19659B00615281 /* DatabaseHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFFE94D12A19659B00615281 /* DatabaseHandler.swift */; };
 		DFFE94D42A19680E00615281 /* Model.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFFE94D32A19680E00615281 /* Model.swift */; };
-		DFFE94D72A1C4E3D00615281 /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = DFFE94D62A1C4E3D00615281 /* FirebaseAnalytics */; };
-		DFFE94D92A1C4E3D00615281 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = DFFE94D82A1C4E3D00615281 /* FirebaseAuth */; };
-		DFFE94DB2A1C4E3D00615281 /* FirebaseDatabase in Frameworks */ = {isa = PBXBuildFile; productRef = DFFE94DA2A1C4E3D00615281 /* FirebaseDatabase */; };
-		DFFE94DD2A1C4E3D00615281 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = DFFE94DC2A1C4E3D00615281 /* FirebaseFirestore */; };
-		DFFE94DF2A1C4E3D00615281 /* FirebaseStorage in Frameworks */ = {isa = PBXBuildFile; productRef = DFFE94DE2A1C4E3D00615281 /* FirebaseStorage */; };
 		DFFE94E12A1CD34E00615281 /* BeatFluxViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFFE94E02A1CD34E00615281 /* BeatFluxViewModel.swift */; };
 /* End PBXBuildFile section */
 
@@ -93,27 +87,21 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				DFA5BCB42A2DFFDF004DB4A3 /* Introspect-Dynamic in Frameworks */,
+				DF7F9A892A30F4010017E561 /* FirebaseDatabase in Frameworks */,
 				DF72E63029FEB487007A6306 /* CombineFirebaseStorage in Frameworks */,
-				DFA5BCBC2A2DFFDF004DB4A3 /* SwiftUIIntrospect-Static in Frameworks */,
-				DFFE94DD2A1C4E3D00615281 /* FirebaseFirestore in Frameworks */,
 				DF72E62C29FEB487007A6306 /* CombineFirebaseFunctions in Frameworks */,
-				DFFE94DB2A1C4E3D00615281 /* FirebaseDatabase in Frameworks */,
-				DFFE94DF2A1C4E3D00615281 /* FirebaseStorage in Frameworks */,
-				DFA5BCB22A2DFFDF004DB4A3 /* Introspect in Frameworks */,
 				DF72E62829FEB487007A6306 /* CombineFirebaseDatabase in Frameworks */,
 				DFFA143A2A298152009F9275 /* Shimmer in Frameworks */,
-				DFA5BCBA2A2DFFDF004DB4A3 /* SwiftUIIntrospect-Dynamic in Frameworks */,
-				DFA5BCB82A2DFFDF004DB4A3 /* SwiftUIIntrospect in Frameworks */,
-				DFFE94D72A1C4E3D00615281 /* FirebaseAnalytics in Frameworks */,
 				DF72E62429FEB487007A6306 /* CombineFirebase in Frameworks */,
-				DFA5BCB62A2DFFDF004DB4A3 /* Introspect-Static in Frameworks */,
 				DF72E62E29FEB487007A6306 /* CombineFirebaseRemoteConfig in Frameworks */,
+				DF7F9A852A30F4010017E561 /* FirebaseAnalytics in Frameworks */,
+				DF7F9A8D2A30F4010017E561 /* FirebaseStorage in Frameworks */,
+				DF7F9A872A30F4010017E561 /* FirebaseAuth in Frameworks */,
 				DF72E62629FEB487007A6306 /* CombineFirebaseAuth in Frameworks */,
 				DFAB03F02A090DAE006B5F7E /* SpotifyAPI in Frameworks */,
 				DF72E62A29FEB487007A6306 /* CombineFirebaseFirestore in Frameworks */,
 				DFAB03F32A09C871006B5F7E /* KeychainAccess in Frameworks */,
-				DFFE94D92A1C4E3D00615281 /* FirebaseAuth in Frameworks */,
+				DF7F9A8B2A30F4010017E561 /* FirebaseFirestore in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -301,18 +289,12 @@
 				DF72E62F29FEB487007A6306 /* CombineFirebaseStorage */,
 				DFAB03EF2A090DAE006B5F7E /* SpotifyAPI */,
 				DFAB03F22A09C871006B5F7E /* KeychainAccess */,
-				DFFE94D62A1C4E3D00615281 /* FirebaseAnalytics */,
-				DFFE94D82A1C4E3D00615281 /* FirebaseAuth */,
-				DFFE94DA2A1C4E3D00615281 /* FirebaseDatabase */,
-				DFFE94DC2A1C4E3D00615281 /* FirebaseFirestore */,
-				DFFE94DE2A1C4E3D00615281 /* FirebaseStorage */,
 				DFFA14392A298152009F9275 /* Shimmer */,
-				DFA5BCB12A2DFFDF004DB4A3 /* Introspect */,
-				DFA5BCB32A2DFFDF004DB4A3 /* Introspect-Dynamic */,
-				DFA5BCB52A2DFFDF004DB4A3 /* Introspect-Static */,
-				DFA5BCB72A2DFFDF004DB4A3 /* SwiftUIIntrospect */,
-				DFA5BCB92A2DFFDF004DB4A3 /* SwiftUIIntrospect-Dynamic */,
-				DFA5BCBB2A2DFFDF004DB4A3 /* SwiftUIIntrospect-Static */,
+				DF7F9A842A30F4010017E561 /* FirebaseAnalytics */,
+				DF7F9A862A30F4010017E561 /* FirebaseAuth */,
+				DF7F9A882A30F4010017E561 /* FirebaseDatabase */,
+				DF7F9A8A2A30F4010017E561 /* FirebaseFirestore */,
+				DF7F9A8C2A30F4010017E561 /* FirebaseStorage */,
 			);
 			productName = BeatFlux;
 			productReference = DFAD004329F5B6C000EE6874 /* BeatFlux.app */;
@@ -347,9 +329,8 @@
 				DF72E62229FEB487007A6306 /* XCRemoteSwiftPackageReference "CombineFirebase" */,
 				DFAB03EE2A090DAE006B5F7E /* XCRemoteSwiftPackageReference "SpotifyAPI" */,
 				DFAB03F12A09C871006B5F7E /* XCRemoteSwiftPackageReference "KeychainAccess" */,
-				DFFE94D52A1C4E3D00615281 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
 				DFFA14382A298152009F9275 /* XCRemoteSwiftPackageReference "SwiftUI-Shimmer" */,
-				DFA5BCB02A2DFFDF004DB4A3 /* XCRemoteSwiftPackageReference "SwiftUI-Introspect" */,
+				DF7F9A832A30F4010017E561 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
 			);
 			productRefGroup = DFAD004429F5B6C000EE6874 /* Products */;
 			projectDirPath = "";
@@ -409,6 +390,7 @@
 /* Begin XCBuildConfiguration section */
 		DFAD004F29F5B6C100EE6874 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = DFFA14372A298007009F9275 /* Config.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;
@@ -469,6 +451,7 @@
 		};
 		DFAD005029F5B6C100EE6874 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = DFFA14372A298007009F9275 /* Config.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;
@@ -630,12 +613,12 @@
 				minimumVersion = 0.3.3;
 			};
 		};
-		DFA5BCB02A2DFFDF004DB4A3 /* XCRemoteSwiftPackageReference "SwiftUI-Introspect" */ = {
+		DF7F9A832A30F4010017E561 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
 			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/siteline/SwiftUI-Introspect.git";
+			repositoryURL = "https://github.com/firebase/firebase-ios-sdk";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 0.5.2;
+				minimumVersion = 10.10.0;
 			};
 		};
 		DFAB03EE2A090DAE006B5F7E /* XCRemoteSwiftPackageReference "SpotifyAPI" */ = {
@@ -660,14 +643,6 @@
 			requirement = {
 				kind = upToNextMajorVersion;
 				minimumVersion = 1.0.0;
-			};
-		};
-		DFFE94D52A1C4E3D00615281 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/firebase/firebase-ios-sdk";
-			requirement = {
-				kind = exactVersion;
-				version = 10.0.0;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */
@@ -708,35 +683,30 @@
 			package = DF72E62229FEB487007A6306 /* XCRemoteSwiftPackageReference "CombineFirebase" */;
 			productName = CombineFirebaseStorage;
 		};
-		DFA5BCB12A2DFFDF004DB4A3 /* Introspect */ = {
+		DF7F9A842A30F4010017E561 /* FirebaseAnalytics */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = DFA5BCB02A2DFFDF004DB4A3 /* XCRemoteSwiftPackageReference "SwiftUI-Introspect" */;
-			productName = Introspect;
+			package = DF7F9A832A30F4010017E561 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAnalytics;
 		};
-		DFA5BCB32A2DFFDF004DB4A3 /* Introspect-Dynamic */ = {
+		DF7F9A862A30F4010017E561 /* FirebaseAuth */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = DFA5BCB02A2DFFDF004DB4A3 /* XCRemoteSwiftPackageReference "SwiftUI-Introspect" */;
-			productName = "Introspect-Dynamic";
+			package = DF7F9A832A30F4010017E561 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAuth;
 		};
-		DFA5BCB52A2DFFDF004DB4A3 /* Introspect-Static */ = {
+		DF7F9A882A30F4010017E561 /* FirebaseDatabase */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = DFA5BCB02A2DFFDF004DB4A3 /* XCRemoteSwiftPackageReference "SwiftUI-Introspect" */;
-			productName = "Introspect-Static";
+			package = DF7F9A832A30F4010017E561 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseDatabase;
 		};
-		DFA5BCB72A2DFFDF004DB4A3 /* SwiftUIIntrospect */ = {
+		DF7F9A8A2A30F4010017E561 /* FirebaseFirestore */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = DFA5BCB02A2DFFDF004DB4A3 /* XCRemoteSwiftPackageReference "SwiftUI-Introspect" */;
-			productName = SwiftUIIntrospect;
+			package = DF7F9A832A30F4010017E561 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseFirestore;
 		};
-		DFA5BCB92A2DFFDF004DB4A3 /* SwiftUIIntrospect-Dynamic */ = {
+		DF7F9A8C2A30F4010017E561 /* FirebaseStorage */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = DFA5BCB02A2DFFDF004DB4A3 /* XCRemoteSwiftPackageReference "SwiftUI-Introspect" */;
-			productName = "SwiftUIIntrospect-Dynamic";
-		};
-		DFA5BCBB2A2DFFDF004DB4A3 /* SwiftUIIntrospect-Static */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = DFA5BCB02A2DFFDF004DB4A3 /* XCRemoteSwiftPackageReference "SwiftUI-Introspect" */;
-			productName = "SwiftUIIntrospect-Static";
+			package = DF7F9A832A30F4010017E561 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseStorage;
 		};
 		DFAB03EF2A090DAE006B5F7E /* SpotifyAPI */ = {
 			isa = XCSwiftPackageProductDependency;
@@ -752,31 +722,6 @@
 			isa = XCSwiftPackageProductDependency;
 			package = DFFA14382A298152009F9275 /* XCRemoteSwiftPackageReference "SwiftUI-Shimmer" */;
 			productName = Shimmer;
-		};
-		DFFE94D62A1C4E3D00615281 /* FirebaseAnalytics */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = DFFE94D52A1C4E3D00615281 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
-			productName = FirebaseAnalytics;
-		};
-		DFFE94D82A1C4E3D00615281 /* FirebaseAuth */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = DFFE94D52A1C4E3D00615281 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
-			productName = FirebaseAuth;
-		};
-		DFFE94DA2A1C4E3D00615281 /* FirebaseDatabase */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = DFFE94D52A1C4E3D00615281 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
-			productName = FirebaseDatabase;
-		};
-		DFFE94DC2A1C4E3D00615281 /* FirebaseFirestore */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = DFFE94D52A1C4E3D00615281 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
-			productName = FirebaseFirestore;
-		};
-		DFFE94DE2A1C4E3D00615281 /* FirebaseStorage */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = DFFE94D52A1C4E3D00615281 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
-			productName = FirebaseStorage;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
