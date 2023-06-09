@@ -6,7 +6,6 @@
 //
 
 import SwiftUI
-import Shimmer
 
 struct SpotifySettingsView: View {
     @EnvironmentObject var beatFluxViewModel: BeatFluxViewModel

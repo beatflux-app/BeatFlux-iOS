@@ -6,7 +6,6 @@
 //
 
 import SwiftUI
-import Shimmer
 
 struct RedactedView: View {
     var isRedacted: Bool
@@ -17,7 +16,6 @@ struct RedactedView: View {
         if isRedacted {
             text
                 .redacted(reason: .placeholder)
-                .shimmering()
         } else {
             text
         }

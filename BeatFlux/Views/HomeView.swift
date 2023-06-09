@@ -6,7 +6,6 @@
 //
 
 import SwiftUI
-import Shimmer
 
 
 struct HomeView: View {
@@ -31,22 +30,18 @@ struct HomeView: View {
             
             ScrollView {
                 VStack {
-                    //if (showRefreshingIcon) {
-                        GeometryReader { proxy in
-                            ProgressView()
-                                .opacity(showRefreshingIcon ? 1 : 0)
-                                .frame(width: proxy.size.width, height: proxy.size.height + max(0, offset))
-                                .offset(CGSize(width: 0, height: min(0, -offset)))
-                        }
-                        .padding(.top, showRefreshingIcon ? 5 : 0)
-                        .background(
-                            GeometryReader { proxy in
-                                let offset = proxy.frame(in: .named("scroll")).minY
-                                Color.clear.preference(key: ViewOffsetKey.self, value: offset)
+                    GeometryReader { proxy in
+                        Rectangle()
+                            .overlay(alignment: .top) {
+                                ProgressView()
+                                    .opacity(showRefreshingIcon ? 1 : 0)
+                                    
                             }
-                        )
-                        
-                    //}
+                            .frame(width: proxy.size.width, height: proxy.size.height + max(0, offset))
+                            .foregroundStyle(.clear)
+                            .offset(CGSize(width: 0, height: min(0, -offset)))
+                    }
+                    
                     
                     Grid(alignment: .center) {
                         ForEach(0..<10) { index in
@@ -58,7 +53,6 @@ struct HomeView: View {
                                 
                                 
                             }
-                            .shimmering()
                             .padding(.horizontal)
                             .padding(.bottom)
                         }

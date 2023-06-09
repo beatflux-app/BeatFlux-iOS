@@ -40,7 +40,6 @@
 		DFBE88BF29FF51DB00572B47 /* LoadingIndicator.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFBE88BE29FF51DB00572B47 /* LoadingIndicator.swift */; };
 		DFC6661329FA0AA3003227FE /* SignupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFC6661229FA0AA3003227FE /* SignupView.swift */; };
 		DFC6661529FA0EA4003227FE /* Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFC6661429FA0EA4003227FE /* Extensions.swift */; };
-		DFFA143A2A298152009F9275 /* Shimmer in Frameworks */ = {isa = PBXBuildFile; productRef = DFFA14392A298152009F9275 /* Shimmer */; };
 		DFFA143C2A298218009F9275 /* RedactedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFFA143B2A298218009F9275 /* RedactedView.swift */; };
 		DFFA14412A2A01CF009F9275 /* NetworkStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFFA14402A2A01CF009F9275 /* NetworkStatus.swift */; };
 		DFFE94CE2A1963ED00615281 /* AuthTextLabel_Element.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFFE94CD2A1963ED00615281 /* AuthTextLabel_Element.swift */; };
@@ -91,7 +90,6 @@
 				DF72E63029FEB487007A6306 /* CombineFirebaseStorage in Frameworks */,
 				DF72E62C29FEB487007A6306 /* CombineFirebaseFunctions in Frameworks */,
 				DF72E62829FEB487007A6306 /* CombineFirebaseDatabase in Frameworks */,
-				DFFA143A2A298152009F9275 /* Shimmer in Frameworks */,
 				DF72E62429FEB487007A6306 /* CombineFirebase in Frameworks */,
 				DF72E62E29FEB487007A6306 /* CombineFirebaseRemoteConfig in Frameworks */,
 				DF7F9A852A30F4010017E561 /* FirebaseAnalytics in Frameworks */,
@@ -289,7 +287,6 @@
 				DF72E62F29FEB487007A6306 /* CombineFirebaseStorage */,
 				DFAB03EF2A090DAE006B5F7E /* SpotifyAPI */,
 				DFAB03F22A09C871006B5F7E /* KeychainAccess */,
-				DFFA14392A298152009F9275 /* Shimmer */,
 				DF7F9A842A30F4010017E561 /* FirebaseAnalytics */,
 				DF7F9A862A30F4010017E561 /* FirebaseAuth */,
 				DF7F9A882A30F4010017E561 /* FirebaseDatabase */,
@@ -329,7 +326,6 @@
 				DF72E62229FEB487007A6306 /* XCRemoteSwiftPackageReference "CombineFirebase" */,
 				DFAB03EE2A090DAE006B5F7E /* XCRemoteSwiftPackageReference "SpotifyAPI" */,
 				DFAB03F12A09C871006B5F7E /* XCRemoteSwiftPackageReference "KeychainAccess" */,
-				DFFA14382A298152009F9275 /* XCRemoteSwiftPackageReference "SwiftUI-Shimmer" */,
 				DF7F9A832A30F4010017E561 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
 			);
 			productRefGroup = DFAD004429F5B6C000EE6874 /* Products */;
@@ -637,14 +633,6 @@
 				kind = branch;
 			};
 		};
-		DFFA14382A298152009F9275 /* XCRemoteSwiftPackageReference "SwiftUI-Shimmer" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/markiv/SwiftUI-Shimmer";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 1.0.0;
-			};
-		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -717,11 +705,6 @@
 			isa = XCSwiftPackageProductDependency;
 			package = DFAB03F12A09C871006B5F7E /* XCRemoteSwiftPackageReference "KeychainAccess" */;
 			productName = KeychainAccess;
-		};
-		DFFA14392A298152009F9275 /* Shimmer */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = DFFA14382A298152009F9275 /* XCRemoteSwiftPackageReference "SwiftUI-Shimmer" */;
-			productName = Shimmer;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
