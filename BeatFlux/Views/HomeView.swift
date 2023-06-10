@@ -53,9 +53,10 @@ struct HomeView: View {
                                     .font(.largeTitle)
                                     .fontWeight(.bold)
                                     .padding(.leading)
+                                    .padding(.bottom, 3)
                                 Spacer()
                             }
-                            .background(.bar.opacity(opacityParameters.getValueForOffset(offset: offset)))
+                            .background(Color(UIColor.systemBackground).opacity(opacityParameters.getValueForOffset(offset: offset)))
                             .frame(width: proxy.size.width)
                             .offset(CGSize(width: 0, height: max(0, -offset)))
 
