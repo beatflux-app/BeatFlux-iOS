@@ -11,11 +11,13 @@ import FirebaseFirestore
 import FirebaseAuth
 import Combine
 import CombineFirebaseFirestore
+import FirebaseDatabase
 import SpotifyWebAPI
 
 final class DatabaseHandler {
     
-    private let db = Firestore.firestore()
+    let firestore = Firestore.firestore()
+    let database = Database.database()
     private var cancellables = Set<AnyCancellable>()
     
     
@@ -32,7 +34,7 @@ final class DatabaseHandler {
     func initializeUser(firstName: String, lastName: String) {
         guard let user = user else { return }
         
-        db.collection("users")
+        firestore.collection("users")
             .document(user.uid)
             .setData(from: UserModel(first_name: firstName, last_name: lastName, email: user.email, is_using_dark: false), merge: true)
             .sink(
@@ -71,7 +73,7 @@ final class DatabaseHandler {
             throw UserError.nilUser
         }
         return try await withCheckedThrowingContinuation { continuation in
-            let docRef = db.collection("users").document(user.uid)
+            let docRef = firestore.collection("users").document(user.uid)
             
             
             docRef.getDocument { (document, error) in
@@ -144,7 +146,7 @@ final class DatabaseHandler {
                 print("Unable to encode")
             }
             
-            db.collection("users")
+            firestore.collection("users")
                 .document(user.uid)
                 .setData(dictionaryToAdd)
                 

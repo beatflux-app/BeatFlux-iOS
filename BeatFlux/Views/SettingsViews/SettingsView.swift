@@ -7,6 +7,7 @@
 
 import SwiftUI
 
+
 struct SettingsView: View {
     @Binding var showSettings: Bool
     @EnvironmentObject var beatFluxViewModel: BeatFluxViewModel
@@ -17,7 +18,7 @@ struct SettingsView: View {
         NavigationView {
             Form {
                 Section {
-                    NavigationLink(destination: Text("TEST")) {
+                    NavigationLink(destination: ProfileSettingsView().environmentObject(beatFluxViewModel)) {
                         HStack(spacing: 15) {
                             Circle()
                                 .frame(height: 55)
@@ -55,9 +56,28 @@ struct SettingsView: View {
                         .font(.title3)
                         .frame(maxWidth: .infinity)
                     }
-                    .disabled(!beatFluxViewModel.isUserValid)
+                    
+                    .disabled(!beatFluxViewModel.isUserValid || !beatFluxViewModel.isConnected)
                     
                 }
+                
+                Section {
+                    NavigationLink(destination: SpotifySettingsView().environmentObject(beatFluxViewModel).environmentObject(spotify)) {
+                        HStack(spacing: 15) {
+                            Image("SpotifyLogo")
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .frame(width: 25)
+                            Text("Spotify")
+                        }
+                    }
+                    .disabled(!beatFluxViewModel.isUserValid || !beatFluxViewModel.isConnected)
+                    
+                } header: {
+                    Text("Connections")
+                }
+
+                
                 
                 
                 Button {

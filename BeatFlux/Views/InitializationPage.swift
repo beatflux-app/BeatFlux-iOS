@@ -14,7 +14,9 @@ struct InitializationPage: View {
     @EnvironmentObject var spotify: Spotify
     @State private var cancellables: Set<AnyCancellable> = []
 
-
+    init() {
+        UIView.appearance(whenContainedInInstancesOf: [UIAlertController.self]).tintColor = UIColor(named: "AccentColor")
+    }
     
     var body: some View {
         if beatFluxViewModel.isUserLoggedIn {
@@ -27,8 +29,6 @@ struct InitializationPage: View {
                 .environmentObject(beatFluxViewModel)
         }
     }
-    
-    
 }
 
 struct InitializationPage_Previews: PreviewProvider {

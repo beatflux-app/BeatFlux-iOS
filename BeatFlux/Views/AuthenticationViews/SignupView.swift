@@ -48,7 +48,7 @@ struct SignupView: View {
                 Button {
                     dismiss()
                 } label: {
-                    Text("Done")
+                    Text("Cancel")
                         .fontWeight(.bold)
                     
                 }

@@ -3,20 +3,20 @@ import UIKit
 import SwiftUI
 import Foundation
 import KeychainAccess
+import FirebaseCore
+import FirebaseAuth
 import Combine
 
 final class Spotify: ObservableObject {
     private static let clientId: String = {
-        if let clientId = ProcessInfo.processInfo
-                .environment["CLIENT_ID"] {
+        if let clientId = Bundle.main.infoDictionary?["CLIENT_ID"] as? String {
             return clientId
         }
         fatalError("Could not find 'CLIENT_ID' in environment variables")
     }()
     
     private static let clientSecret: String = {
-        if let clientSecret = ProcessInfo.processInfo
-                .environment["CLIENT_SECRET"] {
+        if let clientSecret = Bundle.main.infoDictionary?["CLIENT_SECRET"] as? String {
             return clientSecret
         }
         fatalError("Could not find 'CLIENT_SECRET' in environment variables")
@@ -35,6 +35,27 @@ final class Spotify: ObservableObject {
     @Published var currentUser: SpotifyUser? = nil
     
     
+    private var isUserAuthLoggedIn: Bool = false {
+        didSet {
+            Task {
+                DispatchQueue.main.async {
+                    self.currentUser = nil
+                    self.isAuthorized = false
+                    self.isRetrievingTokens = false
+                    self.cancellables.removeAll()
+                    print("SUCCESS: All spotify api cancellables removed successfully")
+                    if self.isUserAuthLoggedIn {
+                        self.initializeSpotify()
+                    }
+                }
+
+                
+            }
+            
+            
+        }
+    }
+    
     let api = SpotifyAPI(
         authorizationManager: AuthorizationCodeFlowManager(
             clientId: Spotify.clientId,
@@ -49,6 +70,25 @@ final class Spotify: ObservableObject {
     let refreshTokensQueue = DispatchQueue(label: "refreshTokens")
     
     init() {
+        Auth.auth().addStateDidChangeListener { auth, user in
+            if let _ = user {
+                self.isUserAuthLoggedIn = true
+            } else {
+                self.isUserAuthLoggedIn = false
+            }
+        }
+        
+        if self.isUserAuthLoggedIn {
+            initializeSpotify()
+        }
+        
+        
+        
+    }
+    
+    func initializeSpotify() {
+        print(Spotify.clientId)
+        
         self.api.apiRequestLogger.logLevel = .trace
         
         self.api.authorizationManagerDidChange
@@ -158,38 +198,37 @@ final class Spotify: ObservableObject {
         
         DispatchQueue.main.async {
             self.isAuthorized = self.api.authorizationManager.isAuthorized()
+            print(self.isAuthorized)
+            
+            print(
+                "Spotify.authorizationManagerDidChange: isAuthorized:",
+                self.isAuthorized
+            )
+            
+            self.autoRefreshTokensWhenExpired()
+            
+            self.retrieveCurrentUser()
         }
             
-        
-        print(
-            "Spotify.authorizationManagerDidChange: isAuthorized:",
-            self.isAuthorized
-        )
-        
-        self.autoRefreshTokensWhenExpired()
-        
-        self.retrieveCurrentUser()
-        
-        
-            // Save the data to the keychain.
-            Task {
-                do {
-                    let userData = try await DatabaseHandler.shared.getUserData()
-                    if var userData = userData {
-                        userData.spotify_data?.authorization_manager = self.api.authorizationManager
-                        try await DatabaseHandler.shared.uploadUserData(from: userData)
-                        print("SUCCESS: Did save authorization manager to database")
-                    }
-                    else {
-                        print("ERROR: User data is invalid")
-                    }
-                } catch {
-                    print(
-                        "ERROR: Couldn't encode authorizationManager for storage " +
-                            "in keychain:\n\(error)"
-                    )
+        // Save the data to the keychain.
+        Task {
+            do {
+                let userData = try await DatabaseHandler.shared.getUserData()
+                if var userData = userData {
+                    userData.spotify_data?.authorization_manager = self.api.authorizationManager
+                    try await DatabaseHandler.shared.uploadUserData(from: userData)
+                    print("SUCCESS: Did save authorization manager to database")
                 }
+                else {
+                    print("ERROR: User data is invalid")
+                }
+            } catch {
+                print(
+                    "ERROR: Couldn't encode authorizationManager for storage " +
+                        "in keychain:\n\(error)"
+                )
             }
+        }
             
         
         
@@ -231,7 +270,10 @@ final class Spotify: ObservableObject {
             return
         }
 
-        guard self.isAuthorized else { return }
+        guard self.isAuthorized else {
+            print("User is not authorized")
+            return
+        }
 
         self.api.currentUserProfile()
             .receive(on: RunLoop.main)
