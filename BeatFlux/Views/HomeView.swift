@@ -16,33 +16,54 @@ struct HomeView: View {
     
     @State var isLoading = false
     @State var showSettings = false
-    @State var didScrollUp: Bool = false
     @State var didResetToTop: Bool = true
     @State var showRefreshingIcon: Bool = false
     @State var offset: CGFloat = 0.0
     
     var size: CGFloat = 170
     
+    let fontSizeParameters = ScrollEffectParameters(startOffset: 0, endOffset: -10, newValue: 20, originalValue: 34)
+    let opacityParameters = ScrollEffectParameters(startOffset: 0, endOffset: -10, newValue: 1, originalValue: 0)
+    
+    
+    
     var body: some View {
         VStack {
-            TopBarView(showSettings: $showSettings, minimizeTile: didScrollUp)
+            TopBarView(showSettings: $showSettings)
                 .environmentObject(beatFluxViewModel)
             
             ScrollView {
                 VStack {
-                    GeometryReader { proxy in
-                        Rectangle()
-                            .overlay(alignment: .top) {
-                                ProgressView()
-                                    .opacity(showRefreshingIcon ? 1 : 0)
-                                    
+                    ZStack {
+                        GeometryReader { proxy in
+                            Rectangle()
+                                .overlay(alignment: .top) {
+                                    ProgressView()
+                                        .opacity(showRefreshingIcon ? 1 : 0)
+                                        
+                                }
+                                .frame(width: proxy.size.width, height: proxy.size.height + max(0, offset))
+                                .foregroundStyle(.clear)
+                                .offset(CGSize(width: 0, height: min(0, -offset)))
+                            
+                            HStack {
+    
+                                Text("Playlists")
+                                    .font(.system(size: fontSizeParameters.getValueForOffset(offset: offset)))
+                                    .font(.largeTitle)
+                                    .fontWeight(.bold)
+                                    .padding(.leading)
+                                Spacer()
                             }
-                            .frame(width: proxy.size.width, height: proxy.size.height + max(0, offset))
-                            .foregroundStyle(.clear)
-                            .offset(CGSize(width: 0, height: min(0, -offset)))
+                            .background(.bar.opacity(opacityParameters.getValueForOffset(offset: offset)))
+                            .frame(width: proxy.size.width)
+                            .offset(CGSize(width: 0, height: max(0, -offset)))
+
+                        }
+                        .padding(.bottom, 30)
                     }
-                    
-                    
+                    .zIndex(1)
+
                     Grid(alignment: .center) {
                         ForEach(0..<10) { index in
                             GridRow {
@@ -57,6 +78,8 @@ struct HomeView: View {
                             .padding(.bottom)
                         }
                     }
+                    
+                    
                 }
                 .background(
                     GeometryReader { proxy in
@@ -79,11 +102,6 @@ struct HomeView: View {
                         }
                     }
                     
-                }
-                
-                withAnimation(.easeInOut(duration: 0.2)) {
-                    if offset < -135 { didScrollUp = true }
-                    else { didScrollUp = false }
                 }
             }
             
@@ -115,7 +133,7 @@ struct HomeView: View {
     }
     
     func fetchData() async {
-        UIImpactFeedbackGenerator(style: .soft).impactOccurred()
+        UIImpactFeedbackGenerator(style: .rigid).impactOccurred()
         withAnimation(.easeOut(duration: 0.3)) { showRefreshingIcon = true }
         while (!didResetToTop) {
             try? await Task.sleep(nanoseconds: 500_000_000)
@@ -128,6 +146,25 @@ struct HomeView: View {
     }
 }
 
+struct ScrollEffectParameters {
+    var startOffset: CGFloat
+    var endOffset: CGFloat
+    var newValue: CGFloat
+    var originalValue: CGFloat
+
+    func getValueForOffset(offset: CGFloat) -> CGFloat {
+        if offset > startOffset {
+            return originalValue
+        } else if offset < endOffset {
+            return newValue
+        } else {
+            let value = originalValue - ((offset - startOffset) / (endOffset - startOffset)) * (originalValue - newValue)
+            return value
+        }
+    }
+}
+
+
 struct HomeView_Previews: PreviewProvider {
     static var previews: some View {
         HomeView()
@@ -136,7 +173,6 @@ struct HomeView_Previews: PreviewProvider {
     }
 }
 
-//TODO: Preference tried to update multiple times (SwiftUI) (FIX ERROR)
 
 private struct ViewOffsetKey: PreferenceKey {
     static let defaultValue: CGFloat = 0.0
@@ -170,7 +206,6 @@ private struct PlaylistGridSquare: View {
 private struct TopBarView: View {
     @EnvironmentObject var beatFluxViewModel: BeatFluxViewModel
     @Binding var showSettings: Bool
-    var minimizeTile: Bool
     
     var body: some View {
         VStack {
@@ -202,13 +237,7 @@ private struct TopBarView: View {
                 
                 
             }
-            HStack {
-                Text("Playlists")
-                    .font(minimizeTile ? .title3 : .largeTitle)
-                    .fontWeight(minimizeTile ? .semibold : .bold)
-                    .padding(.leading)
-                Spacer()
-            }
+            
             
         }
     }
