@@ -45,9 +45,11 @@ struct HomeView: View {
                                         Image(systemName: "arrow.up")
                                             .font(.subheadline)
                                             .fontWeight(.semibold)
-                                            .rotationEffect(.degrees(offset > 30 ?
-                                                                     180.0 + ((Double(offset - arrowStartRotationOffset) / arrowPullDownMultiplier) * 180.0) :
-                                                                     180), anchor: .center)
+                                            .rotationEffect(.degrees(offset > arrowStartRotationOffset ? max(180, 180 + min((Double(offset - arrowStartRotationOffset) / arrowPullDownMultiplier) * 180.0, 180)) : 180), anchor: .center)
+                                            
+
+
+
                                             .foregroundStyle(Color.accentColor)
                                             .opacity(!showRefreshingIcon ? arrowOpacityParameters.getValueForOffset(offset: offset) : 0)
                                         
