@@ -58,39 +58,47 @@ struct HomeView: View {
                                     
                             }
                             .opacity(opacityLoadingBackgroundParameters.getValueForOffset(offset: offset))
-                            .padding(.top, 2)
+                            .padding(.top, 5)
                             .frame(width: proxy.size.width)
                             //, height: proxy.size.height + max(0, offset)
                             //.background(.red)
                             .offset(CGSize(width: 0, height: -offset))
                             
-
+                            VStack(spacing: 0) {
+                                Rectangle()
+                                    .foregroundStyle(Color(UIColor.systemBackground).opacity(opacityPlaylistBackgroundParameters.getValueForOffset(offset: offset)))
+                                    .frame(height: 20)
+                                   
                                 
-                            
-                            HStack {
-    
-                                Text("Playlists")
-                                    .font(.system(size: fontSizeParameters.getValueForOffset(offset: offset)))
-                                    .font(.largeTitle)
-                                    .fontWeight(.bold)
+                                HStack {
+        
+                                    Text("Playlists")
+                                        .font(.system(size: fontSizeParameters.getValueForOffset(offset: offset)))
+                                        .font(.largeTitle)
+                                        .fontWeight(.bold)
+                                        
+                                        
+                                    Spacer()
                                     
+                                    LoadingIndicator(color: .accentColor, lineWidth: 3.0)
+                                        .frame(width: 15, height: 15)
+                                        .opacity(offset < -10 ? (showRefreshingIcon ? 1 : 0) : 0)
                                     
-                                Spacer()
+                                }
                                 
-                                LoadingIndicator(color: .accentColor, lineWidth: 3.0)
-                                    .frame(width: 15, height: 15)
-                                    .opacity(offset < -10 ? (showRefreshingIcon ? 1 : 0) : 0)
+                                .padding(.horizontal)
+                                .padding(.vertical, 3)
+                                .background(.bar.opacity(opacityPlaylistBackgroundParameters.getValueForOffset(offset: offset)))
+                                
                                 
                             }
-                            .padding(.top, 20)
-                            .padding(.horizontal)
-                            .padding(.bottom, 3)
-                            .background(Color(UIColor.systemBackground).opacity(opacityPlaylistBackgroundParameters.getValueForOffset(offset: offset)))
                             .frame(width: proxy.size.width)
                             .offset(CGSize(width: 0, height: max(0, -offset)))
+                            
+                            
 
                         }
-                        .padding(.bottom, 50)
+                        .padding(.bottom, 55)
                     }
                     .zIndex(1)
 
