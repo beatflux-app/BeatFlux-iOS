@@ -25,8 +25,9 @@ struct HomeView: View {
     var size: CGFloat = 170
     
     let fontSizeParameters = ScrollEffectParameters(startOffset: 0, endOffset: -10, newValue: 20, originalValue: 34)
-    let opacityParameters = ScrollEffectParameters(startOffset: 0, endOffset: -10, newValue: 1, originalValue: 0)
+    let opacityPlaylistBackgroundParameters = ScrollEffectParameters(startOffset: 0, endOffset: -10, newValue: 1, originalValue: 0)
     let arrowOpacityParameters = ScrollEffectParameters(startOffset: 30, endOffset: 40, newValue: 1, originalValue: 0)
+    let opacityLoadingBackgroundParameters = ScrollEffectParameters(startOffset: 0, endOffset: -10, newValue: 0, originalValue: 1)
     
     
     
@@ -39,35 +40,32 @@ struct HomeView: View {
                 VStack {
                     ZStack {
                         GeometryReader { proxy in
-                            Rectangle()
-                                .overlay(alignment: .top) {
-                                    ZStack {
-                                        Image(systemName: "arrow.up")
-                                            .font(.subheadline)
-                                            .fontWeight(.semibold)
-                                            .rotationEffect(.degrees(offset > arrowStartRotationOffset ? max(180, 180 + min((Double(offset - arrowStartRotationOffset) / arrowPullDownMultiplier) * 180.0, 180)) : 180), anchor: .center)
-                                            
-
-
-
-                                            .foregroundStyle(Color.accentColor)
-                                            .opacity(!showRefreshingIcon ? arrowOpacityParameters.getValueForOffset(offset: offset) : 0)
-                                        
-                                        LoadingIndicator(color: .accentColor, lineWidth: 3.0)
-                                            .frame(width: 15, height: 15)
-                                            .opacity(showRefreshingIcon ? 1 : 0)
-                                            
-                                    }
-                                    .padding(.top, 2)
+                            ZStack(alignment: .top) {
+                                Image(systemName: "arrow.up")
+                                    .font(.title3)
+                                    .fontWeight(.semibold)
+                                    .rotationEffect(.degrees(offset > arrowStartRotationOffset ? max(180, 180 + min((Double(offset - arrowStartRotationOffset) / arrowPullDownMultiplier) * 180.0, 180)) : 180), anchor: .center)
                                     
-                                        
-                                        
+
+
+
+                                    .foregroundStyle(Color.accentColor)
+                                    .opacity(!showRefreshingIcon ? arrowOpacityParameters.getValueForOffset(offset: offset) : 0)
+                                
+                                LoadingIndicator(color: .accentColor, lineWidth: 4.0)
+                                    .frame(width: 25, height: 25)
+                                    .opacity(showRefreshingIcon ? 1 : 0)
                                     
-                                        
-                                }
-                                .frame(width: proxy.size.width, height: proxy.size.height + max(0, offset))
-                                .foregroundStyle(.clear)
-                                .offset(CGSize(width: 0, height: min(0, -offset)))
+                            }
+                            .opacity(opacityLoadingBackgroundParameters.getValueForOffset(offset: offset))
+                            .padding(.top, 2)
+                            .frame(width: proxy.size.width)
+                            //, height: proxy.size.height + max(0, offset)
+                            //.background(.red)
+                            .offset(CGSize(width: 0, height: -offset))
+                            
+
+                                
                             
                             HStack {
     
@@ -82,35 +80,42 @@ struct HomeView: View {
                                 LoadingIndicator(color: .accentColor, lineWidth: 3.0)
                                     .frame(width: 15, height: 15)
                                     .opacity(offset < -10 ? (showRefreshingIcon ? 1 : 0) : 0)
+                                
                             }
+                            .padding(.top, 20)
                             .padding(.horizontal)
                             .padding(.bottom, 3)
-                            .background(Color(UIColor.systemBackground).opacity(opacityParameters.getValueForOffset(offset: offset)))
+                            .background(Color(UIColor.systemBackground).opacity(opacityPlaylistBackgroundParameters.getValueForOffset(offset: offset)))
                             .frame(width: proxy.size.width)
                             .offset(CGSize(width: 0, height: max(0, -offset)))
 
                         }
-                        .padding(.bottom, 30)
+                        .padding(.bottom, 50)
                     }
                     .zIndex(1)
 
-                    Grid(alignment: .center) {
+                    Grid(alignment: .center, horizontalSpacing: 40) {
                         ForEach(0..<10) { index in
                             GridRow {
                                 
-                                PlaylistGridSquare(size: size)
+                                PlaylistGridSquare()
                                 
-                                PlaylistGridSquare(size: size)
+                                PlaylistGridSquare()
                                 
                                 
                             }
-                            .padding(.horizontal)
+                            
+                            
                             .padding(.bottom)
                         }
+                        
                     }
+                    .padding(.horizontal)
+                    
                     
                     
                 }
+                
                 .background(
                     GeometryReader { proxy in
                         let offset = proxy.frame(in: .named("scroll")).minY
@@ -118,6 +123,7 @@ struct HomeView: View {
                     }
                 )
             }
+            .scrollIndicators(.hidden)
             .coordinateSpace(name: "scroll")
             .onPreferenceChange(ViewOffsetKey.self) { offset in
                 self.offset = offset
@@ -169,6 +175,7 @@ struct HomeView: View {
         while (!didResetToTop) {
             try? await Task.sleep(nanoseconds: 500_000_000)
         }
+        //try? await Task.sleep(nanoseconds: 500_000_000_000)
         await beatFluxViewModel.retrieveUserData()
         
         withAnimation(.easeOut(duration: 0.3)) { showRefreshingIcon = false }
@@ -227,11 +234,11 @@ private struct ViewOffsetKey: PreferenceKey {
 }
 
 private struct PlaylistGridSquare: View {
-    var size: CGFloat
     var body: some View {
+        
         VStack(alignment: .leading) {
             Rectangle()
-                .frame(width: size, height: size, alignment: .center)
+                .aspectRatio(contentMode: .fit)
                 .foregroundColor(Color(UIColor.systemGray5))
                 .cornerRadius(16)
             VStack(alignment: .leading) {
@@ -244,6 +251,8 @@ private struct PlaylistGridSquare: View {
             
             
         }
+        
+        
     }
 }
 
