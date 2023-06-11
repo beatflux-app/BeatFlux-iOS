@@ -20,6 +20,7 @@ struct HomeView: View {
     @State var showRefreshingIcon: Bool = false
     @State var offset: CGFloat = 0.0
     var arrowPullDownMultiplier: CGFloat = 100
+    var arrowStartRotationOffset: CGFloat = 30
     
     var size: CGFloat = 170
     
@@ -44,7 +45,9 @@ struct HomeView: View {
                                         Image(systemName: "arrow.up")
                                             .font(.subheadline)
                                             .fontWeight(.semibold)
-                                            .rotationEffect(.degrees(offset > 30 ? 180.0 + min(Double(offset) / arrowPullDownMultiplier, 1.0) * 180.0 : 180), anchor: .center)
+                                            .rotationEffect(.degrees(offset > 30 ?
+                                                                     180.0 + ((Double(offset - arrowStartRotationOffset) / arrowPullDownMultiplier) * 180.0) :
+                                                                     180), anchor: .center)
                                             .foregroundStyle(Color.accentColor)
                                             .opacity(!showRefreshingIcon ? arrowOpacityParameters.getValueForOffset(offset: offset) : 0)
                                         
@@ -120,7 +123,7 @@ struct HomeView: View {
                 if offset <= 0 { didResetToTop = true }
                 else { didResetToTop = false }
                 
-                if Double(offset) / arrowPullDownMultiplier >= 1.0 {
+                if Double(offset - arrowStartRotationOffset) / arrowPullDownMultiplier >= 1.0 {
                     if !showRefreshingIcon {
                         Task {
                             await fetchData()
