@@ -19,11 +19,13 @@ struct HomeView: View {
     @State var didResetToTop: Bool = true
     @State var showRefreshingIcon: Bool = false
     @State var offset: CGFloat = 0.0
+    var arrowPullDownMultiplier: CGFloat = 100
     
     var size: CGFloat = 170
     
     let fontSizeParameters = ScrollEffectParameters(startOffset: 0, endOffset: -10, newValue: 20, originalValue: 34)
     let opacityParameters = ScrollEffectParameters(startOffset: 0, endOffset: -10, newValue: 1, originalValue: 0)
+    let arrowOpacityParameters = ScrollEffectParameters(startOffset: 30, endOffset: 40, newValue: 1, originalValue: 0)
     
     
     
@@ -38,8 +40,24 @@ struct HomeView: View {
                         GeometryReader { proxy in
                             Rectangle()
                                 .overlay(alignment: .top) {
-                                    ProgressView()
-                                        .opacity(showRefreshingIcon ? 1 : 0)
+                                    ZStack {
+                                        Image(systemName: "arrow.up")
+                                            .font(.subheadline)
+                                            .fontWeight(.semibold)
+                                            .rotationEffect(.degrees(offset > 30 ? 180.0 + min(Double(offset) / arrowPullDownMultiplier, 1.0) * 180.0 : 180), anchor: .center)
+                                            .foregroundStyle(Color.accentColor)
+                                            .opacity(!showRefreshingIcon ? arrowOpacityParameters.getValueForOffset(offset: offset) : 0)
+                                        
+                                        LoadingIndicator(color: .accentColor, lineWidth: 3.0)
+                                            .frame(width: 15, height: 15)
+                                            .opacity(showRefreshingIcon ? 1 : 0)
+                                            
+                                    }
+                                    .padding(.top, 2)
+                                    
+                                        
+                                        
+                                    
                                         
                                 }
                                 .frame(width: proxy.size.width, height: proxy.size.height + max(0, offset))
@@ -52,10 +70,16 @@ struct HomeView: View {
                                     .font(.system(size: fontSizeParameters.getValueForOffset(offset: offset)))
                                     .font(.largeTitle)
                                     .fontWeight(.bold)
-                                    .padding(.leading)
-                                    .padding(.bottom, 3)
+                                    
+                                    
                                 Spacer()
+                                
+                                LoadingIndicator(color: .accentColor, lineWidth: 3.0)
+                                    .frame(width: 15, height: 15)
+                                    .opacity(offset < -10 ? (showRefreshingIcon ? 1 : 0) : 0)
                             }
+                            .padding(.horizontal)
+                            .padding(.bottom, 3)
                             .background(Color(UIColor.systemBackground).opacity(opacityParameters.getValueForOffset(offset: offset)))
                             .frame(width: proxy.size.width)
                             .offset(CGSize(width: 0, height: max(0, -offset)))
@@ -96,14 +120,15 @@ struct HomeView: View {
                 if offset <= 0 { didResetToTop = true }
                 else { didResetToTop = false }
                 
-                if offset >= 135 {
+                if Double(offset) / arrowPullDownMultiplier >= 1.0 {
                     if !showRefreshingIcon {
                         Task {
                             await fetchData()
                         }
                     }
-                    
                 }
+                
+
             }
             
         }
@@ -134,13 +159,13 @@ struct HomeView: View {
     }
     
     func fetchData() async {
-        UIImpactFeedbackGenerator(style: .rigid).impactOccurred()
+        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
         withAnimation(.easeOut(duration: 0.3)) { showRefreshingIcon = true }
         while (!didResetToTop) {
             try? await Task.sleep(nanoseconds: 500_000_000)
         }
-        
         await beatFluxViewModel.retrieveUserData()
+        
         withAnimation(.easeOut(duration: 0.3)) { showRefreshingIcon = false }
         
         
@@ -154,13 +179,26 @@ struct ScrollEffectParameters {
     var originalValue: CGFloat
 
     func getValueForOffset(offset: CGFloat) -> CGFloat {
-        if offset > startOffset {
-            return originalValue
-        } else if offset < endOffset {
-            return newValue
+        if startOffset <= endOffset {
+            // Handle positive scrolling (offset increases)
+            if offset < startOffset {
+                return originalValue
+            } else if offset > endOffset {
+                return newValue
+            } else {
+                let value = originalValue + ((offset - startOffset) / (endOffset - startOffset)) * (newValue - originalValue)
+                return value
+            }
         } else {
-            let value = originalValue - ((offset - startOffset) / (endOffset - startOffset)) * (originalValue - newValue)
-            return value
+            // Handle negative scrolling (offset decreases)
+            if offset > startOffset {
+                return originalValue
+            } else if offset < endOffset {
+                return newValue
+            } else {
+                let value = originalValue - ((startOffset - offset) / (startOffset - endOffset)) * (originalValue - newValue)
+                return value
+            }
         }
     }
 }

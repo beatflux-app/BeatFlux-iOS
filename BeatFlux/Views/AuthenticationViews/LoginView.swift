@@ -124,7 +124,8 @@ struct LoginView: View {
                         }
                         
                     
-                    LoadingIndicator(size: 45, color: .white, lineWidth: 3)
+                    LoadingIndicator(color: .white, lineWidth: 3)
+                        .frame(width: 20, height: 20)
                         .opacity(isLoading ? 1 : 0)
                 }
 
