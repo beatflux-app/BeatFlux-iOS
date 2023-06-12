@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import SpotifyWebAPI
 
 
 struct HomeView: View {
@@ -60,8 +61,6 @@ struct HomeView: View {
                             .opacity(opacityLoadingBackgroundParameters.getValueForOffset(offset: offset))
                             .padding(.top, 5)
                             .frame(width: proxy.size.width)
-                            //, height: proxy.size.height + max(0, offset)
-                            //.background(.red)
                             .offset(CGSize(width: 0, height: -offset))
                             
                             VStack(spacing: 0) {
@@ -102,23 +101,36 @@ struct HomeView: View {
                     }
                     .zIndex(1)
 
-                    Grid(alignment: .center, horizontalSpacing: 40) {
-                        ForEach(0..<10) { index in
-                            GridRow {
-                                
-                                PlaylistGridSquare()
-                                
-                                PlaylistGridSquare()
-                                
-                                
+
+                    
+                    if let playlists = beatFluxViewModel.userData?.spotify_data?.playlists {
+                        let columns = [
+                            GridItem(.flexible()),
+                            GridItem(.flexible())
+                        ]
+                        LazyVGrid(columns: columns, spacing: 20) {
+                            
+                            ForEach(playlists.indices, id: \.self) { index in
+                                PlaylistGridSquare(playlist: playlists[index])
                             }
                             
-                            
-                            .padding(.bottom)
                         }
-                        
+                        .padding(.horizontal)
                     }
-                    .padding(.horizontal)
+                    else {
+                        VStack {
+                            Spacer()
+                                Image(systemName: "questionmark.app.dashed")
+                                    .font(.largeTitle)
+                                Text("No Playlists Found")
+                                    .font(.title3)
+                                    .fontWeight(.semibold)
+                                    .padding(.top, 5)
+                            
+                        }
+                    }
+                    
+                    
                     
                     
                     
@@ -173,7 +185,6 @@ struct HomeView: View {
         .fullScreenCover(isPresented: $showSettings) {
             SettingsView(showSettings: $showSettings)
         }
-        
         
     }
     
@@ -242,20 +253,32 @@ private struct ViewOffsetKey: PreferenceKey {
 }
 
 private struct PlaylistGridSquare: View {
+    var playlist: Playlist<PlaylistItemsReference>
+    
     var body: some View {
         
         VStack(alignment: .leading) {
-            Rectangle()
-                .aspectRatio(contentMode: .fit)
-                .foregroundColor(Color(UIColor.systemGray5))
-                .cornerRadius(16)
+            AsyncImage(url: playlist.images[0].url) { image in
+                image
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+            } placeholder: {
+                Rectangle()
+                    .foregroundStyle(Color(UIColor.secondarySystemGroupedBackground))
+                    .aspectRatio(contentMode: .fill)
+                    .redacted(reason: .placeholder)
+            }
+            .clipped()
+            .cornerRadius(16)
+            
             VStack(alignment: .leading) {
-                Text("Playlist")
-                Text("Playist Author")
+                Text(playlist.name)
+                    .fontWeight(.semibold)
+                Text(playlist.owner?.displayName ?? "Unknown")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
                 
             }
-            .redacted(reason: .placeholder)
-            .padding(.leading)
             
             
         }

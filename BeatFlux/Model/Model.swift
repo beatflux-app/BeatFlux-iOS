@@ -24,5 +24,6 @@ struct UserModel: Codable {
 struct SpotifyDataModel: Codable {
 //    var user_id: String?
     var authorization_manager: AuthorizationCodeFlowManager?
-    //var playlists: [Playlist<PlaylistItemsReference>]?
+    var playlists: [Playlist<PlaylistItemsReference>]?
 }
+
