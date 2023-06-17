@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import SpotifyWebAPI
 
 
 struct HomeView: View {
@@ -19,11 +20,15 @@ struct HomeView: View {
     @State var didResetToTop: Bool = true
     @State var showRefreshingIcon: Bool = false
     @State var offset: CGFloat = 0.0
+    var arrowPullDownMultiplier: CGFloat = 100
+    var arrowStartRotationOffset: CGFloat = 30
     
     var size: CGFloat = 170
     
     let fontSizeParameters = ScrollEffectParameters(startOffset: 0, endOffset: -10, newValue: 20, originalValue: 34)
-    let opacityParameters = ScrollEffectParameters(startOffset: 0, endOffset: -10, newValue: 1, originalValue: 0)
+    let opacityPlaylistBackgroundParameters = ScrollEffectParameters(startOffset: 0, endOffset: -10, newValue: 1, originalValue: 0)
+    let arrowOpacityParameters = ScrollEffectParameters(startOffset: 30, endOffset: 40, newValue: 1, originalValue: 0)
+    let opacityLoadingBackgroundParameters = ScrollEffectParameters(startOffset: 0, endOffset: -10, newValue: 0, originalValue: 1)
     
     
     
@@ -36,52 +41,101 @@ struct HomeView: View {
                 VStack {
                     ZStack {
                         GeometryReader { proxy in
-                            Rectangle()
-                                .overlay(alignment: .top) {
-                                    ProgressView()
-                                        .opacity(showRefreshingIcon ? 1 : 0)
-                                        
-                                }
-                                .frame(width: proxy.size.width, height: proxy.size.height + max(0, offset))
-                                .foregroundStyle(.clear)
-                                .offset(CGSize(width: 0, height: min(0, -offset)))
-                            
-                            HStack {
-    
-                                Text("Playlists")
-                                    .font(.system(size: fontSizeParameters.getValueForOffset(offset: offset)))
-                                    .font(.largeTitle)
-                                    .fontWeight(.bold)
-                                    .padding(.leading)
-                                    .padding(.bottom, 3)
-                                Spacer()
+                            ZStack(alignment: .top) {
+                                Image(systemName: "arrow.up")
+                                    .font(.title3)
+                                    .fontWeight(.semibold)
+                                    .rotationEffect(.degrees(offset > arrowStartRotationOffset ? max(180, 180 + min((Double(offset - arrowStartRotationOffset) / arrowPullDownMultiplier) * 180.0, 180)) : 180), anchor: .center)
+                                    
+
+
+
+                                    .foregroundStyle(Color.accentColor)
+                                    .opacity(!showRefreshingIcon ? arrowOpacityParameters.getValueForOffset(offset: offset) : 0)
+                                
+                                LoadingIndicator(color: .accentColor, lineWidth: 4.0)
+                                    .frame(width: 25, height: 25)
+                                    .opacity(showRefreshingIcon ? 1 : 0)
+                                    
                             }
-                            .background(Color(UIColor.systemBackground).opacity(opacityParameters.getValueForOffset(offset: offset)))
+                            .opacity(opacityLoadingBackgroundParameters.getValueForOffset(offset: offset))
+                            .padding(.top, 5)
+                            .frame(width: proxy.size.width)
+                            .offset(CGSize(width: 0, height: -offset))
+                            
+                            VStack(spacing: 0) {
+                                Rectangle()
+                                    .foregroundStyle(Color(UIColor.systemBackground).opacity(opacityPlaylistBackgroundParameters.getValueForOffset(offset: offset)))
+                                    .frame(height: 20)
+                                   
+                                
+                                HStack {
+        
+                                    Text("Playlists")
+                                        .font(.system(size: fontSizeParameters.getValueForOffset(offset: offset)))
+                                        .font(.largeTitle)
+                                        .fontWeight(.bold)
+                                        
+                                        
+                                    Spacer()
+                                    
+                                    LoadingIndicator(color: .accentColor, lineWidth: 3.0)
+                                        .frame(width: 15, height: 15)
+                                        .opacity(offset < -10 ? (showRefreshingIcon ? 1 : 0) : 0)
+                                    
+                                }
+                                
+                                .padding(.horizontal)
+                                .padding(.vertical, 3)
+                                .background(.bar.opacity(opacityPlaylistBackgroundParameters.getValueForOffset(offset: offset)))
+                                
+                                
+                            }
                             .frame(width: proxy.size.width)
                             .offset(CGSize(width: 0, height: max(0, -offset)))
+                            
+                            
 
                         }
-                        .padding(.bottom, 30)
+                        .padding(.bottom, 55)
                     }
                     .zIndex(1)
 
-                    Grid(alignment: .center) {
-                        ForEach(0..<10) { index in
-                            GridRow {
-                                
-                                PlaylistGridSquare(size: size)
-                                
-                                PlaylistGridSquare(size: size)
-                                
-                                
+
+                    
+                    if let playlists = beatFluxViewModel.userData?.spotify_data?.playlists {
+                        let columns = [
+                            GridItem(.flexible()),
+                            GridItem(.flexible())
+                        ]
+                        LazyVGrid(columns: columns, spacing: 20) {
+                            
+                            ForEach(playlists.indices, id: \.self) { index in
+                                PlaylistGridSquare(playlist: playlists[index])
                             }
-                            .padding(.horizontal)
-                            .padding(.bottom)
+                            
+                        }
+                        .padding(.horizontal)
+                    }
+                    else {
+                        VStack {
+                            Spacer()
+                                Image(systemName: "questionmark.app.dashed")
+                                    .font(.largeTitle)
+                                Text("No Playlists Found")
+                                    .font(.title3)
+                                    .fontWeight(.semibold)
+                                    .padding(.top, 5)
+                            
                         }
                     }
                     
                     
+                    
+                    
+                    
                 }
+                
                 .background(
                     GeometryReader { proxy in
                         let offset = proxy.frame(in: .named("scroll")).minY
@@ -89,6 +143,7 @@ struct HomeView: View {
                     }
                 )
             }
+            .scrollIndicators(.hidden)
             .coordinateSpace(name: "scroll")
             .onPreferenceChange(ViewOffsetKey.self) { offset in
                 self.offset = offset
@@ -96,14 +151,15 @@ struct HomeView: View {
                 if offset <= 0 { didResetToTop = true }
                 else { didResetToTop = false }
                 
-                if offset >= 135 {
+                if Double(offset - arrowStartRotationOffset) / arrowPullDownMultiplier >= 1.0 {
                     if !showRefreshingIcon {
                         Task {
                             await fetchData()
                         }
                     }
-                    
                 }
+                
+
             }
             
         }
@@ -130,17 +186,17 @@ struct HomeView: View {
             SettingsView(showSettings: $showSettings)
         }
         
-        
     }
     
     func fetchData() async {
-        UIImpactFeedbackGenerator(style: .rigid).impactOccurred()
+        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
         withAnimation(.easeOut(duration: 0.3)) { showRefreshingIcon = true }
         while (!didResetToTop) {
             try? await Task.sleep(nanoseconds: 500_000_000)
         }
-        
+        //try? await Task.sleep(nanoseconds: 500_000_000_000)
         await beatFluxViewModel.retrieveUserData()
+        
         withAnimation(.easeOut(duration: 0.3)) { showRefreshingIcon = false }
         
         
@@ -154,13 +210,26 @@ struct ScrollEffectParameters {
     var originalValue: CGFloat
 
     func getValueForOffset(offset: CGFloat) -> CGFloat {
-        if offset > startOffset {
-            return originalValue
-        } else if offset < endOffset {
-            return newValue
+        if startOffset <= endOffset {
+            // Handle positive scrolling (offset increases)
+            if offset < startOffset {
+                return originalValue
+            } else if offset > endOffset {
+                return newValue
+            } else {
+                let value = originalValue + ((offset - startOffset) / (endOffset - startOffset)) * (newValue - originalValue)
+                return value
+            }
         } else {
-            let value = originalValue - ((offset - startOffset) / (endOffset - startOffset)) * (originalValue - newValue)
-            return value
+            // Handle negative scrolling (offset decreases)
+            if offset > startOffset {
+                return originalValue
+            } else if offset < endOffset {
+                return newValue
+            } else {
+                let value = originalValue - ((startOffset - offset) / (startOffset - endOffset)) * (originalValue - newValue)
+                return value
+            }
         }
     }
 }
@@ -184,23 +253,37 @@ private struct ViewOffsetKey: PreferenceKey {
 }
 
 private struct PlaylistGridSquare: View {
-    var size: CGFloat
+    var playlist: Playlist<PlaylistItemsReference>
+    
     var body: some View {
+        
         VStack(alignment: .leading) {
-            Rectangle()
-                .frame(width: size, height: size, alignment: .center)
-                .foregroundColor(Color(UIColor.systemGray5))
-                .cornerRadius(16)
+            AsyncImage(url: playlist.images[0].url) { image in
+                image
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+            } placeholder: {
+                Rectangle()
+                    .foregroundStyle(Color(UIColor.secondarySystemGroupedBackground))
+                    .aspectRatio(contentMode: .fill)
+                    .redacted(reason: .placeholder)
+            }
+            .clipped()
+            .cornerRadius(16)
+            
             VStack(alignment: .leading) {
-                Text("Playlist")
-                Text("Playist Author")
+                Text(playlist.name)
+                    .fontWeight(.semibold)
+                Text(playlist.owner?.displayName ?? "Unknown")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
                 
             }
-            .redacted(reason: .placeholder)
-            .padding(.leading)
             
             
         }
+        
+        
     }
 }
 

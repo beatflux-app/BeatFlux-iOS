@@ -145,8 +145,6 @@ struct SpotifyAuthenticationView: View {
                 
                 switch completion {
                 case .finished:
-                    var userPlaylists: [Playlist<PlaylistItemsReference>]?
-                    
                     spotify.getUserPlaylists { playlists in
                         guard let playlists = playlists else {
                             print("No playlists")
@@ -154,10 +152,21 @@ struct SpotifyAuthenticationView: View {
                             
                         }
                         
-                        userPlaylists = playlists.items
+//                        spotify.api.playlistTracks(playlists.items[0].uri)
+//                            .extendPages(spotify.api)
+//                            .sink { completion in
+//                                print(completion)
+//                            } receiveValue: { results in
+//                                print(results)
+//                            }
+//                            .store(in: &cancellables)
+
                         
-                        let spotifyData = SpotifyDataModel(authorization_manager: spotify.api.authorizationManager)
                         
+                        
+                        
+                        let spotifyData = SpotifyDataModel(authorization_manager: spotify.api.authorizationManager, playlists: playlists.items)
+
                         DispatchQueue.main.async {
                             beatFluxViewModel.userData?.spotify_data = spotifyData
                         }
