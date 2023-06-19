@@ -94,11 +94,14 @@ final class DatabaseHandler {
                     if let spotifyData = document.get("spotify_data") as? [String: Any],
                        let authorizationManager = spotifyData["authorization_manager"] as? String,
                        let playlistsData = spotifyData["playlists"] as? String {
+                        
                         do {
                             let decoder = JSONDecoder()
                             let authManager = try decoder.decode(AuthorizationCodeFlowManager.self, from: Data(authorizationManager.utf8))
-                            let playlists = try decoder.decode([Playlist<PlaylistItemsReference>].self, from: Data(playlistsData.utf8))
+                            let playlists = try decoder.decode([PlaylistDetails].self, from: Data(playlistsData.utf8))
+                            
                             spotifyDataModel = SpotifyDataModel(authorization_manager: authManager, playlists: playlists)
+                            
                         } catch {
                             print("ERROR: decoding AuthorizationCodeFlowManager: \(error)")
                         }
@@ -123,7 +126,9 @@ final class DatabaseHandler {
     }
 
     
-    
+    private func convertSpotifyPlaylistToCustom(playlist: Playlist<PlaylistItemsReference>) {
+        
+    }
     
     
     

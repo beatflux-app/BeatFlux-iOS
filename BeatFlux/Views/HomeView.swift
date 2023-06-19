@@ -111,7 +111,7 @@ struct HomeView: View {
                         LazyVGrid(columns: columns, spacing: 20) {
                             
                             ForEach(playlists.indices, id: \.self) { index in
-                                PlaylistGridSquare(playlist: playlists[index])
+                                PlaylistGridSquare(playlist: playlists[index].playlist)
                             }
                             
                         }
