@@ -145,53 +145,12 @@ struct SpotifyAuthenticationView: View {
                 
                 switch completion {
                 case .finished:
-                    spotify.getUserPlaylists { playlists in
-                        guard let playlists = playlists else {
-                            print("No playlists")
-                            return
-                            
-                        }
-                        
-                        DispatchQueue.main.async {
-                            var spotifyData = SpotifyDataModel(authorization_manager: spotify.api.authorizationManager)
-                            
-                            // Create a DispatchGroup
-                            let group = DispatchGroup()
-
-                            for playlist in playlists.items {
-                                // Enter the group before each async operation
-                                group.enter()
-
-                                spotify.api.playlistItems(playlist.uri)
-                                    .sink(receiveCompletion: { completion in
-                                        switch completion {
-                                        case .finished:
-                                            print("Finished fetching playlist items")
-                                        case .failure(let error):
-                                            print("Failed to get playlist items: \(error)")
-                                        }
-                                        
-                                        // Leave the group when each operation is complete
-                                        group.leave()
-                                    }, receiveValue: { pagingObject in
-                                        let playlistDetails = PlaylistDetails(playlist: playlist, tracks: pagingObject.items)
-                                        spotifyData.playlists.append(playlistDetails)
-                                        print("appended")
-                                    })
-                                    .store(in: &cancellables)
-                            }
-                            
-                            // Set up a notification for when all tasks are complete
-                            group.notify(queue: .main) {
-                                print(spotifyData)
-                                beatFluxViewModel.userData?.spotify_data = spotifyData
-                            }
-                        }
-
-                        
+                    getPlaylists {
+                        //when function is completed
+                        showSpotifyLinkPrompt = false
                     }
                     
-                    showSpotifyLinkPrompt = false
+                    
                 case .failure(let error):
                     print("couldn't retrieve access and refresh tokens:\n\(error)")
                     if let authError = error as? SpotifyAuthorizationError,
@@ -214,6 +173,54 @@ struct SpotifyAuthenticationView: View {
             self.spotify.authorizationState = String.randomURLSafe(length: 128)
             
         }
+    
+    func getPlaylists(completion: @escaping () -> Void) {
+
+        spotify.getUserPlaylists { playlists in
+            guard let playlists = playlists else {
+                print("No playlists")
+                completion()
+                return
+            }
+            
+            DispatchQueue.main.async {
+                var spotifyData = SpotifyDataModel(authorization_manager: spotify.api.authorizationManager)
+                
+                // Create a DispatchGroup
+                let group = DispatchGroup()
+
+                for playlist in playlists.items {
+                    // Enter the group before each async operation
+                    group.enter()
+
+                    spotify.api.playlistItems(playlist.uri)
+                        .sink(receiveCompletion: { completion in
+                            switch completion {
+                            case .finished:
+                                print("Finished fetching playlist items")
+                            case .failure(let error):
+                                print("Failed to get playlist items: \(error)")
+                            }
+                            
+                            // Leave the group when each operation is complete
+                            group.leave()
+                        }, receiveValue: { pagingObject in
+                            let playlistDetails = PlaylistDetails(playlist: playlist, tracks: pagingObject.items, lastFetched: Date())
+                            spotifyData.playlists.append(playlistDetails)
+                        })
+                        .store(in: &cancellables)
+                }
+                
+                // Set up a notification for when all tasks are complete
+                group.notify(queue: .main) {
+                    beatFluxViewModel.userData?.spotify_data = spotifyData
+                    completion()
+                }
+            }
+
+            
+        }
+    }
 }
 
 struct SpotifyPopup_Previews: PreviewProvider {

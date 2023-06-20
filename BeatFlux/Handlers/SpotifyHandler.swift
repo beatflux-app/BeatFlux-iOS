@@ -303,6 +303,22 @@ final class Spotify: ObservableObject {
             .store(in: &cancellables)
     }
     
+    public func retrievePlaylistItem(fetchedPlaylist: Playlist<PlaylistItemsReference>, completion: @escaping (PlaylistDetails) -> Void) {
+        self.api.playlistItems(fetchedPlaylist.uri)
+            .sink(receiveCompletion: { completion in
+                switch completion {
+                case .finished:
+                    print("SUCCESS:RETRIEVE_PLAYLIST_ITEM:Finished fetching playlist items")
+                case .failure(let error):
+                    print("ERROR:RETRIEVE_PLAYLIST_ITEM:Failed to get playlist items: \(error)")
+                }
+                
+            }, receiveValue: { pagingObject in
+                completion(PlaylistDetails(playlist: fetchedPlaylist, tracks: pagingObject.items, lastFetched: Date()))
+            })
+            .store(in: &cancellables)
+    }
+    
     
     
     

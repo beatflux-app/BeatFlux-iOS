@@ -7,7 +7,7 @@
 
 import SwiftUI
 import SpotifyWebAPI
-
+import Combine
 
 struct HomeView: View {
     @EnvironmentObject var beatFluxViewModel: BeatFluxViewModel
@@ -29,8 +29,6 @@ struct HomeView: View {
     let opacityPlaylistBackgroundParameters = ScrollEffectParameters(startOffset: 0, endOffset: -10, newValue: 1, originalValue: 0)
     let arrowOpacityParameters = ScrollEffectParameters(startOffset: 30, endOffset: 40, newValue: 1, originalValue: 0)
     let opacityLoadingBackgroundParameters = ScrollEffectParameters(startOffset: 0, endOffset: -10, newValue: 0, originalValue: 1)
-    
-    
     
     var body: some View {
         VStack {
@@ -194,7 +192,56 @@ struct HomeView: View {
         while (!didResetToTop) {
             try? await Task.sleep(nanoseconds: 500_000_000)
         }
-        //try? await Task.sleep(nanoseconds: 500_000_000_000)
+        
+        spotify.getUserPlaylists { playlists in
+            guard let playlists = playlists else {
+                print("No playlists")
+                return
+            }
+            
+            
+            for fetchedPlaylist in playlists.items {
+                
+                if let foundPlaylist = beatFluxViewModel.userData?.spotify_data?.playlists.first(where: { $0.playlist.id == fetchedPlaylist.id}) {
+                    //checking if the playlists have different version numbers
+                    if foundPlaylist.playlist.snapshotId != fetchedPlaylist.snapshotId {
+                        
+                        spotify.retrievePlaylistItem(fetchedPlaylist: fetchedPlaylist) { playlistDetails in
+                            
+                            if let index = beatFluxViewModel.userData?.spotify_data?.playlists.firstIndex(where: { $0.playlist.id == fetchedPlaylist.id}) {
+                                DispatchQueue.main.async {
+                                    beatFluxViewModel.userData?.spotify_data?.playlists[index] = playlistDetails
+                                }
+                            }
+                            else {
+                                DispatchQueue.main.async {
+                                    beatFluxViewModel.userData?.spotify_data?.playlists.append(playlistDetails)
+                                }
+                                
+                            }
+                            
+                        }
+                    }
+                    else {
+                        print("Already updated")
+                    }
+
+                    
+                    
+                }
+                else {
+                    spotify.retrievePlaylistItem(fetchedPlaylist: fetchedPlaylist) { playlistDetails in
+                        DispatchQueue.main.async {
+                            beatFluxViewModel.userData?.spotify_data?.playlists.append(playlistDetails)
+                        }
+                    }
+                    
+                }
+            }
+            
+        }
+        
+        
         await beatFluxViewModel.retrieveUserData()
         
         withAnimation(.easeOut(duration: 0.3)) { showRefreshingIcon = false }
