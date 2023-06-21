@@ -102,7 +102,7 @@ final class Spotify: ObservableObject {
             .store(in: &cancellables)
         Task {
             do {
-                guard let authManagerData = try await DatabaseHandler.shared.getUserData()?.spotify_data?.authorization_manager else {
+                guard let authManagerData = try await DatabaseHandler.shared.getUserData()?.spotify_data.authorization_manager else {
                     print("Did NOT find authorization information in keychain")
                     return
                 }
@@ -215,7 +215,7 @@ final class Spotify: ObservableObject {
             do {
                 let userData = try await DatabaseHandler.shared.getUserData()
                 if var userData = userData {
-                    userData.spotify_data?.authorization_manager = self.api.authorizationManager
+                    userData.spotify_data.authorization_manager = self.api.authorizationManager
                     try await DatabaseHandler.shared.uploadUserData(from: userData)
                     print("SUCCESS: Did save authorization manager to database")
                 }
@@ -251,7 +251,7 @@ final class Spotify: ObservableObject {
                     return
                 }
                 
-                userModel.spotify_data?.authorization_manager = nil
+                userModel.spotify_data.authorization_manager = nil
                 try await DatabaseHandler.shared.uploadUserData(from: userModel)
                 print("SUCCESS: Did remove authorization manager from database")
                 
@@ -319,6 +319,43 @@ final class Spotify: ObservableObject {
             .store(in: &cancellables)
     }
     
+    public func requestAccessAndRefreshTokens(url: URL, result: @escaping (Bool, Error?) -> Void) {
+        enum ErrorTypes: Error {
+            case authRequestDenied(String)
+        }
+        
+        self.api.authorizationManager.requestAccessAndRefreshTokens(
+            redirectURIWithQuery: url,
+            state: self.authorizationState
+        )
+        .receive(on: RunLoop.main)
+        .sink(receiveCompletion: { completion in
+            DispatchQueue.main.async {
+                self.isRetrievingTokens = false
+            }
+
+            switch completion {
+            case .finished:
+                DispatchQueue.main.async {
+                    result(true, nil)
+                }
+            case .failure(let error):
+                print("couldn't retrieve access and refresh tokens:\n\(error)")
+                if let authError = error as? SpotifyAuthorizationError, authError.accessWasDenied {
+                    DispatchQueue.main.async {
+                        result(false, ErrorTypes.authRequestDenied("Authorization request denied"))
+                    }
+                }
+                else {
+                    DispatchQueue.main.async {
+                        result(false, error)
+                    }
+                }
+            }
+
+        })
+        .store(in: &cancellables)
+    }
     
     
     

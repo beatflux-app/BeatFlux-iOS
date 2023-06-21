@@ -44,17 +44,13 @@ struct HomeView: View {
                                     .font(.title3)
                                     .fontWeight(.semibold)
                                     .rotationEffect(.degrees(offset > arrowStartRotationOffset ? max(180, 180 + min((Double(offset - arrowStartRotationOffset) / arrowPullDownMultiplier) * 180.0, 180)) : 180), anchor: .center)
-                                    
-
-
-
                                     .foregroundStyle(Color.accentColor)
                                     .opacity(!showRefreshingIcon ? arrowOpacityParameters.getValueForOffset(offset: offset) : 0)
                                 
                                 LoadingIndicator(color: .accentColor, lineWidth: 4.0)
                                     .frame(width: 25, height: 25)
                                     .opacity(showRefreshingIcon ? 1 : 0)
-                                    
+                                
                             }
                             .opacity(opacityLoadingBackgroundParameters.getValueForOffset(offset: offset))
                             .padding(.top, 5)
@@ -65,16 +61,15 @@ struct HomeView: View {
                                 Rectangle()
                                     .foregroundStyle(Color(UIColor.systemBackground).opacity(opacityPlaylistBackgroundParameters.getValueForOffset(offset: offset)))
                                     .frame(height: 20)
-                                   
+                                
                                 
                                 HStack {
-        
+                                    
                                     Text("Playlists")
                                         .font(.system(size: fontSizeParameters.getValueForOffset(offset: offset)))
                                         .font(.largeTitle)
                                         .fontWeight(.bold)
-                                        
-                                        
+                                                                        
                                     Spacer()
                                     
                                     LoadingIndicator(color: .accentColor, lineWidth: 3.0)
@@ -93,40 +88,36 @@ struct HomeView: View {
                             .offset(CGSize(width: 0, height: max(0, -offset)))
                             
                             
-
+                            
                         }
                         .padding(.bottom, 55)
                     }
                     .zIndex(1)
-
-
                     
-                    if let playlists = beatFluxViewModel.userData?.spotify_data?.playlists {
-                        let columns = [
-                            GridItem(.flexible()),
-                            GridItem(.flexible())
-                        ]
-                        LazyVGrid(columns: columns, spacing: 20) {
-                            
-                            ForEach(playlists.indices, id: \.self) { index in
-                                PlaylistGridSquare(playlist: playlists[index].playlist)
+                    
+                    if let userData = beatFluxViewModel.userData {
+                        if !userData.spotify_data.playlists.isEmpty {
+                            let columns = [
+                                GridItem(.flexible()),
+                                GridItem(.flexible())
+                            ]
+                            LazyVGrid(columns: columns, spacing: 20) {
+                                
+                                ForEach(userData.spotify_data.playlists.indices, id: \.self) { index in
+                                    PlaylistGridSquare(playlist: userData.spotify_data.playlists[index].playlist)
+                                }
+                                
                             }
-                            
+                            .padding(.horizontal)
                         }
-                        .padding(.horizontal)
+                        else {
+                            NoPlaylistsFoundView()
+                        }
                     }
                     else {
-                        VStack {
-                            Spacer()
-                                Image(systemName: "questionmark.app.dashed")
-                                    .font(.largeTitle)
-                                Text("No Playlists Found")
-                                    .font(.title3)
-                                    .fontWeight(.semibold)
-                                    .padding(.top, 5)
-                            
-                        }
+                        NoPlaylistsFoundView()
                     }
+
                     
                     
                     
@@ -157,7 +148,7 @@ struct HomeView: View {
                     }
                 }
                 
-
+                
             }
             
         }
@@ -174,7 +165,7 @@ struct HomeView: View {
             if beatFluxViewModel.isViewModelFullyLoaded == true {
                 
                 if let userData = beatFluxViewModel.userData {
-                    if !userData.account_link_shown && userData.spotify_data?.authorization_manager == nil {
+                    if !userData.account_link_shown && userData.spotify_data.authorization_manager == nil {
                         showSpotifyLinkPrompt = true
                     }
                 }
@@ -185,70 +176,81 @@ struct HomeView: View {
         }
         
     }
-    
+
     func fetchData() async {
         UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-        withAnimation(.easeOut(duration: 0.3)) { showRefreshingIcon = true }
+        animateRefreshingIcon(isShowing: true)
+        
         while (!didResetToTop) {
             try? await Task.sleep(nanoseconds: 500_000_000)
         }
         
-        spotify.getUserPlaylists { playlists in
-            guard let playlists = playlists else {
-                print("No playlists")
-                return
-            }
-            
-            
-            for fetchedPlaylist in playlists.items {
+        if spotify.isAuthorized {
+            spotify.getUserPlaylists { optionalPlaylists in
+                guard let playlists = optionalPlaylists else {
+                    print("No playlists")
+                    return
+                }
                 
-                if let foundPlaylist = beatFluxViewModel.userData?.spotify_data?.playlists.first(where: { $0.playlist.id == fetchedPlaylist.id}) {
-                    //checking if the playlists have different version numbers
-                    if foundPlaylist.playlist.snapshotId != fetchedPlaylist.snapshotId {
-                        
-                        spotify.retrievePlaylistItem(fetchedPlaylist: fetchedPlaylist) { playlistDetails in
-                            
-                            if let index = beatFluxViewModel.userData?.spotify_data?.playlists.firstIndex(where: { $0.playlist.id == fetchedPlaylist.id}) {
-                                DispatchQueue.main.async {
-                                    beatFluxViewModel.userData?.spotify_data?.playlists[index] = playlistDetails
-                                }
-                            }
-                            else {
-                                DispatchQueue.main.async {
-                                    beatFluxViewModel.userData?.spotify_data?.playlists.append(playlistDetails)
-                                }
-                                
-                            }
-                            
-                        }
-                    }
-                    else {
-                        print("Already updated")
-                    }
-
-                    
-                    
-                }
-                else {
-                    spotify.retrievePlaylistItem(fetchedPlaylist: fetchedPlaylist) { playlistDetails in
-                        DispatchQueue.main.async {
-                            beatFluxViewModel.userData?.spotify_data?.playlists.append(playlistDetails)
-                        }
-                    }
-                    
+                for fetchedPlaylist in playlists.items {
+                    handleFetchedPlaylist(fetchedPlaylist)
                 }
             }
-            
         }
+        
         
         
         await beatFluxViewModel.retrieveUserData()
         
-        withAnimation(.easeOut(duration: 0.3)) { showRefreshingIcon = false }
-        
-        
+        animateRefreshingIcon(isShowing: false)
     }
+
+    func animateRefreshingIcon(isShowing: Bool) {
+        withAnimation(.easeOut(duration: 0.3)) {
+            showRefreshingIcon = isShowing
+        }
+    }
+
+    func handleFetchedPlaylist(_ fetchedPlaylist: Playlist<PlaylistItemsReference>) {
+        if let foundPlaylist = beatFluxViewModel.userData?.spotify_data.playlists.first(where: { $0.playlist.id == fetchedPlaylist.id}) {
+            handleFoundPlaylist(foundPlaylist: foundPlaylist, fetchedPlaylist: fetchedPlaylist)
+        } else {
+            retrieveAndAppendPlaylistItem(fetchedPlaylist: fetchedPlaylist)
+        }
+    }
+
+    func handleFoundPlaylist(foundPlaylist: PlaylistDetails, fetchedPlaylist: Playlist<PlaylistItemsReference>) {
+        if foundPlaylist.playlist.snapshotId != fetchedPlaylist.snapshotId {
+            spotify.retrievePlaylistItem(fetchedPlaylist: fetchedPlaylist) { playlistDetails in
+                updatePlaylistDetails(fetchedPlaylist: fetchedPlaylist, playlistDetails: playlistDetails)
+            }
+        } else {
+            print("Already updated")
+        }
+    }
+
+    func retrieveAndAppendPlaylistItem(fetchedPlaylist: Playlist<PlaylistItemsReference>) {
+        spotify.retrievePlaylistItem(fetchedPlaylist: fetchedPlaylist) { playlistDetails in
+            DispatchQueue.main.async {
+                beatFluxViewModel.userData?.spotify_data.playlists.append(playlistDetails)
+            }
+        }
+    }
+
+    func updatePlaylistDetails(fetchedPlaylist: Playlist<PlaylistItemsReference>, playlistDetails: PlaylistDetails) {
+        if let index = beatFluxViewModel.userData?.spotify_data.playlists.firstIndex(where: { $0.playlist.id == fetchedPlaylist.id}) {
+            DispatchQueue.main.async {
+                beatFluxViewModel.userData?.spotify_data.playlists[index] = playlistDetails
+            }
+        } else {
+            DispatchQueue.main.async {
+                beatFluxViewModel.userData?.spotify_data.playlists.append(playlistDetails)
+            }
+        }
+    }
+    
 }
+
 
 struct ScrollEffectParameters {
     var startOffset: CGFloat
@@ -290,6 +292,21 @@ struct HomeView_Previews: PreviewProvider {
     }
 }
 
+
+private struct NoPlaylistsFoundView: View {
+    var body: some View {
+        VStack {
+            Spacer()
+            Image(systemName: "questionmark.app.dashed")
+                .font(.largeTitle)
+            Text("No Playlists Found")
+                .font(.title3)
+                .fontWeight(.semibold)
+                .padding(.top, 5)
+            
+        }
+    }
+}
 
 private struct ViewOffsetKey: PreferenceKey {
     static let defaultValue: CGFloat = 0.0
