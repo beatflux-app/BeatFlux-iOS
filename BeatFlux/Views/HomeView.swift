@@ -325,7 +325,11 @@ private struct PlaylistGridSquare: View {
             AsyncImage(url: playlist.images[0].url) { image in
                 image
                     .resizable()
-                    .aspectRatio(contentMode: .fill)
+                    .scaledToFill()
+                    .frame(width: (UIScreen.main.bounds.width / 2) - 25, height: (UIScreen.main.bounds.width / 2) - 25)
+                    .clipped()
+                
+                    
             } placeholder: {
                 Rectangle()
                     .foregroundStyle(Color(UIColor.secondarySystemGroupedBackground))
@@ -346,6 +350,9 @@ private struct PlaylistGridSquare: View {
             
             
         }
+        
+        
+        
         
         
     }
