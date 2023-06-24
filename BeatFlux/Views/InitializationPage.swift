@@ -12,7 +12,6 @@ import SpotifyWebAPI
 struct InitializationPage: View {
     @EnvironmentObject var beatFluxViewModel: BeatFluxViewModel
     @EnvironmentObject var spotify: Spotify
-    @State private var cancellables: Set<AnyCancellable> = []
 
     init() {
         UIView.appearance(whenContainedInInstancesOf: [UIAlertController.self]).tintColor = UIColor(named: "AccentColor")

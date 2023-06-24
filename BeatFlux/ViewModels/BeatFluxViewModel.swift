@@ -134,7 +134,5 @@ class BeatFluxViewModel: ObservableObject {
         catch {
             print("ERROR: Failed to upload user data: \(error.localizedDescription)")
         }
-            
-
     }
 }

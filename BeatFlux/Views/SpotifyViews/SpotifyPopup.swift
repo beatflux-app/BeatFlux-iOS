@@ -14,8 +14,6 @@ struct SpotifyPopup: View {
     @EnvironmentObject var beatFluxViewModel: BeatFluxViewModel
     @EnvironmentObject var spotify: Spotify
     @Binding var showSpotifyLinkPrompt: Bool
-    
-    @State private var cancellables: Set<AnyCancellable> = []
     @State private var isWebViewShown = false
     
     @State var alertTitle = ""
@@ -53,7 +51,7 @@ struct SpotifyPopup: View {
                 .padding(.bottom)
 
                 VStack {
-                    NavigationLink(destination: SpotifyAuthenticationView(cancellables: $cancellables, alertTitle: $alertTitle, alertMessage: $alertMessage, showAlert: $showAlert, showSpotifyLinkPrompt: $showSpotifyLinkPrompt, url: spotify.authorize()).environmentObject(beatFluxViewModel).environmentObject(spotify)) {
+                    NavigationLink(destination: SpotifyAuthenticationView(alertTitle: $alertTitle, alertMessage: $alertMessage, showAlert: $showAlert, showSpotifyLinkPrompt: $showSpotifyLinkPrompt, url: spotify.authorize()).environmentObject(beatFluxViewModel).environmentObject(spotify)) {
                         
                         Rectangle()
                             .cornerRadius(30)
@@ -106,7 +104,6 @@ struct SpotifyAuthenticationView: View {
     @EnvironmentObject var spotify: Spotify
     @EnvironmentObject var beatFluxViewModel: BeatFluxViewModel
     
-    @Binding var cancellables: Set<AnyCancellable>
     @Binding var alertTitle: String
     @Binding var alertMessage: String
     @Binding var showAlert: Bool
@@ -125,77 +122,70 @@ struct SpotifyAuthenticationView: View {
     }
     
     func handleURL(_ url: URL) {
-            guard url.scheme == self.spotify.loginCallbackURL.scheme else {
-                print("not handling URL: unexpected scheme: '\(url)'")
-                print("Unexpected URL")
+        guard url.scheme == self.spotify.loginCallbackURL.scheme else {
+            print("not handling URL: unexpected scheme: '\(url)'")
+            print("Unexpected URL")
+            return
+        }
+        
+        print("received redirect from Spotify: '\(url)'")
+        
+        DispatchQueue.main.async {
+            spotify.isRetrievingTokens = true
+        }
+        
+
+        spotify.requestAccessAndRefreshTokens(url: url) { result, error in
+            if let error = error {
+                alertTitle =
+                    "Couldn't Authorization With Your Account"
+                alertMessage = error.localizedDescription
+    
+                showAlert = true
+                
+            }
+            else {
+                showSpotifyLinkPrompt = false
+
+                getPlaylists()
+            }
+        }
+        
+        DispatchQueue.main.async {
+            self.spotify.authorizationState = String.randomURLSafe(length: 128)
+        }
+        
+    }
+    
+    func getPlaylists() {
+        spotify.getUserPlaylists { playlists in
+            guard let playlists = playlists else {
+                print("No playlists")
                 return
             }
             
-            print("received redirect from Spotify: '\(url)'")
-            
-            spotify.isRetrievingTokens = true
-
-            spotify.api.authorizationManager.requestAccessAndRefreshTokens(
-                redirectURIWithQuery: url,
-                state: spotify.authorizationState
-            )
-            .receive(on: RunLoop.main)
-            .sink(receiveCompletion: { completion in
-                self.spotify.isRetrievingTokens = false
-                
-                switch completion {
-                case .finished:
-                    spotify.getUserPlaylists { playlists in
-                        guard let playlists = playlists else {
-                            print("No playlists")
-                            return
-                            
-                        }
-                        
-//                        spotify.api.playlistTracks(playlists.items[0].uri)
-//                            .extendPages(spotify.api)
-//                            .sink { completion in
-//                                print(completion)
-//                            } receiveValue: { results in
-//                                print(results)
-//                            }
-//                            .store(in: &cancellables)
-
-                        
-                        
-                        
-                        
-                        let spotifyData = SpotifyDataModel(authorization_manager: spotify.api.authorizationManager, playlists: playlists.items)
-
-                        DispatchQueue.main.async {
-                            beatFluxViewModel.userData?.spotify_data = spotifyData
-                        }
-                        
-                    }
+            for playlist in playlists.items {
+                spotify.retrievePlaylistItem(fetchedPlaylist: playlist) { playlistDetails in
+                    let playlistDetails = PlaylistDetails(playlist: playlistDetails.playlist, tracks: playlistDetails.tracks, lastFetched: Date())
                     
-                    showSpotifyLinkPrompt = false
-                case .failure(let error):
-                    print("couldn't retrieve access and refresh tokens:\n\(error)")
-                    if let authError = error as? SpotifyAuthorizationError,
-                       authError.accessWasDenied {
-                        alertTitle = "You Denied The Authorization Request :("
-                        alertMessage = ""
-                        showAlert = true
+                    if let index = beatFluxViewModel.userData?.spotify_data.playlists.firstIndex(where: { $0.playlist.id == playlistDetails.playlist.id }) { //check if the playlist already exists; if it does overwrite it
+                        DispatchQueue.main.async {
+                            beatFluxViewModel.userData?.spotify_data.playlists[index] = playlistDetails
+                        }
                     }
                     else {
-                        alertTitle =
-                            "Couldn't Authorization With Your Account"
-                        alertMessage = error.localizedDescription
-                        showAlert = true
+                        DispatchQueue.main.async {
+                            beatFluxViewModel.userData?.spotify_data.playlists.append(playlistDetails)
+                        }
                     }
-                }
+                    
 
-            })
-            .store(in: &cancellables)
-            
-            self.spotify.authorizationState = String.randomURLSafe(length: 128)
-            
+
+                }
+            }
+
         }
+    }
 }
 
 struct SpotifyPopup_Previews: PreviewProvider {

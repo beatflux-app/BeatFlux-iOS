@@ -36,7 +36,7 @@ final class DatabaseHandler {
         
         firestore.collection("users")
             .document(user.uid)
-            .setData(from: UserModel(first_name: firstName, last_name: lastName, email: user.email, is_using_dark: false), merge: true)
+            .setData(from: UserModel(first_name: firstName, last_name: lastName, email: user.email, is_using_dark: false, spotify_data: SpotifyDataModel(authorization_manager: nil, playlists: [])), merge: true)
             .sink(
                 receiveCompletion: { completion in
                     if case let .failure(error) = completion {
@@ -89,20 +89,35 @@ final class DatabaseHandler {
                     let isUsingDark = document.get("is_using_dark") as? Bool ?? UserModel.defaultData.is_using_dark
                     let accountLinkShown = document.get("account_link_shown") as? Bool ?? UserModel.defaultData.account_link_shown
 
-                    var spotifyDataModel: SpotifyDataModel? = nil
+                    var spotifyDataModel: SpotifyDataModel = SpotifyDataModel(authorization_manager: nil, playlists: [])
 
-                    if let spotifyData = document.get("spotify_data") as? [String: Any],
-                       let authorizationManager = spotifyData["authorization_manager"] as? String,
-                       let playlistsData = spotifyData["playlists"] as? String {
-                        do {
-                            let decoder = JSONDecoder()
-                            let authManager = try decoder.decode(AuthorizationCodeFlowManager.self, from: Data(authorizationManager.utf8))
-                            let playlists = try decoder.decode([Playlist<PlaylistItemsReference>].self, from: Data(playlistsData.utf8))
-                            spotifyDataModel = SpotifyDataModel(authorization_manager: authManager, playlists: playlists)
-                        } catch {
-                            print("ERROR: decoding AuthorizationCodeFlowManager: \(error)")
+                    if let spotifyData = document.get("spotify_data") as? [String: Any] {
+                        
+                        if let authorizationManager = spotifyData["authorization_manager"] as? String {
+                            do {
+                                let decoder = JSONDecoder()
+                                let authManager = try decoder.decode(AuthorizationCodeFlowManager.self, from: Data(authorizationManager.utf8))
+                                
+                                spotifyDataModel.authorization_manager = authManager
+                                
+                            } catch {
+                                print("ERROR: decoding AuthorizationCodeFlowManager: \(error)")
+                            }
                         }
+                        
+                        if let playlistsData = spotifyData["playlists"] as? String {
+                            do {
+                                let decoder = JSONDecoder()
+                                let playlists = try decoder.decode([PlaylistDetails].self, from: Data(playlistsData.utf8))
+                                spotifyDataModel.playlists = playlists
+                            } catch {
+                                print("ERROR: decoding playlist details: \(error)")
+                            }
+                        }
+                        
+                        
                     }
+                    
 
                     let returnValue = UserModel(
                         first_name: firstName,
@@ -123,7 +138,9 @@ final class DatabaseHandler {
     }
 
     
-    
+    private func convertSpotifyPlaylistToCustom(playlist: Playlist<PlaylistItemsReference>) {
+        
+    }
     
     
     
@@ -137,14 +154,13 @@ final class DatabaseHandler {
             var dictionaryToAdd: [String: Any] = [:]
             do {
                 dictionaryToAdd = try data.asDictionary()
-                if let spotifyData = data.spotify_data {
-                    let authManagerEncodedManager = try JSONEncoder().encode(spotifyData.authorization_manager)
-                    let authDataString = String(data: authManagerEncodedManager, encoding: .utf8)
-                    
-                    let playlistEncodedManager = try JSONEncoder().encode(spotifyData.playlists)
-                    let authPlaylistString = String(data: playlistEncodedManager, encoding: .utf8)
-                    dictionaryToAdd.updateValue(["authorization_manager": authDataString, "playlists": authPlaylistString], forKey: "spotify_data")
-                }
+                let authManagerEncodedManager = try JSONEncoder().encode(data.spotify_data.authorization_manager)
+                let authDataString = String(data: authManagerEncodedManager, encoding: .utf8)
+                
+                let playlistEncodedManager = try JSONEncoder().encode(data.spotify_data.playlists)
+                let authPlaylistString = String(data: playlistEncodedManager, encoding: .utf8)
+                dictionaryToAdd.updateValue(["authorization_manager": authDataString, "playlists": authPlaylistString], forKey: "spotify_data")
+                
             } catch {
                 print("Unable to encode")
             }
