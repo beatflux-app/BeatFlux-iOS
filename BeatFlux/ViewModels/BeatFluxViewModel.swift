@@ -40,7 +40,7 @@ class BeatFluxViewModel: ObservableObject {
         didSet {
             Task {
                 do {
-                    if userData != nil {
+                    if userData != nil && isViewModelFullyLoaded {
                         try await uploadUserData()
                     }
                     

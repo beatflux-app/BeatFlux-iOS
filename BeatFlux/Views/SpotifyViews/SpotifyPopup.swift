@@ -128,7 +128,7 @@ struct SpotifyAuthenticationView: View {
             return
         }
         
-        print("received redirect from Spotify: '\(url)'")
+        print("HANDLE URL: received redirect from Spotify: '\(url)'")        
         
         DispatchQueue.main.async {
             spotify.isRetrievingTokens = true
@@ -146,8 +146,8 @@ struct SpotifyAuthenticationView: View {
             }
             else {
                 showSpotifyLinkPrompt = false
-
-                getPlaylists()
+                
+                //getPlaylists()
             }
         }
         
@@ -165,23 +165,19 @@ struct SpotifyAuthenticationView: View {
             }
             
             for playlist in playlists.items {
-                spotify.retrievePlaylistItem(fetchedPlaylist: playlist) { playlistDetails in
-                    let playlistDetails = PlaylistDetails(playlist: playlistDetails.playlist, tracks: playlistDetails.tracks, lastFetched: Date())
-                    
-                    if let index = beatFluxViewModel.userData?.spotify_data.playlists.firstIndex(where: { $0.playlist.id == playlistDetails.playlist.id }) { //check if the playlist already exists; if it does overwrite it
+                spotify.convertSpotifyPlaylistToCustom(playlist: playlist) { details in
+                    if let index = spotify.spotifyData.playlists.firstIndex(where: { $0.playlist.id == details.playlist.id }) { //check if the playlist already exists; if it does overwrite it
                         DispatchQueue.main.async {
-                            beatFluxViewModel.userData?.spotify_data.playlists[index] = playlistDetails
+                            spotify.spotifyData.playlists[index] = details
                         }
                     }
                     else {
                         DispatchQueue.main.async {
-                            beatFluxViewModel.userData?.spotify_data.playlists.append(playlistDetails)
+                            spotify.spotifyData.playlists.append(details)
                         }
                     }
-                    
-
-
                 }
+                
             }
 
         }

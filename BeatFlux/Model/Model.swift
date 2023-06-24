@@ -16,9 +16,8 @@ struct UserModel: Codable {
     var email: String?
     var is_using_dark: Bool = false
     var account_link_shown = false
-    var spotify_data: SpotifyDataModel
     
-    static let defaultData = UserModel(first_name: "", last_name: "", email: nil, is_using_dark: false, account_link_shown: false, spotify_data: SpotifyDataModel(authorization_manager: nil, playlists: []))
+    static let defaultData = UserModel(first_name: "", last_name: "", email: nil, is_using_dark: false, account_link_shown: false)
 }
 
 struct SpotifyDataModel: Codable {
@@ -26,10 +25,12 @@ struct SpotifyDataModel: Codable {
     var authorization_manager: AuthorizationCodeFlowManager? = nil
     //var playlists: [Playlist<PlaylistItemsReference>]?
     var playlists: [PlaylistDetails] = []
+    
+    static let defaultData = SpotifyDataModel(authorization_manager: nil, playlists: [])
 }
 
 
-struct PlaylistDetails: Codable {
+struct PlaylistDetails: Codable, Hashable {
     var playlist: Playlist<PlaylistItemsReference>
     var tracks: [PlaylistItemContainer<PlaylistItem>] = []
     var lastFetched: Date

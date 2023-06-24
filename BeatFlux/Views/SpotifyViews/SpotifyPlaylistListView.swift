@@ -8,13 +8,224 @@
 import SwiftUI
 
 struct SpotifyPlaylistListView: View {
+    @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject var spotify: Spotify
+    @State var loadingPlaylistID: String?
+    
     var body: some View {
-        Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
+        NavigationView {
+            Group {
+                    Form {
+                        Section("Your Spotify Library") {
+                            ForEach(spotify.userPlaylists, id: \.self) { playlist in
+                                /*HStack(spacing: 15) {
+                                    AsyncImage(urlString: playlist.playlist.images[0].url.absoluteString) {
+                                        Rectangle()
+                                            .foregroundStyle(Color(UIColor.secondarySystemGroupedBackground))
+                                            .aspectRatio(contentMode: .fill)
+                                            .redacted(reason: .placeholder)
+                                    } content: {
+                                        Image(uiImage: $0)
+                                            .resizable()
+                                            .scaledToFill()
+                                            .frame(width: 50, height: 50)
+                                            .clipped()
+                                    }
+                                    .clipped()
+                                    .cornerRadius(8)
+
+                                    VStack(alignment: .leading) {
+                                        Text(playlist.playlist.name)
+                                            .fontWeight(.semibold)
+                                        Text(playlist.playlist.owner?.displayName ?? "Unknown")
+                                            .font(.caption)
+                                            .foregroundStyle(.secondary)
+                                    }
+                                    
+                                    Spacer()
+                                    
+                                    Button {
+                                        if let savedPlaylistIndex = spotify.spotifyData.playlists.firstIndex(where: { $0.playlist.id == playlist.playlist.id }) {
+                                            //print(spotify.spotifyData.playlists[savedPlaylistIndex].playlist.name)
+                                            //playlist is already saved
+                                            spotify.spotifyData.playlists.remove(at: savedPlaylistIndex)
+                                            for playlist in spotify.spotifyData.playlists {
+                                                print(playlist.playlist.name)
+                                            }
+                                        }
+                                        else {
+                                            loadingPlaylistID = playlist.playlist.id
+                                            spotify.convertSpotifyPlaylistToCustom(playlist: playlist.playlist) { details in
+                                                
+                                                DispatchQueue.main.async {
+                                                    spotify.spotifyData.playlists.append(details)
+                                                    loadingPlaylistID = nil
+                                                }
+                                                
+                                                
+                                            }
+                                            
+                                            
+                                        }
+                                    } label: {
+                                        if loadingPlaylistID == playlist.playlist.id {
+                                                LoadingIndicator(color: .accentColor, lineWidth: 3.0)
+                                                    .frame(width: 15, height: 15)
+                                            }
+                                            else {
+                                                Image(systemName: (spotify.spotifyData.playlists.first(where: { $0.playlist.id == playlist.playlist.id }) != nil) ? "checkmark.circle.fill" : "circle")
+                                            }
+                                        
+                                    }
+                                    
+                                }*/
+                                
+                                PlaylistRow(loadingPlaylistID: $loadingPlaylistID, playlist: playlist)
+                                    .environmentObject(spotify)
+                                
+                            }
+                        }
+                        
+                        Section("Playlists From Other Accounts") {
+                            ForEach(spotify.spotifyData.playlists, id: \.self) { playlist in
+                                if (spotify.userPlaylists.first(where:  { $0.playlist.id == playlist.playlist.id }) == nil) {
+                                    
+                                    PlaylistRow(loadingPlaylistID: $loadingPlaylistID, playlist: playlist)
+                                        .environmentObject(spotify)
+
+                                }
+                            }
+                        }
+                        
+                    }
+            }
+            .navigationTitle("Add Playlists")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem {
+                    Button {
+                        dismiss()
+                    } label: {
+                        Circle()
+                            .frame(width: 35)
+                            .foregroundStyle(Color(UIColor.systemGray5))
+                            .overlay {
+                                Image(systemName: "xmark")
+                                    .fontWeight(.bold)
+                                    .font(.subheadline)
+                            }
+                    
+                    }
+
+                }
+                
+            }
+            
+                
+                
+                
+
+        }
+    }
+}
+
+
+
+
+private struct PlaylistImage: View {
+    
+    var playlist: PlaylistDetails
+
+    
+    var body: some View {
+        
+        HStack(spacing: 15) {
+            AsyncImage(urlString: playlist.playlist.images[0].url.absoluteString) {
+                Rectangle()
+                    .foregroundStyle(Color(UIColor.secondarySystemGroupedBackground))
+                    .aspectRatio(contentMode: .fill)
+                    .redacted(reason: .placeholder)
+            } content: {
+                Image(uiImage: $0)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: 50, height: 50)
+                    .clipped()
+            }
+            .clipped()
+            .cornerRadius(8)
+
+        }
+    }
+}
+
+private struct PlaylistRow: View {
+    @EnvironmentObject var spotify: Spotify
+    @Binding var loadingPlaylistID: String?
+    
+    var playlist: PlaylistDetails
+    
+    @State private var isPresentingConfirm = false
+    
+    var body: some View {
+        HStack {
+            PlaylistImage(playlist: playlist)
+            
+            VStack(alignment: .leading) {
+                Text(playlist.playlist.name)
+                    .fontWeight(.semibold)
+                Text(playlist.playlist.owner?.displayName ?? "Unknown")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            
+            Spacer()
+
+            Button {
+                if let savedPlaylistIndex = spotify.spotifyData.playlists.firstIndex(where: { $0.playlist.id == playlist.playlist.id }) {
+                    //playlist is already saved
+                    isPresentingConfirm = true
+                }
+                else {
+                    loadingPlaylistID = playlist.playlist.id
+                    spotify.convertSpotifyPlaylistToCustom(playlist: playlist.playlist) { details in
+                        
+                        DispatchQueue.main.async {
+                            spotify.spotifyData.playlists.append(details)
+                            loadingPlaylistID = nil
+                        }
+                        
+                        
+                    }
+                    
+                    
+                }
+            } label: {
+                if loadingPlaylistID == playlist.playlist.id {
+                        LoadingIndicator(color: .accentColor, lineWidth: 3.0)
+                            .frame(width: 15, height: 15)
+                    }
+                    else {
+                        Image(systemName: (spotify.spotifyData.playlists.first(where: { $0.playlist.id == playlist.playlist.id }) != nil) ? "checkmark.circle.fill" : "circle")
+                    }
+                
+            }
+        }
+        .confirmationDialog("Are you sure you want to delete this playlist backup?",
+          isPresented: $isPresentingConfirm) {
+          Button("Delete Backup", role: .destructive) {
+              if let savedPlaylistIndex = spotify.spotifyData.playlists.firstIndex(where: { $0.playlist.id == playlist.playlist.id }) {
+                  //playlist is already saved
+                  spotify.spotifyData.playlists.remove(at: savedPlaylistIndex)
+              }
+           }
+         }
     }
 }
 
 struct PlaylistListView_Previews: PreviewProvider {
     static var previews: some View {
         SpotifyPlaylistListView()
+            .environmentObject(Spotify())
     }
 }
