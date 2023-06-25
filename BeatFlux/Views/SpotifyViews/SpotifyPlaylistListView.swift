@@ -182,36 +182,56 @@ private struct PlaylistRow: View {
             Spacer()
 
             Button {
-                if let savedPlaylistIndex = spotify.spotifyData.playlists.firstIndex(where: { $0.playlist.id == playlist.playlist.id }) {
+                if spotify.spotifyData.playlists.firstIndex(where: { $0.playlist.id == playlist.playlist.id }) != nil {
                     //playlist is already saved
                     isPresentingConfirm = true
                 }
                 else {
                     loadingPlaylistID = playlist.playlist.id
-                    spotify.convertSpotifyPlaylistToCustom(playlist: playlist.playlist) { details in
-                        
+                    
+                    if playlist.lastFetched.timeIntervalSinceNow > 30 * 60 { //30 minutes
                         DispatchQueue.main.async {
-                            spotify.spotifyData.playlists.append(details)
+                            print("more than 30 minutes have passed")
+                            
+                            spotify.convertSpotifyPlaylistToCustom(playlist: playlist.playlist) { details in
+        
+                                DispatchQueue.main.async {
+                                    spotify.spotifyData.playlists.append(details)
+                                    loadingPlaylistID = nil
+                                }
+        
+        
+                            }
+                            
+                            loadingPlaylistID = nil
+                            
+                        }
+                    }
+                    else {
+                        DispatchQueue.main.async {
+                            spotify.spotifyData.playlists.append(playlist)
                             loadingPlaylistID = nil
                         }
-                        
-                        
                     }
+                    
+ 
+
                     
                     
                 }
             } label: {
                 if loadingPlaylistID == playlist.playlist.id {
-                        LoadingIndicator(color: .accentColor, lineWidth: 3.0)
+                    LoadingIndicator(color: .accentColor, lineWidth: 3.0)
                             .frame(width: 15, height: 15)
-                    }
-                    else {
-                        Image(systemName: (spotify.spotifyData.playlists.first(where: { $0.playlist.id == playlist.playlist.id }) != nil) ? "checkmark.circle.fill" : "circle")
-                    }
+                }
+                else {
+                    Image(systemName: (spotify.spotifyData.playlists.first(where: { $0.playlist.id == playlist.playlist.id }) != nil) ? "checkmark.circle.fill" : "circle")
+                        .font(.title3)
+                }
                 
             }
         }
-        .confirmationDialog("Are you sure you want to delete this playlist backup?",
+        .confirmationDialog("Are you sure?",
           isPresented: $isPresentingConfirm) {
           Button("Delete Backup", role: .destructive) {
               if let savedPlaylistIndex = spotify.spotifyData.playlists.firstIndex(where: { $0.playlist.id == playlist.playlist.id }) {
@@ -219,7 +239,10 @@ private struct PlaylistRow: View {
                   spotify.spotifyData.playlists.remove(at: savedPlaylistIndex)
               }
            }
-         }
+         } message: {
+             Text("You cannot undo this action")
+           }
+
     }
 }
 

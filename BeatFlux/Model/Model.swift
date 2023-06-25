@@ -21,9 +21,7 @@ struct UserModel: Codable {
 }
 
 struct SpotifyDataModel: Codable {
-//    var user_id: String?
     var authorization_manager: AuthorizationCodeFlowManager? = nil
-    //var playlists: [Playlist<PlaylistItemsReference>]?
     var playlists: [PlaylistDetails] = []
     
     static let defaultData = SpotifyDataModel(authorization_manager: nil, playlists: [])
