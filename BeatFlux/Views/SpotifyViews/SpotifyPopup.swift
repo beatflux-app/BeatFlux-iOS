@@ -25,18 +25,14 @@ struct SpotifyPopup: View {
     var body: some View {
         NavigationView {
             VStack {
-                VStack(alignment: .leading) {
+                VStack(alignment: .leading, spacing: 10) {
                     Text("Hey there!")
                         .font(.largeTitle)
                         .fontWeight(.bold)
-                        .padding(.bottom)
                     Text("To use BeatFlux, link your preferred music service. To explore, swipe down the pop-up.")
                         .foregroundColor(.secondary)
                 }
-                .padding(.horizontal)
-                .padding(.top)
-                .padding(.bottom)
-                
+                .padding([.horizontal])
                 
                 HStack {
                     Rectangle()
@@ -81,13 +77,9 @@ struct SpotifyPopup: View {
             }
             .toolbar {
                 ToolbarItem {
-                    Button {
-                        showSpotifyLinkPrompt.toggle()
-                    } label: {
-                        Text("Not Now")
-                            .fontWeight(.bold)
-                    }
-
+                    Button(action: { showSpotifyLinkPrompt.toggle() }) {
+                        Text("")
+                    }.buttonStyle(ExitButtonStyle(buttonSize: 30, symbolScale: 0.4))
                 }
             }
         }
@@ -112,8 +104,6 @@ struct SpotifyAuthenticationView: View {
     let url: URL
     
     var body: some View {
-        
-        
         WebView(url: url) { url in
             handleURL(url)
         }
@@ -142,12 +132,9 @@ struct SpotifyAuthenticationView: View {
                 alertMessage = error.localizedDescription
     
                 showAlert = true
-                
             }
             else {
                 showSpotifyLinkPrompt = false
-                
-                //getPlaylists()
             }
         }
         
@@ -160,7 +147,6 @@ struct SpotifyAuthenticationView: View {
     func getPlaylists() {
         spotify.getUserPlaylists { playlists in
             guard let playlists = playlists else {
-                print("No playlists")
                 return
             }
             

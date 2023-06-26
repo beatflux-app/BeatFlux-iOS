@@ -53,19 +53,9 @@ struct SpotifyPlaylistListView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem {
-                    Button {
-                        dismiss()
-                    } label: {
-                        Circle()
-                            .frame(width: 35)
-                            .foregroundStyle(Color(UIColor.systemGray5))
-                            .overlay {
-                                Image(systemName: "xmark")
-                                    .fontWeight(.bold)
-                                    .font(.subheadline)
-                            }
-                    
-                    }
+                    Button(action: { dismiss() }) {
+                        Text("")
+                    }.buttonStyle(ExitButtonStyle(buttonSize: 30, symbolScale: 0.4))
 
                 }
                 

@@ -410,6 +410,7 @@ private struct TopBarView: View {
                     
                     
                 }
+                .disabled(!beatFluxViewModel.isViewModelFullyLoaded)
                 .padding(.trailing)
             }
             
