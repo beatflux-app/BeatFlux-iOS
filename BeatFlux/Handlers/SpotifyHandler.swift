@@ -30,9 +30,28 @@ final class Spotify: ObservableObject {
     
     var authorizationState = String.randomURLSafe(length: 128)
     
+    @Published var isSpotifyInitializationLoaded = false
     @Published var isAuthorized = false
+    
     @Published var isRetrievingTokens = false
     @Published var currentUser: SpotifyUser? = nil
+    @Published var userPlaylists: [PlaylistDetails] = []
+    @Published var spotifyData: SpotifyDataModel = SpotifyDataModel.defaultData {
+        didSet {
+            Task {
+                do {
+                    try await uploadSpotifyData()
+                } catch {
+                    print("ERROR: Failed to upload user data: \(error.localizedDescription)")
+                }
+            }
+        }
+    }
+    
+    enum SpotifyError: Error {
+        case nilSpotifyData
+    }
+    
     
     
     private var isUserAuthLoggedIn: Bool = false {
@@ -86,8 +105,39 @@ final class Spotify: ObservableObject {
         
     }
     
+    func loadSpotifyData() async {
+        await retrieveSpotifyData()
+        DispatchQueue.main.async {
+            self.isSpotifyInitializationLoaded = true
+        }
+    }
+    
+
+
+    func retrieveSpotifyData() async {
+        do {
+            let data = try await DatabaseHandler.shared.getSpotifyData()
+            DispatchQueue.main.async {
+                self.spotifyData = data
+            }
+            
+        }
+        catch {
+            print("ERROR: Failed to retrieve user data: \(error.localizedDescription)")
+        }
+
+    }
+    
+    func uploadSpotifyData() async throws {
+        do {
+            try await DatabaseHandler.shared.uploadSpotifyData(from: spotifyData)
+        }
+        catch {
+            print("ERROR: Failed to upload user data: \(error.localizedDescription)")
+        }
+    }
+    
     func initializeSpotify() {
-        print(Spotify.clientId)
         
         self.api.apiRequestLogger.logLevel = .trace
         
@@ -102,7 +152,9 @@ final class Spotify: ObservableObject {
             .store(in: &cancellables)
         Task {
             do {
-                guard let authManagerData = try await DatabaseHandler.shared.getUserData()?.spotify_data.authorization_manager else {
+                await loadSpotifyData()
+                
+                guard let authManagerData = try await DatabaseHandler.shared.getSpotifyData().authorization_manager else {
                     print("Did NOT find authorization information in keychain")
                     return
                 }
@@ -110,7 +162,8 @@ final class Spotify: ObservableObject {
                 print("Found authorization information in database")
                 
                 self.api.authorizationManager = authManagerData
-            
+                
+                refreshUserPlaylistArray()
             
                 if !self.api.authorizationManager.accessTokenIsExpired() {
                     self.autoRefreshTokensWhenExpired()
@@ -129,8 +182,8 @@ final class Spotify: ObservableObject {
                     }
                 })
                 .store(in: &self.cancellables)
-                    
-
+                
+                
             }
             catch {
                 print("ERROR: Unable to get user data from database")
@@ -198,8 +251,7 @@ final class Spotify: ObservableObject {
         
         DispatchQueue.main.async {
             self.isAuthorized = self.api.authorizationManager.isAuthorized()
-            print(self.isAuthorized)
-            
+
             print(
                 "Spotify.authorizationManagerDidChange: isAuthorized:",
                 self.isAuthorized
@@ -208,29 +260,19 @@ final class Spotify: ObservableObject {
             self.autoRefreshTokensWhenExpired()
             
             self.retrieveCurrentUser()
+            
+            self.refreshUserPlaylistArray()
+            
+            
         }
             
         // Save the data to the keychain.
-        Task {
-            do {
-                let userData = try await DatabaseHandler.shared.getUserData()
-                if var userData = userData {
-                    userData.spotify_data.authorization_manager = self.api.authorizationManager
-                    try await DatabaseHandler.shared.uploadUserData(from: userData)
-                    print("SUCCESS: Did save authorization manager to database")
-                }
-                else {
-                    print("ERROR: User data is invalid")
-                }
-            } catch {
-                print(
-                    "ERROR: Couldn't encode authorizationManager for storage " +
-                        "in keychain:\n\(error)"
-                )
-            }
+        if DatabaseHandler.shared.user != nil {
+            spotifyData.authorization_manager = self.api.authorizationManager
         }
-            
-        
+        else {
+            print("ERROR: Unable to save user, user is nil")
+        }
         
     }
     
@@ -241,37 +283,23 @@ final class Spotify: ObservableObject {
         
         self.currentUser = nil
         self.refreshTokensCancellable = nil
+        self.userPlaylists = []
         
-        
-        
-        Task {
-            do {
-                guard var userModel = try await DatabaseHandler.shared.getUserData() else {
-                    print("ERROR: Unable to retrive user data from the database")
-                    return
-                }
-                
-                userModel.spotify_data.authorization_manager = nil
-                try await DatabaseHandler.shared.uploadUserData(from: userModel)
-                print("SUCCESS: Did remove authorization manager from database")
-                
-            }
-            catch {
-                print(
-                    "ERROR: Couldn't remove authorization manager " +
-                    "from database: \(error)"
-                )
-            }
+        if DatabaseHandler.shared.user != nil {
+            spotifyData.authorization_manager = nil
+        }
+        else {
+            print("ERROR: Unable to save user, user is nil")
         }
     }
     
-    func retrieveCurrentUser(onlyIfNil: Bool = true) {
+    func retrieveCurrentUser(onlyIfNil: Bool = false) {
         if onlyIfNil && self.currentUser != nil {
             return
         }
 
         guard self.isAuthorized else {
-            print("User is not authorized")
+            print("ERROR: User is not authorized")
             return
         }
 
@@ -319,6 +347,39 @@ final class Spotify: ObservableObject {
             .store(in: &cancellables)
     }
     
+    public func refreshUserPlaylistArray() {
+        self.getUserPlaylists { playlists in
+            
+            var playlistsToAdd: [PlaylistDetails] = []
+            
+            if let playlists = playlists {
+                for playlist in playlists.items {
+                    
+                    var details = PlaylistDetails(playlist: playlist, lastFetched: Date())
+                    self.retrievePlaylistItem(fetchedPlaylist: playlist) { info in
+                        details.tracks = info.tracks
+                    }
+                    playlistsToAdd.append(details)
+                }
+            }
+            
+            DispatchQueue.main.async {
+                self.userPlaylists = playlistsToAdd
+            }
+            
+
+        }
+    }
+    
+    public func convertSpotifyPlaylistToCustom(playlist: Playlist<PlaylistItemsReference>, completion: @escaping (PlaylistDetails) -> Void) {
+        self.retrievePlaylistItem(fetchedPlaylist: playlist) { fetchedDetails in
+            let playlistDetails = PlaylistDetails(playlist: fetchedDetails.playlist, tracks: fetchedDetails.tracks, lastFetched: Date())
+            
+            completion(playlistDetails)
+
+        }
+    }
+    
     public func requestAccessAndRefreshTokens(url: URL, result: @escaping (Bool, Error?) -> Void) {
         enum ErrorTypes: Error {
             case authRequestDenied(String)
@@ -340,7 +401,7 @@ final class Spotify: ObservableObject {
                     result(true, nil)
                 }
             case .failure(let error):
-                print("couldn't retrieve access and refresh tokens:\n\(error)")
+                print("ERROR: Couldn't retrieve access and refresh tokens:\n\(error)")
                 if let authError = error as? SpotifyAuthorizationError, authError.accessWasDenied {
                     DispatchQueue.main.async {
                         result(false, ErrorTypes.authRequestDenied("Authorization request denied"))

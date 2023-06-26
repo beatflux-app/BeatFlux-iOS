@@ -25,18 +25,14 @@ struct SpotifyPopup: View {
     var body: some View {
         NavigationView {
             VStack {
-                VStack(alignment: .leading) {
+                VStack(alignment: .leading, spacing: 10) {
                     Text("Hey there!")
                         .font(.largeTitle)
                         .fontWeight(.bold)
-                        .padding(.bottom)
                     Text("To use BeatFlux, link your preferred music service. To explore, swipe down the pop-up.")
                         .foregroundColor(.secondary)
                 }
-                .padding(.horizontal)
-                .padding(.top)
-                .padding(.bottom)
-                
+                .padding([.horizontal])
                 
                 HStack {
                     Rectangle()
@@ -81,13 +77,9 @@ struct SpotifyPopup: View {
             }
             .toolbar {
                 ToolbarItem {
-                    Button {
-                        showSpotifyLinkPrompt.toggle()
-                    } label: {
-                        Text("Not Now")
-                            .fontWeight(.bold)
-                    }
-
+                    Button(action: { showSpotifyLinkPrompt.toggle() }) {
+                        Text("")
+                    }.buttonStyle(ExitButtonStyle(buttonSize: 30, symbolScale: 0.4))
                 }
             }
         }
@@ -112,8 +104,6 @@ struct SpotifyAuthenticationView: View {
     let url: URL
     
     var body: some View {
-        
-        
         WebView(url: url) { url in
             handleURL(url)
         }
@@ -128,7 +118,7 @@ struct SpotifyAuthenticationView: View {
             return
         }
         
-        print("received redirect from Spotify: '\(url)'")
+        print("HANDLE URL: received redirect from Spotify: '\(url)'")        
         
         DispatchQueue.main.async {
             spotify.isRetrievingTokens = true
@@ -142,12 +132,9 @@ struct SpotifyAuthenticationView: View {
                 alertMessage = error.localizedDescription
     
                 showAlert = true
-                
             }
             else {
                 showSpotifyLinkPrompt = false
-
-                getPlaylists()
             }
         }
         
@@ -160,28 +147,23 @@ struct SpotifyAuthenticationView: View {
     func getPlaylists() {
         spotify.getUserPlaylists { playlists in
             guard let playlists = playlists else {
-                print("No playlists")
                 return
             }
             
             for playlist in playlists.items {
-                spotify.retrievePlaylistItem(fetchedPlaylist: playlist) { playlistDetails in
-                    let playlistDetails = PlaylistDetails(playlist: playlistDetails.playlist, tracks: playlistDetails.tracks, lastFetched: Date())
-                    
-                    if let index = beatFluxViewModel.userData?.spotify_data.playlists.firstIndex(where: { $0.playlist.id == playlistDetails.playlist.id }) { //check if the playlist already exists; if it does overwrite it
+                spotify.convertSpotifyPlaylistToCustom(playlist: playlist) { details in
+                    if let index = spotify.spotifyData.playlists.firstIndex(where: { $0.playlist.id == details.playlist.id }) { //check if the playlist already exists; if it does overwrite it
                         DispatchQueue.main.async {
-                            beatFluxViewModel.userData?.spotify_data.playlists[index] = playlistDetails
+                            spotify.spotifyData.playlists[index] = details
                         }
                     }
                     else {
                         DispatchQueue.main.async {
-                            beatFluxViewModel.userData?.spotify_data.playlists.append(playlistDetails)
+                            spotify.spotifyData.playlists.append(details)
                         }
                     }
-                    
-
-
                 }
+                
             }
 
         }

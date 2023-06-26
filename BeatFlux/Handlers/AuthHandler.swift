@@ -38,7 +38,7 @@ final class AuthHandler {
             try Auth.auth().signOut()
         }
         catch {
-            print(error.localizedDescription)
+            print("ERROR: A problem occured when trying to sign out: \(error.localizedDescription)")
         }
         
     }
@@ -66,7 +66,7 @@ final class AuthHandler {
                         case .finished:
                             break
                         case .failure(let error):
-                            print(error.localizedDescription)
+                            print("ERROR: A problem occured when trying to register user: \(error.localizedDescription)")
                             let errorDescription = self.convertErrorToString(error)
                             continutation.resume(throwing: AuthResult.error(errorDescription))
                         }
@@ -96,7 +96,7 @@ final class AuthHandler {
                         case .finished:
                             break
                         case .failure(let error):
-                            print(error.localizedDescription)
+                            print("ERROR: A problem occured when trying to login user: \(error.localizedDescription)")
                             let errorDescription = self.convertErrorToString(error)
                             continutation.resume(throwing: AuthResult.error(errorDescription))
                         }
