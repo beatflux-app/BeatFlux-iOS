@@ -208,19 +208,6 @@ struct HomeView: View {
         while (!didResetToTop) {
             try? await Task.sleep(nanoseconds: 500_000_000)
         }
-//        
-//        if spotify.isAuthorized {
-//            spotify.getUserPlaylists { optionalPlaylists in
-//                guard let playlists = optionalPlaylists else {
-//                    print("No backups found")
-//                    return
-//                }
-//                
-//                for fetchedPlaylist in playlists.items {
-//                    handleFetchedPlaylist(fetchedPlaylist)
-//                }
-//            }
-//        }
         
         spotify.refreshUserPlaylistArray()
         
@@ -233,42 +220,6 @@ struct HomeView: View {
     func animateRefreshingIcon(isShowing: Bool) {
         withAnimation(.easeOut(duration: 0.3)) {
             showRefreshingIcon = isShowing
-        }
-    }
-
-    func handleFetchedPlaylist(_ fetchedPlaylist: Playlist<PlaylistItemsReference>) {
-        if let foundPlaylist = spotify.spotifyData.playlists.first(where: { $0.playlist.id == fetchedPlaylist.id}) {
-            handleFoundPlaylist(foundPlaylist: foundPlaylist, fetchedPlaylist: fetchedPlaylist)
-        } else {
-            retrieveAndAppendPlaylistItem(fetchedPlaylist: fetchedPlaylist)
-        }
-    }
-
-    func handleFoundPlaylist(foundPlaylist: PlaylistDetails, fetchedPlaylist: Playlist<PlaylistItemsReference>) {
-        if foundPlaylist.playlist.snapshotId != fetchedPlaylist.snapshotId {
-            spotify.retrievePlaylistItem(fetchedPlaylist: fetchedPlaylist) { playlistDetails in
-                updatePlaylistDetails(fetchedPlaylist: fetchedPlaylist, playlistDetails: playlistDetails)
-            }
-        }
-    }
-
-    func retrieveAndAppendPlaylistItem(fetchedPlaylist: Playlist<PlaylistItemsReference>) {
-        spotify.retrievePlaylistItem(fetchedPlaylist: fetchedPlaylist) { playlistDetails in
-            DispatchQueue.main.async {
-                spotify.spotifyData.playlists.append(playlistDetails)
-            }
-        }
-    }
-
-    func updatePlaylistDetails(fetchedPlaylist: Playlist<PlaylistItemsReference>, playlistDetails: PlaylistDetails) {
-        if let index = spotify.spotifyData.playlists.firstIndex(where: { $0.playlist.id == fetchedPlaylist.id}) {
-            DispatchQueue.main.async {
-                spotify.spotifyData.playlists[index] = playlistDetails
-            }
-        } else {
-            DispatchQueue.main.async {
-                spotify.spotifyData.playlists.append(playlistDetails)
-            }
         }
     }
     

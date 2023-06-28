@@ -371,6 +371,52 @@ final class Spotify: ObservableObject {
         }
     }
     
+    public func backupPlaylist(playlist: PlaylistDetails, completion: @escaping () -> Void) {
+        self.getUserPlaylists { fetchedPlaylists in
+            guard let fetchedPlaylists else { return }
+            
+            guard let item = fetchedPlaylists.items.first(where: { $0.id == playlist.playlist.id }) else {
+                DispatchQueue.main.async {
+                    self.spotifyData.playlists.append(playlist)
+                    completion()
+                }
+                return
+            }
+            
+            //helps save on api calls
+            if playlist.playlist.snapshotId != item.snapshotId {
+                print("Different version")
+                
+                    self.convertSpotifyPlaylistToCustom(playlist: item) { details in
+                        if let index = self.userPlaylists.firstIndex(where: { $0.playlist.id == details.playlist.id }) {
+                            DispatchQueue.main.async {
+                                self.userPlaylists[index] = details
+                            }
+                            
+                        }
+                        else {
+                            DispatchQueue.main.async {
+                                self.userPlaylists.append(details)
+                            }
+                            
+                        }
+                        
+                        DispatchQueue.main.async {
+                            self.spotifyData.playlists.append(details)
+                            completion()
+                        }
+                    }
+                }
+                else {
+                    DispatchQueue.main.async {
+                        self.spotifyData.playlists.append(playlist)
+                        completion()
+                    }
+                }
+        }
+
+    }
+    
     public func convertSpotifyPlaylistToCustom(playlist: Playlist<PlaylistItemsReference>, completion: @escaping (PlaylistDetails) -> Void) {
         self.retrievePlaylistItem(fetchedPlaylist: playlist) { fetchedDetails in
             let playlistDetails = PlaylistDetails(playlist: fetchedDetails.playlist, tracks: fetchedDetails.tracks, lastFetched: Date())

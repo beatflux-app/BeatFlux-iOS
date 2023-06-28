@@ -19,6 +19,7 @@ struct SpotifyPlaylistListView: View {
                         Section("Your Spotify Library") {
                             if spotify.userPlaylists.isEmpty {
                                 Text("None")
+                                    .foregroundStyle(.secondary)
                             }
                             else {
                                 ForEach(spotify.userPlaylists, id: \.self) { playlist in
@@ -33,6 +34,7 @@ struct SpotifyPlaylistListView: View {
                         Section("Playlists From Other Accounts") {
                             if spotify.spotifyData.playlists.isEmpty {
                                 Text("None")
+                                    .foregroundStyle(.secondary)
                             }
                             else {
                                 ForEach(spotify.spotifyData.playlists, id: \.self) { playlist in
@@ -59,12 +61,8 @@ struct SpotifyPlaylistListView: View {
 
                 }
                 
+                
             }
-            
-                
-                
-                
-
         }
     }
 }
@@ -128,25 +126,11 @@ private struct PlaylistRow: View {
                 }
                 else {
                     loadingPlaylistID = playlist.playlist.id
+                    spotify.backupPlaylist(playlist: playlist) {
+                        loadingPlaylistID = nil
+                    }
                     
-                    //helps save on api calls
-                    if playlist.lastFetched.timeIntervalSinceNow < 30 * 60 { //30 minutes
-                        DispatchQueue.main.async {
-                            spotify.convertSpotifyPlaylistToCustom(playlist: playlist.playlist) { details in
-        
-                                DispatchQueue.main.async {
-                                    spotify.spotifyData.playlists.append(details)
-                                    loadingPlaylistID = nil
-                                }
-                            }
-                        }
-                    }
-                    else {
-                        DispatchQueue.main.async {
-                            spotify.spotifyData.playlists.append(playlist)
-                            loadingPlaylistID = nil
-                        }
-                    }
+                    
                 }
             } label: {
                 if loadingPlaylistID == playlist.playlist.id {
@@ -173,6 +157,7 @@ private struct PlaylistRow: View {
            }
 
     }
+
 }
 
 struct PlaylistListView_Previews: PreviewProvider {
