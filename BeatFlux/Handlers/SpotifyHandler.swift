@@ -2,7 +2,6 @@ import SpotifyWebAPI
 import UIKit
 import SwiftUI
 import Foundation
-import KeychainAccess
 import FirebaseCore
 import FirebaseAuth
 import Combine
