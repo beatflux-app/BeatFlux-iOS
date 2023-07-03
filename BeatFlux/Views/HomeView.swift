@@ -21,14 +21,14 @@ struct HomeView: View {
     @State var offset: CGFloat = 0.0
     @State var showSpotifyPlaylistListView: Bool = false
     
-    var arrowPullDownMultiplier: CGFloat = 100
-    var arrowStartRotationOffset: CGFloat = 30
+    var arrowPullDownMultiplier: CGFloat = 175
+    var arrowStartRotationOffset: CGFloat = 20
     
     var size: CGFloat = 170
     
     let fontSizeParameters = ScrollEffectParameters(startOffset: 0, endOffset: -10, newValue: 20, originalValue: 34)
     let opacityPlaylistBackgroundParameters = ScrollEffectParameters(startOffset: 0, endOffset: -10, newValue: 1, originalValue: 0)
-    let arrowOpacityParameters = ScrollEffectParameters(startOffset: 30, endOffset: 40, newValue: 1, originalValue: 0)
+    let arrowOpacityParameters = ScrollEffectParameters(startOffset: 10, endOffset: 20, newValue: 1, originalValue: 0)
     let opacityLoadingBackgroundParameters = ScrollEffectParameters(startOffset: 0, endOffset: -10, newValue: 0, originalValue: 1)
     
     var body: some View {
@@ -99,18 +99,21 @@ struct HomeView: View {
                     if beatFluxViewModel.isViewModelFullyLoaded {
                         if beatFluxViewModel.userData != nil {
                             if !spotify.spotifyData.playlists.isEmpty {
-                                let columns = [
-                                    GridItem(.flexible()),
-                                    GridItem(.flexible())
-                                ]
+                                let playlists = spotify.spotifyData.playlists
+                                let chunks = playlists.chunked(size: 2)
                                 
                                 
-                                LazyVGrid(columns: columns, spacing: 20) {
+                                Grid {
+                                    ForEach(0..<chunks.count, id: \.self) { index in
                                     
-                                    ForEach(spotify.spotifyData.playlists, id: \.self) { playlist in
-                                        PlaylistGridSquare(playlist: playlist.playlist)
+                                        GridRow {
+                                            ForEach(chunks[index], id: \.self) { playlist in
+                                                PlaylistGridSquare(playlist: playlist.playlist)
+                                            }
+                                        }
+                                             
+                                         
                                     }
-                                    
                                 }
                                 .padding(.horizontal)
                             }
@@ -269,6 +272,16 @@ struct HomeView_Previews: PreviewProvider {
 }
 
 
+
+
+private struct ViewOffsetKey: PreferenceKey {
+    static let defaultValue: CGFloat = 0.0
+    
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value += nextValue()
+    }
+}
+
 private struct NoPlaylistsFoundView: View {
     var body: some View {
         VStack {
@@ -284,18 +297,12 @@ private struct NoPlaylistsFoundView: View {
     }
 }
 
-private struct ViewOffsetKey: PreferenceKey {
-    static let defaultValue: CGFloat = 0.0
-    
-    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
-        value += nextValue()
-    }
-}
-
 private struct PlaylistGridSquare: View {
     var playlist: Playlist<PlaylistItemsReference>
     
     var body: some View {
+        
+        
         
         VStack(alignment: .leading) {
             AsyncImage(urlString: playlist.images[0].url.absoluteString) {
@@ -311,17 +318,38 @@ private struct PlaylistGridSquare: View {
                     .clipped()
             }
             .clipped()
-            .cornerRadius(16)
-    
-            VStack(alignment: .leading) {
+            .cornerRadius(12)
+
+            VStack(alignment: .leading, spacing: 0) {
                 Text(playlist.name)
                     .fontWeight(.semibold)
+                
                 Text(playlist.owner?.displayName ?? "Unknown")
                     .font(.caption)
                     .foregroundStyle(.secondary)
+            }
+            .padding(.leading, 5)
+            
+
+            
+            
                 
-            } 
+            
         }
+        .padding(.horizontal, 5)
+        .padding(.vertical, 5)
+        
+        .background(ContainerRelativeShape().fill(Color(uiColor: .systemBackground)))
+        .contextMenu(ContextMenu(menuItems: {
+            Button("Item 1") {}
+            Button("Item 2") {}
+        }))
+        
+
+
+
+        
+
         
         
         

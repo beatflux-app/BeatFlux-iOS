@@ -8,10 +8,13 @@
 import Foundation
 import UIKit
 
+class CachedImages {
+    static var imageCache = NSCache<NSString, UIImage>()
+}
+
 class ImageLoader: ObservableObject {
     @Published var image: UIImage?
     private var urlString: String
-    private var imageCache = NSCache<AnyObject, AnyObject>()
 
     init(urlString: String) {
         self.urlString = urlString
@@ -19,7 +22,7 @@ class ImageLoader: ObservableObject {
     
     func load() {
         // Check if image is already in cache
-        if let cachedImage = self.imageCache.object(forKey: urlString as NSString) as? UIImage {
+        if let cachedImage = CachedImages.imageCache.object(forKey: urlString as NSString) {
             self.image = cachedImage
             return
         }
@@ -32,7 +35,7 @@ class ImageLoader: ObservableObject {
         URLSession.shared.dataTask(with: url) { (data, response, error) in
             if let data = data, let image = UIImage(data: data) {
                 DispatchQueue.main.async {
-                    self.imageCache.setObject(image, forKey: self.urlString as NSString)
+                    CachedImages.imageCache.setObject(image, forKey: self.urlString as NSString)
                     self.image = image
                 }
             }

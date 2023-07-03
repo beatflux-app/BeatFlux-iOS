@@ -234,7 +234,9 @@ final class Spotify: ObservableObject {
                 .playlistModifyPublic,
                 .userLibraryRead,
                 .userLibraryModify,
-                .userReadRecentlyPlayed
+                .userReadRecentlyPlayed,
+                .playlistReadPrivate,
+                .playlistReadCollaborative,
             ]
         )!
         
@@ -321,7 +323,7 @@ final class Spotify: ObservableObject {
     
     
     public func getUserPlaylists(completion: @escaping (PagingObject<Playlist<PlaylistItemsReference>>?) -> Void) {
-
+        
         self.api.currentUserPlaylists()
             .extendPages(self.api)
             .sink(receiveCompletion: { _ in },

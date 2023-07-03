@@ -31,11 +31,11 @@
 		DF7F9A892A30F4010017E561 /* FirebaseDatabase in Frameworks */ = {isa = PBXBuildFile; productRef = DF7F9A882A30F4010017E561 /* FirebaseDatabase */; };
 		DF7F9A8B2A30F4010017E561 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = DF7F9A8A2A30F4010017E561 /* FirebaseFirestore */; };
 		DF7F9A8D2A30F4010017E561 /* FirebaseStorage in Frameworks */ = {isa = PBXBuildFile; productRef = DF7F9A8C2A30F4010017E561 /* FirebaseStorage */; };
+		DF8A77792A4DEA3E00266500 /* FormTitle.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF8A77782A4DEA3E00266500 /* FormTitle.swift */; };
 		DFA5BCA92A2D71A6004DB4A3 /* ProfileSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFA5BCA82A2D71A6004DB4A3 /* ProfileSettingsView.swift */; };
 		DFA5BCAC2A2D73D1004DB4A3 /* SettingsTextLabel_Element.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFA5BCAB2A2D73D1004DB4A3 /* SettingsTextLabel_Element.swift */; };
 		DFA5BCAF2A2DFAD2004DB4A3 /* NonDismissableNavigationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFA5BCAE2A2DFAD2004DB4A3 /* NonDismissableNavigationView.swift */; };
 		DFAB03F02A090DAE006B5F7E /* SpotifyAPI in Frameworks */ = {isa = PBXBuildFile; productRef = DFAB03EF2A090DAE006B5F7E /* SpotifyAPI */; };
-		DFAB03F32A09C871006B5F7E /* KeychainAccess in Frameworks */ = {isa = PBXBuildFile; productRef = DFAB03F22A09C871006B5F7E /* KeychainAccess */; };
 		DFAD004729F5B6C000EE6874 /* BeatFluxApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFAD004629F5B6C000EE6874 /* BeatFluxApp.swift */; };
 		DFAD004929F5B6C000EE6874 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFAD004829F5B6C000EE6874 /* HomeView.swift */; };
 		DFAD004B29F5B6C100EE6874 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = DFAD004A29F5B6C100EE6874 /* Assets.xcassets */; };
@@ -67,6 +67,7 @@
 		DF599E7529FD70A700EBF850 /* InitializationPage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InitializationPage.swift; sourceTree = "<group>"; };
 		DF67A34C2A28162100E3BF89 /* SpotifySettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpotifySettingsView.swift; sourceTree = "<group>"; };
 		DF6A789A2A43A85E00067D68 /* SpotifyPlaylistListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpotifyPlaylistListView.swift; sourceTree = "<group>"; };
+		DF8A77782A4DEA3E00266500 /* FormTitle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FormTitle.swift; sourceTree = "<group>"; };
 		DFA5BCA82A2D71A6004DB4A3 /* ProfileSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileSettingsView.swift; sourceTree = "<group>"; };
 		DFA5BCAB2A2D73D1004DB4A3 /* SettingsTextLabel_Element.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsTextLabel_Element.swift; sourceTree = "<group>"; };
 		DFA5BCAE2A2DFAD2004DB4A3 /* NonDismissableNavigationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NonDismissableNavigationView.swift; sourceTree = "<group>"; };
@@ -108,7 +109,6 @@
 				DF72E62629FEB487007A6306 /* CombineFirebaseAuth in Frameworks */,
 				DFAB03F02A090DAE006B5F7E /* SpotifyAPI in Frameworks */,
 				DF72E62A29FEB487007A6306 /* CombineFirebaseFirestore in Frameworks */,
-				DFAB03F32A09C871006B5F7E /* KeychainAccess in Frameworks */,
 				DF7F9A8B2A30F4010017E561 /* FirebaseFirestore in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -264,6 +264,7 @@
 				DFFA143B2A298218009F9275 /* RedactedView.swift */,
 				DF469EC22A43426900BE166C /* AsyncImage.swift */,
 				DF0AB5EB2A49F0E400C28366 /* ExitButtonStyle.swift */,
+				DF8A77782A4DEA3E00266500 /* FormTitle.swift */,
 			);
 			path = GenericViews;
 			sourceTree = "<group>";
@@ -317,7 +318,6 @@
 				DF72E62D29FEB487007A6306 /* CombineFirebaseRemoteConfig */,
 				DF72E62F29FEB487007A6306 /* CombineFirebaseStorage */,
 				DFAB03EF2A090DAE006B5F7E /* SpotifyAPI */,
-				DFAB03F22A09C871006B5F7E /* KeychainAccess */,
 				DF7F9A842A30F4010017E561 /* FirebaseAnalytics */,
 				DF7F9A862A30F4010017E561 /* FirebaseAuth */,
 				DF7F9A882A30F4010017E561 /* FirebaseDatabase */,
@@ -356,7 +356,6 @@
 			packageReferences = (
 				DF72E62229FEB487007A6306 /* XCRemoteSwiftPackageReference "CombineFirebase" */,
 				DFAB03EE2A090DAE006B5F7E /* XCRemoteSwiftPackageReference "SpotifyAPI" */,
-				DFAB03F12A09C871006B5F7E /* XCRemoteSwiftPackageReference "KeychainAccess" */,
 				DF7F9A832A30F4010017E561 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
 			);
 			productRefGroup = DFAD004429F5B6C000EE6874 /* Products */;
@@ -401,6 +400,7 @@
 				DFBE88BF29FF51DB00572B47 /* LoadingIndicator.swift in Sources */,
 				DFFA143C2A298218009F9275 /* RedactedView.swift in Sources */,
 				DF10E66D2A242EA100D9EFD7 /* SpotifyPopup.swift in Sources */,
+				DF8A77792A4DEA3E00266500 /* FormTitle.swift in Sources */,
 				DFAD004929F5B6C000EE6874 /* HomeView.swift in Sources */,
 				DF599E7429FC9A3000EBF850 /* AuthHandler.swift in Sources */,
 				DFCB52862A4322A000846E66 /* ShimmerEffect.swift in Sources */,
@@ -650,7 +650,7 @@
 			repositoryURL = "https://github.com/firebase/firebase-ios-sdk";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 10.10.0;
+				minimumVersion = 10.11.0;
 			};
 		};
 		DFAB03EE2A090DAE006B5F7E /* XCRemoteSwiftPackageReference "SpotifyAPI" */ = {
@@ -659,14 +659,6 @@
 			requirement = {
 				kind = upToNextMajorVersion;
 				minimumVersion = 2.0.0;
-			};
-		};
-		DFAB03F12A09C871006B5F7E /* XCRemoteSwiftPackageReference "KeychainAccess" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/kishikawakatsumi/KeychainAccess";
-			requirement = {
-				branch = master;
-				kind = branch;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */
@@ -736,11 +728,6 @@
 			isa = XCSwiftPackageProductDependency;
 			package = DFAB03EE2A090DAE006B5F7E /* XCRemoteSwiftPackageReference "SpotifyAPI" */;
 			productName = SpotifyAPI;
-		};
-		DFAB03F22A09C871006B5F7E /* KeychainAccess */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = DFAB03F12A09C871006B5F7E /* XCRemoteSwiftPackageReference "KeychainAccess" */;
-			productName = KeychainAccess;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

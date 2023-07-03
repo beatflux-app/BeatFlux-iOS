@@ -7,12 +7,16 @@
 
 import SwiftUI
 
-struct FormTitle: View {
-    var body: some View {
-        Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
+struct FormTitle: ViewModifier {
+ 
+    let font: Font
+    let fontWeight: Font.Weight
+    
+    func body(content: Content) -> some View {
+        content
+          .foregroundColor(.primary)
+          .fontWeight(fontWeight)
+          .font(font)
+          .textCase(nil)
     }
-}
-
-#Preview {
-    FormTitle()
 }
