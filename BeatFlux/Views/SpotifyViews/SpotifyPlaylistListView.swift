@@ -72,26 +72,41 @@ struct SpotifyPlaylistListView: View {
 
 private struct PlaylistImage: View {
     
-    var playlist: PlaylistDetails
+    var playlist: PlaylistInfo
 
     
     var body: some View {
         
         HStack(spacing: 15) {
-            AsyncImage(urlString: playlist.playlist.images[0].url.absoluteString) {
+            if !playlist.playlist.images.isEmpty {
+                AsyncImage(urlString: playlist.playlist.images[0].url.absoluteString) {
+                    Rectangle()
+                        .foregroundStyle(Color(UIColor.secondarySystemGroupedBackground))
+                        .aspectRatio(contentMode: .fill)
+                        .redacted(reason: .placeholder)
+                } content: {
+                    Image(uiImage: $0)
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width: 50, height: 50)
+                        .clipped()
+                }
+                .clipped()
+                .cornerRadius(8)
+            }
+            else {
                 Rectangle()
                     .foregroundStyle(Color(UIColor.secondarySystemGroupedBackground))
                     .aspectRatio(contentMode: .fill)
                     .redacted(reason: .placeholder)
-            } content: {
-                Image(uiImage: $0)
-                    .resizable()
-                    .scaledToFill()
                     .frame(width: 50, height: 50)
                     .clipped()
+                    .overlay {
+                        Text("?")
+                    }
+                
             }
-            .clipped()
-            .cornerRadius(8)
+            
 
         }
     }
@@ -101,7 +116,7 @@ private struct PlaylistRow: View {
     @EnvironmentObject var spotify: Spotify
     @Binding var loadingPlaylistID: String?
     
-    var playlist: PlaylistDetails
+    var playlist: PlaylistInfo
     
     @State private var isPresentingConfirm = false
     

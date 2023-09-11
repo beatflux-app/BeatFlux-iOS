@@ -34,7 +34,7 @@ final class Spotify: ObservableObject {
     
     @Published var isRetrievingTokens = false
     @Published var currentUser: SpotifyUser? = nil
-    @Published var userPlaylists: [PlaylistDetails] = []
+    @Published var userPlaylists: [PlaylistInfo] = []
     @Published var spotifyData: SpotifyDataModel = SpotifyDataModel.defaultData {
         didSet {
             Task {
@@ -227,6 +227,8 @@ final class Spotify: ObservableObject {
             // Otherwise, an error will be thrown.
             state: authorizationState,
             scopes: [
+                .ugcImageUpload,
+                .userLibraryModify,
                 .userReadPlaybackState,
                 .userModifyPlaybackState,
                 .playlistModifyPrivate,
@@ -332,7 +334,7 @@ final class Spotify: ObservableObject {
             .store(in: &cancellables)
     }
     
-    public func retrievePlaylistItem(fetchedPlaylist: Playlist<PlaylistItemsReference>, completion: @escaping (PlaylistDetails) -> Void) {
+    public func retrievePlaylistItem(fetchedPlaylist: Playlist<PlaylistItemsReference>, completion: @escaping (PlaylistInfo) -> Void) {
         self.api.playlistItems(fetchedPlaylist.uri)
             .sink(receiveCompletion: { completion in
                 switch completion {
@@ -343,7 +345,7 @@ final class Spotify: ObservableObject {
                 }
                 
             }, receiveValue: { pagingObject in
-                completion(PlaylistDetails(playlist: fetchedPlaylist, tracks: pagingObject.items, lastFetched: Date()))
+                completion(PlaylistInfo(playlist: fetchedPlaylist, tracks: pagingObject.items, lastFetched: Date()))
             })
             .store(in: &cancellables)
     }
@@ -351,12 +353,12 @@ final class Spotify: ObservableObject {
     public func refreshUserPlaylistArray() {
         self.getUserPlaylists { playlists in
             
-            var playlistsToAdd: [PlaylistDetails] = []
+            var playlistsToAdd: [PlaylistInfo] = []
             
             if let playlists = playlists {
                 for playlist in playlists.items {
                     
-                    var details = PlaylistDetails(playlist: playlist, lastFetched: Date())
+                    var details = PlaylistInfo(playlist: playlist, lastFetched: Date())
                     self.retrievePlaylistItem(fetchedPlaylist: playlist) { info in
                         details.tracks = info.tracks
                     }
@@ -372,7 +374,7 @@ final class Spotify: ObservableObject {
         }
     }
     
-    public func backupPlaylist(playlist: PlaylistDetails, completion: @escaping () -> Void) {
+    public func backupPlaylist(playlist: PlaylistInfo, completion: @escaping () -> Void) {
         self.getUserPlaylists { fetchedPlaylists in
             guard let fetchedPlaylists else { return }
             
@@ -385,8 +387,8 @@ final class Spotify: ObservableObject {
             }
             
             //helps save on api calls
-            if playlist.playlist.snapshotId != item.snapshotId {
-                print("Different version")
+            //if playlist.playlist.snapshotId != item.snapshotId {
+                //print("Different version")
                 
                     self.convertSpotifyPlaylistToCustom(playlist: item) { details in
                         if let index = self.userPlaylists.firstIndex(where: { $0.playlist.id == details.playlist.id }) {
@@ -402,25 +404,27 @@ final class Spotify: ObservableObject {
                             
                         }
                         
+                        
+                        
                         DispatchQueue.main.async {
                             self.spotifyData.playlists.append(details)
                             completion()
                         }
                     }
-                }
-                else {
-                    DispatchQueue.main.async {
-                        self.spotifyData.playlists.append(playlist)
-                        completion()
-                    }
-                }
+                //}
+//                else {
+//                    DispatchQueue.main.async {
+//                        self.spotifyData.playlists.append(playlist)
+//                        completion()
+//                    }
+//                }
         }
 
     }
     
-    public func convertSpotifyPlaylistToCustom(playlist: Playlist<PlaylistItemsReference>, completion: @escaping (PlaylistDetails) -> Void) {
+    public func convertSpotifyPlaylistToCustom(playlist: Playlist<PlaylistItemsReference>, completion: @escaping (PlaylistInfo) -> Void) {
         self.retrievePlaylistItem(fetchedPlaylist: playlist) { fetchedDetails in
-            let playlistDetails = PlaylistDetails(playlist: fetchedDetails.playlist, tracks: fetchedDetails.tracks, lastFetched: Date())
+            let playlistDetails = PlaylistInfo(playlist: fetchedDetails.playlist, tracks: fetchedDetails.tracks, lastFetched: Date())
             
             completion(playlistDetails)
 
@@ -465,6 +469,146 @@ final class Spotify: ObservableObject {
         .store(in: &cancellables)
     }
     
+    public func uploadSpotifyPlaylistFromBackup(playlistInfo: PlaylistInfo, playlistName: String, isPublic: Bool, isCollaborative: Bool, description: String, completion: @escaping (Playlist<PlaylistItems>)->Void) {
+        self.api.createPlaylist(for: self.currentUser!.uri, PlaylistDetails(name: playlistName, isPublic: isPublic, isCollaborative: isCollaborative, description: description))
+            .receive(on: RunLoop.main)
+            .sink(receiveCompletion: { completion in
+                switch completion {
+                case .finished:
+                    print("SUCCESS: Created playlist from backed up data")
+                case .failure(let error):
+                    print("ERROR: Couldn't create playlist based on backed up version:\n\(error)")
+                }
+            }, receiveValue: { playlistObject in
+//                if !playlistInfo.playlist.images.isEmpty {
+//                    self.uploadSpotifyPlaylistImage(playlist: playlistObject.uri, image: playlistInfo.playlist.images[0])
+//                }
+                self.uploadTracksToPlaylist(exportedPlaylist: playlistInfo, newPlaylistURI: playlistObject.uri) {
+                    completion(playlistObject)
+                }
+
+                
+               
+            })
+            .store(in: &cancellables)
+    }
+    
+    
+    
+    public func uploadSpotifyPlaylistImage(playlist: SpotifyURIConvertible, image: SpotifyImage) {
+        
+        guard let url = URL(string: "https://i.scdn.co/image/ab67706c0000bebbdce8ac805e4a1a9469083388") else {
+            print("Invalid URL")
+            return
+        }
+
+        let task = URLSession.shared.dataTask(with: url) { (data, response, error) in
+            if let error = error {
+                print("Error: \(error)")
+            } else if let data = data {
+                let newUIImage: UIImage? = UIImage(data: data)
+                if let validImage = newUIImage, let jpegData = validImage.jpegData(compressionQuality: 0.5) {
+                    let base64EncodedData = jpegData.base64EncodedData()
+                    
+                    self.api.uploadPlaylistImage(playlist, imageData: base64EncodedData)
+                        .receive(on: RunLoop.main)
+                        .sink { completion in
+                            switch completion {
+                            case .finished: break
+                            case .failure(let error):
+                                print("ERROR: Unable to upload playlist image: \(error)")
+                            }
+                        }
+                        .store(in: &self.cancellables)
+                }
+            }
+        }
+        
+
+        task.resume()
+        
+            
+        
+        
+    }
+    
+    public func uploadTracksToPlaylist(exportedPlaylist: PlaylistInfo, newPlaylistURI: SpotifyURIConvertible, result: @escaping ()->Void) {
+        
+        print(exportedPlaylist.playlist.name)
+        
+        let uris = self.retrieveTrackURIFromPlaylist(playlist: exportedPlaylist)
+        print(uris)
+        
+        self.api.addToPlaylist(newPlaylistURI, uris: uris)
+            .receive(on: RunLoop.main)
+            .sink(receiveCompletion: { completion in
+                switch completion {
+                case .finished: break
+                case .failure(let error):
+                    print("ERROR: Unable to upload songs to playlist: \(error)")
+                    result()
+                }
+                
+                
+            }, receiveValue: { returnValue in
+                result()
+            })
+            .store(in: &self.cancellables)
+    }
+    
+    public func replaceAllSongsInPlaylist(_ playlist: SpotifyURIConvertible, with uriArray: [SpotifyURIConvertible]) {
+        self.api.replaceAllPlaylistItems(playlist, with: uriArray)
+            .receive(on: RunLoop.main)
+            .sink { completion in
+                switch completion {
+                case .finished:
+                    print("SUCCESS: Replaced all the songs in the playlist")
+                case .failure(let error):
+                    print("ERROR: Unable to replace all the songs in the playlist: \(error)")
+                }
+            } receiveValue: { _ in
+                
+            }
+            .store(in: &cancellables)
+
+    }
+    
+    public func unfollowPlaylist(uri: SpotifyURIConvertible) {
+        self.api.unfollowPlaylistForCurrentUser(uri)
+            .receive(on: RunLoop.main)
+            .sink { completion in
+                switch completion {
+                case .finished:
+                    print("SUCCESS: Unfollowed playlist")
+                case .failure(let error):
+                    print("ERROR: Unable to unfollow playlist: \(error)")
+                }
+            }
+            .store(in: &cancellables)
+
+    }
+    
+    public func retrieveTrackURIFromPlaylist(playlist: PlaylistInfo) -> [SpotifyURIConvertible] {
+        var uris: [SpotifyURIConvertible] = []
+        
+        print(playlist)
+        
+        for track in playlist.tracks {
+            if let uri = track.item?.uri {
+                print("valid uri")
+                uris.append(uri)
+                print(uri)
+            }
+            else {
+                print("not valid uri")
+            }
+            
+        }
+        
+        
+        
+        return uris
+    }
     
     
 }

@@ -21,6 +21,7 @@ struct HomeView: View {
     @State var offset: CGFloat = 0.0
     @State var showSpotifyPlaylistListView: Bool = false
     
+    
     var arrowPullDownMultiplier: CGFloat = 175
     var arrowStartRotationOffset: CGFloat = 20
     
@@ -106,9 +107,9 @@ struct HomeView: View {
                                 Grid {
                                     ForEach(0..<chunks.count, id: \.self) { index in
                                     
-                                        GridRow {
+                                        GridRow(alignment: .top) {
                                             ForEach(chunks[index], id: \.self) { playlist in
-                                                PlaylistGridSquare(playlist: playlist.playlist)
+                                                PlaylistGridSquare(playlistInfo: playlist)
                                             }
                                         }
                                              
@@ -298,33 +299,53 @@ private struct NoPlaylistsFoundView: View {
 }
 
 private struct PlaylistGridSquare: View {
-    var playlist: Playlist<PlaylistItemsReference>
+    var playlistInfo: PlaylistInfo
+    
+    @State var showExportView: Bool = false
     
     var body: some View {
         
         
         
         VStack(alignment: .leading) {
-            AsyncImage(urlString: playlist.images[0].url.absoluteString) {
+            
+            if !playlistInfo.playlist.images.isEmpty {
+                AsyncImage(urlString: playlistInfo.playlist.images[0].url.absoluteString) {
+                    Rectangle()
+                        .foregroundStyle(Color(UIColor.secondarySystemGroupedBackground))
+                        .aspectRatio(contentMode: .fill)
+                        .frame(width: (UIScreen.main.bounds.width / 2) - 25, height: (UIScreen.main.bounds.width / 2) - 25)
+                        .redacted(reason: .placeholder)
+                } content: {
+                    Image(uiImage: $0)
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width: (UIScreen.main.bounds.width / 2) - 25, height: (UIScreen.main.bounds.width / 2) - 25)
+                        .clipped()
+                }
+                .clipped()
+                .cornerRadius(12)
+            }
+            else {
                 Rectangle()
                     .foregroundStyle(Color(UIColor.secondarySystemGroupedBackground))
                     .aspectRatio(contentMode: .fill)
-                    .redacted(reason: .placeholder)
-            } content: {
-                Image(uiImage: $0)
-                    .resizable()
-                    .scaledToFill()
                     .frame(width: (UIScreen.main.bounds.width / 2) - 25, height: (UIScreen.main.bounds.width / 2) - 25)
+                    .redacted(reason: .placeholder)
                     .clipped()
+                    .cornerRadius(12)
+                    .overlay {
+                        Text("?")
+                            .font(.largeTitle)
+                    }
             }
-            .clipped()
-            .cornerRadius(12)
+            
 
             VStack(alignment: .leading, spacing: 0) {
-                Text(playlist.name)
+                Text(playlistInfo.playlist.name)
                     .fontWeight(.semibold)
                 
-                Text(playlist.owner?.displayName ?? "Unknown")
+                Text(playlistInfo.playlist.owner?.displayName ?? "Unknown")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -341,20 +362,20 @@ private struct PlaylistGridSquare: View {
         
         .background(ContainerRelativeShape().fill(Color(uiColor: .systemBackground)))
         .contextMenu(ContextMenu(menuItems: {
-            Button("Item 1") {}
-            Button("Item 2") {}
+            Button {
+                showExportView = true
+            } label: {
+                HStack {
+                    Text("Export")
+                    Spacer()
+                    Image(systemName: "square.and.arrow.up")
+                    
+                }
+            }
         }))
-        
-
-
-
-        
-
-        
-        
-        
-        
-        
+        .sheet(isPresented: $showExportView) {
+            ExportPlaylistView(showExportView: $showExportView, playlistToExport: playlistInfo)
+        }
     }
 }
 

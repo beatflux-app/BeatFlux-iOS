@@ -22,13 +22,13 @@ struct UserModel: Codable {
 
 struct SpotifyDataModel: Codable {
     var authorization_manager: AuthorizationCodeFlowManager? = nil
-    var playlists: [PlaylistDetails] = []
+    var playlists: [PlaylistInfo] = []
     
     static let defaultData = SpotifyDataModel(authorization_manager: nil, playlists: [])
 }
 
 
-struct PlaylistDetails: Codable, Hashable {
+struct PlaylistInfo: Codable, Hashable {
     var playlist: Playlist<PlaylistItemsReference>
     var tracks: [PlaylistItemContainer<PlaylistItem>] = []
     var lastFetched: Date

@@ -132,7 +132,7 @@ final class DatabaseHandler {
                         if let playlistsData = spotifyData["playlists"] as? String {
                             do {
                                 let decoder = JSONDecoder()
-                                let playlists = try decoder.decode([PlaylistDetails].self, from: Data(playlistsData.utf8))
+                                let playlists = try decoder.decode([PlaylistInfo].self, from: Data(playlistsData.utf8))
                                 spotifyDataModel.playlists = playlists
                             } catch {
                                 print("ERROR: decoding playlist details: \(error)")
@@ -191,7 +191,7 @@ final class DatabaseHandler {
                     if let playlistsData = document.get("playlists") as? String {
                         do {
                             let decoder = JSONDecoder()
-                            let playlists = try decoder.decode([PlaylistDetails].self, from: Data(playlistsData.utf8))
+                            let playlists = try decoder.decode([PlaylistInfo].self, from: Data(playlistsData.utf8))
                             spotifyData.playlists = playlists
                         } catch {
                             print("ERROR: decoding playlist details: \(error)")
