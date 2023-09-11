@@ -165,6 +165,9 @@ private struct PlaylistRow: View {
               if let savedPlaylistIndex = spotify.spotifyData.playlists.firstIndex(where: { $0.playlist.id == playlist.playlist.id }) {
                   //playlist is already saved
                   spotify.spotifyData.playlists.remove(at: savedPlaylistIndex)
+                  Task {
+                      await self.spotify.uploadSpotifyData()
+                  }
               }
            }
          } message: {

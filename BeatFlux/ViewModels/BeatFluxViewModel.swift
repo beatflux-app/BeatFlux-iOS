@@ -22,34 +22,39 @@ class BeatFluxViewModel: ObservableObject {
     @Published var isConnected = true
     @Published var isUserLoggedIn: Bool = false {
         didSet {
-            Task {
-                DispatchQueue.main.async {
-                    self.userData = nil
-                    self.isViewModelFullyLoaded = false
+            
+            DispatchQueue.main.async {
+                self.userData = nil
+                self.isViewModelFullyLoaded = false
+                Task { [weak self] in
+                    await self?.uploadUserData()
+                    
                 }
+            }
+            
+            Task {
                 if self.isUserLoggedIn {
                     await self.loadUserData()
                 }
-                
             }
             
             
         }
     }
-    @Published var userData: UserModel? {
-        didSet {
-            Task {
-                do {
-                    if userData != nil && isViewModelFullyLoaded {
-                        try await uploadUserData()
-                    }
-                    
-                } catch {
-                    print("ERROR: Failed to upload user data: \(error.localizedDescription)")
-                }
-            }
-        }
-    }
+    @Published var userData: UserModel? //{
+//        didSet {
+//            Task {
+//                do {
+//                    if userData != nil && isViewModelFullyLoaded {
+//                        try await uploadUserData()
+//                    }
+//                    
+//                } catch {
+//                    print("ERROR: Failed to upload user data: \(error.localizedDescription)")
+//                }
+//            }
+//        }
+    //}
 
 
     
@@ -113,6 +118,10 @@ class BeatFluxViewModel: ObservableObject {
             let data = try await DatabaseHandler.shared.getUserData()
             DispatchQueue.main.async {
                 self.userData = data
+                Task { [weak self] in
+                    await self?.uploadUserData()
+                    
+                }
             }
             
         }
@@ -122,10 +131,10 @@ class BeatFluxViewModel: ObservableObject {
 
     }
     
-    func uploadUserData() async throws {
+    func uploadUserData() async{
         guard let userData = userData else {
             print("ERROR: User data is nil")
-            throw UserError.nilUserData
+            return
         }
         
         do {

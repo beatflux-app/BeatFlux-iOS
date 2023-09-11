@@ -9,7 +9,6 @@ import SwiftUI
 
 
 struct SettingsView: View {
-    @Binding var showSettings: Bool
     @EnvironmentObject var beatFluxViewModel: BeatFluxViewModel
     @EnvironmentObject var spotify: Spotify
     
@@ -90,18 +89,6 @@ struct SettingsView: View {
             }
             .navigationTitle("Settings")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button {
-                        showSettings.toggle()
-                    } label: {
-                        Text("Done")
-                            .fontWeight(.bold)
-                    }
-
-                    
-                }
-            }
         }
     }
 }
@@ -116,7 +103,7 @@ private extension BeatFluxViewModel {
 
 struct SettingsView_Previews: PreviewProvider {
     static var previews: some View {
-        SettingsView(showSettings: .constant(true))
+        SettingsView()
             .environmentObject(BeatFluxViewModel())
             .environmentObject(Spotify())
     }

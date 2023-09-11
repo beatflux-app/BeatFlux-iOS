@@ -15,6 +15,11 @@
 		DF44EEAB29FBE2720027E3DD /* WelcomePageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF44EEAA29FBE2720027E3DD /* WelcomePageView.swift */; };
 		DF469EC12A43420C00BE166C /* ImageLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF469EC02A43420C00BE166C /* ImageLoader.swift */; };
 		DF469EC32A43426900BE166C /* AsyncImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF469EC22A43426900BE166C /* AsyncImage.swift */; };
+		DF4980EE2AAFB84E002A35E3 /* Nuke in Frameworks */ = {isa = PBXBuildFile; productRef = DF4980ED2AAFB84E002A35E3 /* Nuke */; };
+		DF4980F02AAFB84E002A35E3 /* NukeExtensions in Frameworks */ = {isa = PBXBuildFile; productRef = DF4980EF2AAFB84E002A35E3 /* NukeExtensions */; };
+		DF4980F22AAFB84E002A35E3 /* NukeUI in Frameworks */ = {isa = PBXBuildFile; productRef = DF4980F12AAFB84E002A35E3 /* NukeUI */; };
+		DF4980F42AAFB84E002A35E3 /* NukeVideo in Frameworks */ = {isa = PBXBuildFile; productRef = DF4980F32AAFB84E002A35E3 /* NukeVideo */; };
+		DF4980F72AAFCD34002A35E3 /* Shimmer in Frameworks */ = {isa = PBXBuildFile; productRef = DF4980F62AAFCD34002A35E3 /* Shimmer */; };
 		DF599E6629FC990A00EBF850 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = DF599E6529FC990A00EBF850 /* GoogleService-Info.plist */; };
 		DF599E7429FC9A3000EBF850 /* AuthHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF599E7329FC9A3000EBF850 /* AuthHandler.swift */; };
 		DF599E7629FD70A700EBF850 /* InitializationPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF599E7529FD70A700EBF850 /* InitializationPage.swift */; };
@@ -45,7 +50,6 @@
 		DFBE88BF29FF51DB00572B47 /* LoadingIndicator.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFBE88BE29FF51DB00572B47 /* LoadingIndicator.swift */; };
 		DFC6661329FA0AA3003227FE /* SignupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFC6661229FA0AA3003227FE /* SignupView.swift */; };
 		DFC6661529FA0EA4003227FE /* Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFC6661429FA0EA4003227FE /* Extensions.swift */; };
-		DFCB52862A4322A000846E66 /* ShimmerEffect.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFCB52852A4322A000846E66 /* ShimmerEffect.swift */; };
 		DFFA143C2A298218009F9275 /* RedactedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFFA143B2A298218009F9275 /* RedactedView.swift */; };
 		DFFA14412A2A01CF009F9275 /* NetworkStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFFA14402A2A01CF009F9275 /* NetworkStatus.swift */; };
 		DFFC11ED2A54D3D9001BE252 /* ExportPlaylistView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFFC11EC2A54D3D9001BE252 /* ExportPlaylistView.swift */; };
@@ -84,7 +88,6 @@
 		DFBE88D72A03CAB900572B47 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		DFC6661229FA0AA3003227FE /* SignupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignupView.swift; sourceTree = "<group>"; };
 		DFC6661429FA0EA4003227FE /* Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Extensions.swift; sourceTree = "<group>"; };
-		DFCB52852A4322A000846E66 /* ShimmerEffect.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShimmerEffect.swift; sourceTree = "<group>"; };
 		DFFA14372A298007009F9275 /* Config.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config.xcconfig; sourceTree = "<group>"; };
 		DFFA143B2A298218009F9275 /* RedactedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RedactedView.swift; sourceTree = "<group>"; };
 		DFFA14402A2A01CF009F9275 /* NetworkStatus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkStatus.swift; sourceTree = "<group>"; };
@@ -108,12 +111,17 @@
 				DF72E62429FEB487007A6306 /* CombineFirebase in Frameworks */,
 				DF72E62E29FEB487007A6306 /* CombineFirebaseRemoteConfig in Frameworks */,
 				DF7F9A852A30F4010017E561 /* FirebaseAnalytics in Frameworks */,
+				DF4980F42AAFB84E002A35E3 /* NukeVideo in Frameworks */,
+				DF4980F22AAFB84E002A35E3 /* NukeUI in Frameworks */,
 				DF7F9A8D2A30F4010017E561 /* FirebaseStorage in Frameworks */,
 				DF7F9A872A30F4010017E561 /* FirebaseAuth in Frameworks */,
+				DF4980EE2AAFB84E002A35E3 /* Nuke in Frameworks */,
+				DF4980F72AAFCD34002A35E3 /* Shimmer in Frameworks */,
 				DF72E62629FEB487007A6306 /* CombineFirebaseAuth in Frameworks */,
 				DFAB03F02A090DAE006B5F7E /* SpotifyAPI in Frameworks */,
 				DF72E62A29FEB487007A6306 /* CombineFirebaseFirestore in Frameworks */,
 				DF7F9A8B2A30F4010017E561 /* FirebaseFirestore in Frameworks */,
+				DF4980F02AAFB84E002A35E3 /* NukeExtensions in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -124,7 +132,6 @@
 			isa = PBXGroup;
 			children = (
 				DF6A78992A43A84700067D68 /* SpotifyViews */,
-				DFCB52842A43229200846E66 /* Effects */,
 				DFA5BCAD2A2DFABC004DB4A3 /* UIKitViews */,
 				DFBE88BD29FF51BC00572B47 /* GenericViews */,
 				DFA5BCA72A2D7187004DB4A3 /* SettingsViews */,
@@ -283,14 +290,6 @@
 			path = ViewModels;
 			sourceTree = "<group>";
 		};
-		DFCB52842A43229200846E66 /* Effects */ = {
-			isa = PBXGroup;
-			children = (
-				DFCB52852A4322A000846E66 /* ShimmerEffect.swift */,
-			);
-			path = Effects;
-			sourceTree = "<group>";
-		};
 		DFFA143D2A29830A009F9275 /* Utilities */ = {
 			isa = PBXGroup;
 			children = (
@@ -329,6 +328,11 @@
 				DF7F9A882A30F4010017E561 /* FirebaseDatabase */,
 				DF7F9A8A2A30F4010017E561 /* FirebaseFirestore */,
 				DF7F9A8C2A30F4010017E561 /* FirebaseStorage */,
+				DF4980ED2AAFB84E002A35E3 /* Nuke */,
+				DF4980EF2AAFB84E002A35E3 /* NukeExtensions */,
+				DF4980F12AAFB84E002A35E3 /* NukeUI */,
+				DF4980F32AAFB84E002A35E3 /* NukeVideo */,
+				DF4980F62AAFCD34002A35E3 /* Shimmer */,
 			);
 			productName = BeatFlux;
 			productReference = DFAD004329F5B6C000EE6874 /* BeatFlux.app */;
@@ -363,6 +367,8 @@
 				DF72E62229FEB487007A6306 /* XCRemoteSwiftPackageReference "CombineFirebase" */,
 				DFAB03EE2A090DAE006B5F7E /* XCRemoteSwiftPackageReference "SpotifyAPI" */,
 				DF7F9A832A30F4010017E561 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
+				DF4980EC2AAFB84E002A35E3 /* XCRemoteSwiftPackageReference "Nuke" */,
+				DF4980F52AAFCD34002A35E3 /* XCRemoteSwiftPackageReference "SwiftUI-Shimmer" */,
 			);
 			productRefGroup = DFAD004429F5B6C000EE6874 /* Products */;
 			projectDirPath = "";
@@ -410,7 +416,6 @@
 				DF8A77792A4DEA3E00266500 /* FormTitle.swift in Sources */,
 				DFAD004929F5B6C000EE6874 /* HomeView.swift in Sources */,
 				DF599E7429FC9A3000EBF850 /* AuthHandler.swift in Sources */,
-				DFCB52862A4322A000846E66 /* ShimmerEffect.swift in Sources */,
 				DF469EC12A43420C00BE166C /* ImageLoader.swift in Sources */,
 				DFA5BCAF2A2DFAD2004DB4A3 /* NonDismissableNavigationView.swift in Sources */,
 				DF3F15F62A55F6610032FFEC /* CreateNewPlaylistView.swift in Sources */,
@@ -645,6 +650,22 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		DF4980EC2AAFB84E002A35E3 /* XCRemoteSwiftPackageReference "Nuke" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/kean/Nuke.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 12.1.6;
+			};
+		};
+		DF4980F52AAFCD34002A35E3 /* XCRemoteSwiftPackageReference "SwiftUI-Shimmer" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/markiv/SwiftUI-Shimmer.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.4.0;
+			};
+		};
 		DF72E62229FEB487007A6306 /* XCRemoteSwiftPackageReference "CombineFirebase" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/rever-ai/CombineFirebase";
@@ -672,6 +693,31 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		DF4980ED2AAFB84E002A35E3 /* Nuke */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = DF4980EC2AAFB84E002A35E3 /* XCRemoteSwiftPackageReference "Nuke" */;
+			productName = Nuke;
+		};
+		DF4980EF2AAFB84E002A35E3 /* NukeExtensions */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = DF4980EC2AAFB84E002A35E3 /* XCRemoteSwiftPackageReference "Nuke" */;
+			productName = NukeExtensions;
+		};
+		DF4980F12AAFB84E002A35E3 /* NukeUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = DF4980EC2AAFB84E002A35E3 /* XCRemoteSwiftPackageReference "Nuke" */;
+			productName = NukeUI;
+		};
+		DF4980F32AAFB84E002A35E3 /* NukeVideo */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = DF4980EC2AAFB84E002A35E3 /* XCRemoteSwiftPackageReference "Nuke" */;
+			productName = NukeVideo;
+		};
+		DF4980F62AAFCD34002A35E3 /* Shimmer */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = DF4980F52AAFCD34002A35E3 /* XCRemoteSwiftPackageReference "SwiftUI-Shimmer" */;
+			productName = Shimmer;
+		};
 		DF72E62329FEB487007A6306 /* CombineFirebase */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = DF72E62229FEB487007A6306 /* XCRemoteSwiftPackageReference "CombineFirebase" */;

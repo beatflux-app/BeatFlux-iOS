@@ -35,17 +35,17 @@ final class Spotify: ObservableObject {
     @Published var isRetrievingTokens = false
     @Published var currentUser: SpotifyUser? = nil
     @Published var userPlaylists: [PlaylistInfo] = []
-    @Published var spotifyData: SpotifyDataModel = SpotifyDataModel.defaultData {
-        didSet {
-            Task {
-                do {
-                    try await uploadSpotifyData()
-                } catch {
-                    print("ERROR: Failed to upload user data: \(error.localizedDescription)")
-                }
-            }
-        }
-    }
+    @Published var spotifyData: SpotifyDataModel = SpotifyDataModel.defaultData //{
+//        didSet {
+//            Task {
+//                do {
+//                    try await uploadSpotifyData()
+//                } catch {
+//                    print("ERROR: Failed to upload user data: \(error.localizedDescription)")
+//                }
+//            }
+//        }
+//    }
     
     enum SpotifyError: Error {
         case nilSpotifyData
@@ -57,10 +57,11 @@ final class Spotify: ObservableObject {
         didSet {
             Task {
                 DispatchQueue.main.async {
+                    self.cancellables.removeAll()
                     self.currentUser = nil
                     self.isAuthorized = false
                     self.isRetrievingTokens = false
-                    self.cancellables.removeAll()
+                    
                     print("SUCCESS: All spotify api cancellables removed successfully")
                     if self.isUserAuthLoggedIn {
                         self.initializeSpotify()
@@ -118,16 +119,20 @@ final class Spotify: ObservableObject {
             let data = try await DatabaseHandler.shared.getSpotifyData()
             DispatchQueue.main.async {
                 self.spotifyData = data
+                Task { [weak self] in
+                    await self?.uploadSpotifyData()
+                }
             }
+            
             
         }
         catch {
-            print("ERROR: Failed to retrieve user data: \(error.localizedDescription)")
+            print("ERROR: Failed to retrieve spotify data: \(error.localizedDescription)")
         }
 
     }
     
-    func uploadSpotifyData() async throws {
+    func uploadSpotifyData() async {
         do {
             try await DatabaseHandler.shared.uploadSpotifyData(from: spotifyData)
         }
@@ -381,6 +386,9 @@ final class Spotify: ObservableObject {
             guard let item = fetchedPlaylists.items.first(where: { $0.id == playlist.playlist.id }) else {
                 DispatchQueue.main.async {
                     self.spotifyData.playlists.append(playlist)
+                    Task {
+                        await self.uploadSpotifyData()
+                    }
                     completion()
                 }
                 return
@@ -408,6 +416,9 @@ final class Spotify: ObservableObject {
                         
                         DispatchQueue.main.async {
                             self.spotifyData.playlists.append(details)
+                            Task {
+                                await self.uploadSpotifyData()
+                            }
                             completion()
                         }
                     }

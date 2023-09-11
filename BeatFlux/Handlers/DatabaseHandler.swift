@@ -165,43 +165,36 @@ final class DatabaseHandler {
             print("ERROR: Failed to get data from database because the user is nil")
             throw UserError.nilUser
         }
+        
         return try await withCheckedThrowingContinuation { continuation in
             let docRef = firestore.collection("users").document(user.uid)
             
-            
             docRef.getDocument { (document, error) in
                 if let document = document, document.exists {
-                    
                     var spotifyData: SpotifyDataModel = SpotifyDataModel.defaultData
                     
-                    
-                    if let authorizationManager = document.get("authorization_manager") as? String {
+                    do {
+                        let decoder = JSONDecoder()
                         
-                        do {
-                            let decoder = JSONDecoder()
+                        if let authorizationManager = document.get("authorization_manager") as? String {
                             let authManager = try decoder.decode(AuthorizationCodeFlowManager.self, from: Data(authorizationManager.utf8))
-                            
                             spotifyData.authorization_manager = authManager
-                            
-                        } catch {
-                            print("ERROR: decoding AuthorizationCodeFlowManager: \(error)")
                         }
-                    }
-                    
-                    if let playlistsData = document.get("playlists") as? String {
-                        do {
-                            let decoder = JSONDecoder()
+                        
+                        if let playlistsData = document.get("playlists") as? String {
                             let playlists = try decoder.decode([PlaylistInfo].self, from: Data(playlistsData.utf8))
                             spotifyData.playlists = playlists
-                        } catch {
-                            print("ERROR: decoding playlist details: \(error)")
                         }
+                        
+                        continuation.resume(returning: spotifyData)
+                        
+                    } catch {
+                        print("ERROR: decoding data: \(error)")
+                        continuation.resume(throwing: error)
                     }
                     
-                    
-                    continuation.resume(returning: spotifyData)
                 } else {
-                    print("HANDLED ERROR: Document does not exist, initlizing data")
+                    print("HANDLED ERROR: Document does not exist, initializing data")
                     self.initializeUser(firstName: UserModel.defaultData.first_name, lastName: UserModel.defaultData.first_name)
                     continuation.resume(throwing: error ?? UserError.nilUser)
                 }

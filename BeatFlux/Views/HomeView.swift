@@ -12,172 +12,108 @@ import Combine
 struct HomeView: View {
     @EnvironmentObject var beatFluxViewModel: BeatFluxViewModel
     @EnvironmentObject var spotify: Spotify
-    
+
     @State var showSpotifyLinkPrompt = false
     @State var isLoading = false
-    @State var showSettings = false
-    @State var didResetToTop: Bool = true
-    @State var showRefreshingIcon: Bool = false
-    @State var offset: CGFloat = 0.0
     @State var showSpotifyPlaylistListView: Bool = false
     
-    
-    var arrowPullDownMultiplier: CGFloat = 175
-    var arrowStartRotationOffset: CGFloat = 20
-    
-    var size: CGFloat = 170
-    
-    let fontSizeParameters = ScrollEffectParameters(startOffset: 0, endOffset: -10, newValue: 20, originalValue: 34)
-    let opacityPlaylistBackgroundParameters = ScrollEffectParameters(startOffset: 0, endOffset: -10, newValue: 1, originalValue: 0)
-    let arrowOpacityParameters = ScrollEffectParameters(startOffset: 10, endOffset: 20, newValue: 1, originalValue: 0)
-    let opacityLoadingBackgroundParameters = ScrollEffectParameters(startOffset: 0, endOffset: -10, newValue: 0, originalValue: 1)
-    
     var body: some View {
-        VStack {
-            TopBarView(showSettings: $showSettings, showSpotifyPlaylistListView: $showSpotifyPlaylistListView)
-                .environmentObject(beatFluxViewModel)
-            
-            ScrollView {
-                VStack {
-                    ZStack {
-                        GeometryReader { proxy in
-                            ZStack(alignment: .top) {
-                                Image(systemName: "arrow.up")
-                                    .font(.title3)
-                                    .fontWeight(.semibold)
-                                    .rotationEffect(.degrees(offset > arrowStartRotationOffset ? max(180, 180 + min((Double(offset - arrowStartRotationOffset) / arrowPullDownMultiplier) * 180.0, 180)) : 180), anchor: .center)
-                                    .foregroundStyle(Color.accentColor)
-                                    .opacity(beatFluxViewModel.isViewModelFullyLoaded ? (!showRefreshingIcon ? arrowOpacityParameters.getValueForOffset(offset: offset) : 0) : 0)
-                                
-                                LoadingIndicator(color: .accentColor, lineWidth: 4.0)
-                                    .frame(width: 25, height: 25)
-                                    .opacity(showRefreshingIcon ? 1 : 0)
-                                
-                            }
-                            .opacity(opacityLoadingBackgroundParameters.getValueForOffset(offset: offset))
-                            .padding(.top, 5)
-                            .frame(width: proxy.size.width)
-                            .offset(CGSize(width: 0, height: -offset))
-                            
-                            VStack(spacing: 0) {
-                                Rectangle()
-                                    .foregroundStyle(Color(UIColor.systemBackground).opacity(opacityPlaylistBackgroundParameters.getValueForOffset(offset: offset)))
-                                    .frame(height: 20)
-                                
-                                
-                                HStack {
+        ZStack {
+            NavigationView {
+                ScrollView {
+                    VStack {
+                        if beatFluxViewModel.isViewModelFullyLoaded {
+                            if beatFluxViewModel.userData != nil {
+                                if !spotify.spotifyData.playlists.isEmpty {
+                                    let playlists = spotify.spotifyData.playlists
+                                    let chunks = playlists.chunked(size: 2)
                                     
-                                    Text("Backups")
-                                        .font(.system(size: fontSizeParameters.getValueForOffset(offset: offset)))
-                                        .font(.largeTitle)
-                                        .fontWeight(.bold)
-                                                                        
-                                    Spacer()
                                     
-                                    LoadingIndicator(color: .accentColor, lineWidth: 3.0)
-                                        .frame(width: 15, height: 15)
-                                        .opacity(offset < -10 ? (showRefreshingIcon ? 1 : 0) : 0)
-                                    
-                                }
-                                
-                                .padding(.horizontal)
-                                .padding(.vertical, 3)
-                                .background(.thickMaterial
-                                .opacity(opacityPlaylistBackgroundParameters.getValueForOffset(offset: offset)))
-                                
-                                
-                            }
-                            .frame(width: proxy.size.width)
-                            .offset(CGSize(width: 0, height: max(0, -offset)))
-                            
-                            
-                            
-                        }
-                        .padding(.bottom, 55)
-                    }
-                    .zIndex(1)
-                    
-                    if beatFluxViewModel.isViewModelFullyLoaded {
-                        if beatFluxViewModel.userData != nil {
-                            if !spotify.spotifyData.playlists.isEmpty {
-                                let playlists = spotify.spotifyData.playlists
-                                let chunks = playlists.chunked(size: 2)
-                                
-                                
-                                Grid {
-                                    ForEach(0..<chunks.count, id: \.self) { index in
-                                    
-                                        GridRow(alignment: .top) {
-                                            ForEach(chunks[index], id: \.self) { playlist in
-                                                PlaylistGridSquare(playlistInfo: playlist)
+                                    Grid {
+                                        ForEach(0..<chunks.count, id: \.self) { index in
+                                            
+                                            GridRow(alignment: .top) {
+                                                ForEach(chunks[index], id: \.self) { playlist in
+                                                    PlaylistGridSquare(playlistInfo: playlist)
+                                                }
                                             }
+                                            
+                                            
                                         }
-                                             
-                                         
                                     }
+                                    .padding(.horizontal)
                                 }
-                                .padding(.horizontal)
+                                else {
+                                    NoPlaylistsFoundView()
+                                }
                             }
                             else {
                                 NoPlaylistsFoundView()
                             }
                         }
-                        else {
-                            NoPlaylistsFoundView()
-                        }
-                    }
-
-                    
-
-                    
-                    
-                    
-                    
-                    
-                }
-                
-                .background(
-                    GeometryReader { proxy in
-                        let offset = proxy.frame(in: .named("scroll")).minY
-                        Color.clear.preference(key: ViewOffsetKey.self, value: offset)
-                    }
-                )
-            }
-            .overlay {
-
-                VStack(spacing: 20) {
-                    LoadingIndicator(color: .accentColor, lineWidth: 4.0)
-                        .frame(width: 25, height: 25)
-                    
-                    Text("Loading...")
-                        .foregroundStyle(.secondary)
-                        .fontWeight(.semibold)
-                        
-                }
-                .opacity(beatFluxViewModel.isViewModelFullyLoaded ? 0 : 1)
-                    
-            }
-            .scrollDisabled(!beatFluxViewModel.isViewModelFullyLoaded)
-            .scrollIndicators(.hidden)
-            .coordinateSpace(name: "scroll")
-            .onPreferenceChange(ViewOffsetKey.self) { offset in
-                self.offset = offset
-                
-                if offset <= 0 { didResetToTop = true }
-                else { didResetToTop = false }
-                
-                if Double(offset - arrowStartRotationOffset) / arrowPullDownMultiplier >= 1.0 {
-                    if !showRefreshingIcon && beatFluxViewModel.isViewModelFullyLoaded {
-                        Task {
-                            await fetchData()
-                        }
                     }
                 }
-                
+                .overlay {
+                    VStack(spacing: 20) {
+                        LoadingIndicator(color: .accentColor, lineWidth: 4.0)
+                            .frame(width: 25, height: 25)
+
+                        Text("Loading...")
+                            .foregroundStyle(.secondary)
+                            .fontWeight(.semibold)
+
+                    }
+                    .opacity(beatFluxViewModel.isViewModelFullyLoaded ? 0 : 1)
+                }
+                .navigationTitle("Backups")
+                .refreshable {
+                        spotify.refreshUserPlaylistArray()
+
+//                      await beatFluxViewModel.retrieveUserData()
+//                      await spotify.retrieveSpotifyData()
+                    
+                }
+                .scrollIndicators(.hidden)
                 
             }
             
+            
+            VStack {
+                Spacer()
+                
+                HStack {
+                    Spacer()
+                    
+                    Button {
+                        UIImpactFeedbackGenerator(style: .rigid).impactOccurred()
+                        showSpotifyPlaylistListView.toggle()
+                    } label: {
+                        Circle()
+                            .frame(width: 65)
+                            .foregroundStyle(Color.accentColor)
+                            .overlay {
+                                Image(systemName: "plus")
+                                    .foregroundStyle(.white)
+                                    .fontWeight(.bold)
+                                    .font(.title3)
+                            }
+                            .shadow(radius: 16)
+                        
+                        
+                        
+                    }
+                    .buttonStyle(ShrinkOnHoverButtonStyle())
+                    .disabled(!beatFluxViewModel.isViewModelFullyLoaded)
+                }
+                .padding([.trailing, .bottom])
+                
+                
+                
+                
+            }
         }
+        
+
         .sheet(isPresented: $showSpotifyPlaylistListView) {
             SpotifyPlaylistListView()
         }
@@ -199,67 +135,7 @@ struct HomeView: View {
                 }
             }
         })
-        .fullScreenCover(isPresented: $showSettings) {
-            SettingsView(showSettings: $showSettings)
-        }
         
-    }
-
-    func fetchData() async {
-        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-        animateRefreshingIcon(isShowing: true)
-        
-        while (!didResetToTop) {
-            try? await Task.sleep(nanoseconds: 500_000_000)
-        }
-        
-        spotify.refreshUserPlaylistArray()
-        
-        await beatFluxViewModel.retrieveUserData()
-        await spotify.retrieveSpotifyData()
-        
-        animateRefreshingIcon(isShowing: false)
-    }
-
-    func animateRefreshingIcon(isShowing: Bool) {
-        withAnimation(.easeOut(duration: 0.3)) {
-            showRefreshingIcon = isShowing
-        }
-    }
-    
-}
-
-
-
-
-struct ScrollEffectParameters {
-    var startOffset: CGFloat
-    var endOffset: CGFloat
-    var newValue: CGFloat
-    var originalValue: CGFloat
-
-    func getValueForOffset(offset: CGFloat) -> CGFloat {
-        if startOffset <= endOffset {
-            // Handle positive scrolling (offset increases)
-            if offset < startOffset {
-                return originalValue
-            } else if offset > endOffset {
-                return newValue
-            } else {
-                let value = originalValue + ((offset - startOffset) / (endOffset - startOffset)) * (newValue - originalValue)
-                return value
-            }
-        } else {
-            // Handle negative scrolling (offset decreases)
-            if offset > startOffset {
-                return originalValue
-            } else if offset < endOffset {
-                return newValue
-            } else {
-                let value = originalValue - ((startOffset - offset) / (startOffset - endOffset)) * (originalValue - newValue)
-                return value
-            }
-        }
     }
 }
 
@@ -273,15 +149,20 @@ struct HomeView_Previews: PreviewProvider {
 }
 
 
-
-
-private struct ViewOffsetKey: PreferenceKey {
-    static let defaultValue: CGFloat = 0.0
-    
-    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
-        value += nextValue()
+struct ShrinkOnHoverButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? 0.9 : 1)
+            .opacity(configuration.isPressed ? 1 : 1)  // Set opacity to 1 when pressed
+            .animation(.easeInOut(duration: 0.2), value: configuration.isPressed)
+            .scaleEffect(configuration.isPressed ? 0.9 : 1)
+            .animation(.easeInOut, value: configuration.isPressed)
     }
 }
+
+
+
+
 
 private struct NoPlaylistsFoundView: View {
     var body: some View {
@@ -310,6 +191,7 @@ private struct PlaylistGridSquare: View {
         VStack(alignment: .leading) {
             
             if !playlistInfo.playlist.images.isEmpty {
+                
                 AsyncImage(urlString: playlistInfo.playlist.images[0].url.absoluteString) {
                     Rectangle()
                         .foregroundStyle(Color(UIColor.secondarySystemGroupedBackground))
@@ -379,57 +261,3 @@ private struct PlaylistGridSquare: View {
     }
 }
 
-private struct TopBarView: View {
-    @EnvironmentObject var beatFluxViewModel: BeatFluxViewModel
-    @Binding var showSettings: Bool
-    @Binding var showSpotifyPlaylistListView: Bool
-    
-    var body: some View {
-        VStack {
-            HStack {
-                Image("BeatFluxLogo")
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .frame(width: 40)
-                    .cornerRadius(16)
-            }
-            .frame(maxWidth: .infinity)
-            .overlay(alignment: .trailing) {
-                Button {
-                    showSpotifyPlaylistListView.toggle()
-                } label: {
-                    Circle()
-                        .frame(width: 35)
-                        .foregroundStyle(Color(UIColor.systemGray5))
-                        .overlay {
-                            Image(systemName: "plus")
-                                .fontWeight(.bold)
-                                .font(.subheadline)
-                        }
-                    
-                    
-                    
-                }
-                .disabled(!beatFluxViewModel.isViewModelFullyLoaded)
-                .padding(.trailing)
-            }
-            
-            .overlay(alignment: .leading) {
-                    Button {
-                        showSettings.toggle()
-                    } label: {
-                        Circle()
-                            .frame(width: 35)
-                            .foregroundStyle(Color(UIColor.systemGray5))
-                            .overlay {
-                                Image(systemName: "person.fill")
-                            }
-                    }
-                    .disabled(!beatFluxViewModel.isViewModelFullyLoaded)
-                    .padding(.leading)
-            }
-            
-            
-        }
-    }
-}

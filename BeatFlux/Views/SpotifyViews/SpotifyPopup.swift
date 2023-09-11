@@ -155,11 +155,17 @@ struct SpotifyAuthenticationView: View {
                     if let index = spotify.spotifyData.playlists.firstIndex(where: { $0.playlist.id == details.playlist.id }) { //check if the playlist already exists; if it does overwrite it
                         DispatchQueue.main.async {
                             spotify.spotifyData.playlists[index] = details
+                            Task {
+                                await spotify.uploadSpotifyData()
+                            }
                         }
                     }
                     else {
                         DispatchQueue.main.async {
                             spotify.spotifyData.playlists.append(details)
+                            Task {
+                                await spotify.uploadSpotifyData()
+                            }
                         }
                     }
                 }
