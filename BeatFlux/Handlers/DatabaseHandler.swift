@@ -169,7 +169,8 @@ final class DatabaseHandler {
         return try await withCheckedThrowingContinuation { continuation in
             let docRef = firestore.collection("users").document(user.uid)
             
-            docRef.getDocument { (document, error) in
+            docRef.getDocument { [weak self] (document, error) in
+                guard let self = self else { return }
                 if let document = document, document.exists {
                     var spotifyData: SpotifyDataModel = SpotifyDataModel.defaultData
                     
@@ -181,12 +182,30 @@ final class DatabaseHandler {
                             spotifyData.authorization_manager = authManager
                         }
                         
-                        if let playlistsData = document.get("playlists") as? String {
-                            let playlists = try decoder.decode([PlaylistInfo].self, from: Data(playlistsData.utf8))
-                            spotifyData.playlists = playlists
-                        }
+                        // Reference to the playlists sub-collection
+                        let playlistsCollection = self.firestore.collection("users").document(user.uid).collection("playlists")
                         
-                        continuation.resume(returning: spotifyData)
+                        playlistsCollection.getDocuments { (querySnapshot, error) in
+                            if let error = error {
+                                print("ERROR: \(error)")
+                                continuation.resume(throwing: error)
+                                return
+                            }
+                            
+                            var playlists: [PlaylistInfo] = []
+                            
+                            for document in querySnapshot!.documents {
+                                if let playlistData = document.get("data") as? String {
+                                    let playlist = try? decoder.decode(PlaylistInfo.self, from: Data(playlistData.utf8))
+                                    if let playlist = playlist {
+                                        playlists.append(playlist)
+                                    }
+                                }
+                            }
+                            
+                            spotifyData.playlists = playlists
+                            continuation.resume(returning: spotifyData)
+                        }
                         
                     } catch {
                         print("ERROR: decoding data: \(error)")
@@ -248,51 +267,146 @@ final class DatabaseHandler {
         
     }
     
+    func uploadSpecificFieldFromPlaylistCollection(playlist: PlaylistInfo, delete: Bool = false) async throws {
+        guard let user = user else {
+            throw UserError.nilUser
+        }
+        
+        let playlistsCollection = firestore.collection("users").document(user.uid).collection("playlists")
+        
+        // Upload playlist individually
+        let playlistEncoded = try JSONEncoder().encode(playlist)
+        guard let playlistString = String(data: playlistEncoded, encoding: .utf8) else {
+            return
+        }
+        if delete {
+            return try await withCheckedThrowingContinuation { continuation in
+                playlistsCollection.document(playlist.playlist.id).delete() { error in
+                    if let error = error {
+                        print("ERROR: Deleting field failed: \(error)")
+                        continuation.resume(throwing: error)
+                    } else {
+                        print("SUCCESS: Field was successfully deleted")
+                        continuation.resume()
+                    }
+                }
+            }
+        }
+        
+        
+        // Use playlist.id as the document ID for easier querying later
+        return try await withCheckedThrowingContinuation { continuation in
+            
+            playlistsCollection.document(playlist.playlist.id).setData(["data": playlistString], merge: true) { error in
+                if let error = error {
+                    print("ERROR: Writing data failed: \(error)")
+                    continuation.resume(throwing: error)
+                } else {
+                    print("SUCCESS: Data was successfully written")
+                    continuation.resume()
+                }
+            }
+        }
+    }
+    
+    func uploadSpotifyAuthManager(from data: SpotifyDataModel) async throws {
+        guard let user = user else {
+            print("ERROR: Failed to upload data to database because the user is nil")
+            throw UserError.nilUser
+        }
+        
+        do {
+            // Serialize and upload authorization_manager
+            let authManagerEncoded = try JSONEncoder().encode(data.authorization_manager)
+            let authDataString = String(data: authManagerEncoded, encoding: .utf8)
+            
+            guard let authDataString = authDataString else {
+                return
+            }
+            
+            try await firestore.collection("users")
+                .document(user.uid)
+                .setData(["authorization_manager": authDataString], merge: true)
+            
+            print("SUCCESS: Authorization manager was successfully written")
+            
+        } catch {
+            print("ERROR: Unable to encode: \(error)")
+            throw error
+        }
+    }
+    
     func uploadSpotifyData(from data: SpotifyDataModel) async throws {
         guard let user = user else {
             print("ERROR: Failed to upload data to database because the user is nil")
             throw UserError.nilUser
         }
         
-        return try await withCheckedThrowingContinuation { continuation in
-            do {
-                let authManagerEncodedManager = try JSONEncoder().encode(data.authorization_manager)
-                let authDataString = String(data: authManagerEncodedManager, encoding: .utf8)
+        do {
+                try deleteAllPlaylists()
+                // Serialize and upload authorization_manager
+                let authManagerEncoded = try JSONEncoder().encode(data.authorization_manager)
+                let authDataString = String(data: authManagerEncoded, encoding: .utf8)
                 
-                let playlistEncodedManager = try JSONEncoder().encode(data.playlists)
-                let authPlaylistString = String(data: playlistEncodedManager, encoding: .utf8)
-                
-                guard let authDataString = authDataString, let authPlaylistString = authPlaylistString else {
+                guard let authDataString = authDataString else {
                     return
                 }
                 
-                firestore.collection("users")
+                try await firestore.collection("users")
                     .document(user.uid)
-                    .setData(["authorization_manager": authDataString, "playlists": authPlaylistString], merge: true)
+                    .setData(["authorization_manager": authDataString], merge: true)
                 
-                    .sink(
-                        receiveCompletion: { completion in
-                            switch completion {
-                            case .finished:
-                                continuation.resume()
-                            case .failure(let error):
-                                print("ERROR: Writing data failed: \(error)")
-                                continuation.resume(throwing: error)
-                            }
-                        },
-                        receiveValue: {
-                            print("SUCCESS: Value was successfully written")
-                        }
-                    )
-                    .store(in: &cancellables)
+                // Reference to the playlists sub-collection
+                let playlistsCollection = firestore.collection("users").document(user.uid).collection("playlists")
+                
+                // Upload each playlist individually
+                for playlist in data.playlists {
+                    let playlistEncoded = try JSONEncoder().encode(playlist)
+                    let playlistString = String(data: playlistEncoded, encoding: .utf8)
+                    
+                    guard let playlistString = playlistString else {
+                        continue
+                    }
+                    
+                    // Use playlist.id as the document ID for easier querying later
+                    try await playlistsCollection.document(playlist.playlist.id)
+                        .setData(["data": playlistString], merge: true)
+                }
+                
+                print("SUCCESS: Data was successfully written")
+                
             } catch {
                 print("ERROR: Unable to encode: \(error)")
+                throw error
+            }
+        
+    }
+    
+    func deleteAllPlaylists() throws {
+        guard let user = user else {
+            throw UserError.nilUser
+        }
+        // Reference to the playlists sub-collection
+        let playlistsCollection = firestore.collection("users").document(user.uid).collection("playlists")
+        
+        // Fetch all documents in the sub-collection
+        playlistsCollection.getDocuments { (querySnapshot, error) in
+            if let error = error {
+                print("ERROR: \(error)")
+                return
             }
             
-            
-            
+            // Loop through all documents and delete them
+            for document in querySnapshot!.documents {
+                document.reference.delete { error in
+                    if let error = error {
+                        print("ERROR: Failed to delete document: \(error)")
+                    } else {
+                        print("Document successfully deleted")
+                    }
+                }
+            }
         }
-        
     }
     
     func uploadUserData(from data: UserModel) async throws {

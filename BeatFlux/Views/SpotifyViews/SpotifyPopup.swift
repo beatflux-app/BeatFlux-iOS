@@ -156,7 +156,7 @@ struct SpotifyAuthenticationView: View {
                         DispatchQueue.main.async {
                             spotify.spotifyData.playlists[index] = details
                             Task {
-                                await spotify.uploadSpotifyData()
+                                await spotify.uploadSpecificFieldFromPlaylistCollection(playlist: details, delete: false)
                             }
                         }
                     }
@@ -164,7 +164,7 @@ struct SpotifyAuthenticationView: View {
                         DispatchQueue.main.async {
                             spotify.spotifyData.playlists.append(details)
                             Task {
-                                await spotify.uploadSpotifyData()
+                                await spotify.uploadSpecificFieldFromPlaylistCollection(playlist: details, delete: false)
                             }
                         }
                     }

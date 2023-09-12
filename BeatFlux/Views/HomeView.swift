@@ -47,9 +47,6 @@ struct HomeView: View {
                                     NoPlaylistsFoundView()
                                 }
                             }
-                            else {
-                                NoPlaylistsFoundView()
-                            }
                         }
                     }
                 }
@@ -63,15 +60,15 @@ struct HomeView: View {
                             .fontWeight(.semibold)
 
                     }
-                    .opacity(beatFluxViewModel.isViewModelFullyLoaded ? 0 : 1)
+                    .opacity(beatFluxViewModel.isViewModelFullyLoaded && spotify.isSpotifyInitializationLoaded ? 0 : 1)
                 }
                 .navigationTitle("Backups")
                 .refreshable {
                     spotify.refreshUserPlaylistArray()
                     spotify.refreshUsersBackedUpPlaylistArray()
 
-//                      await beatFluxViewModel.retrieveUserData()
-//                      await spotify.retrieveSpotifyData()
+//                  await beatFluxViewModel.retrieveUserData()
+//                  await spotify.retrieveSpotifyData()
                     
                 }
                 .scrollIndicators(.hidden)

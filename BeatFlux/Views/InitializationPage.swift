@@ -20,35 +20,38 @@ struct InitializationPage: View {
     }
     
     var body: some View {
-        if beatFluxViewModel.isUserLoggedIn {
-            TabView(selection: $selectedTab) {
-                HomeView()
-                    .onAppear {
-                        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-                    }
-                    .environmentObject(beatFluxViewModel)
-                    .environmentObject(spotify)
-                    .tabItem {
-                        Label("Home", systemImage: "house.fill")
-                    }
-                    .tag(0)
-                
-                SettingsView()
-                    .onAppear {
-                        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-                    }
-                    .tabItem {
-                        Label("Settings", systemImage: "gearshape.fill")
-                    }
-                    .tag(1)
+        if beatFluxViewModel.isViewModelFullyLoaded {
+            if beatFluxViewModel.isUserLoggedIn {
+                TabView(selection: $selectedTab) {
+                    HomeView()
+                        .onAppear {
+                            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                        }
+                        .environmentObject(beatFluxViewModel)
+                        .environmentObject(spotify)
+                        .tabItem {
+                            Label("Home", systemImage: "house.fill")
+                        }
+                        .tag(0)
                     
+                    SettingsView()
+                        .onAppear {
+                            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                        }
+                        .tabItem {
+                            Label("Settings", systemImage: "gearshape.fill")
+                        }
+                        .tag(1)
+                        
+                }
+                
             }
-            
+            else {
+                WelcomePageView()
+                    .environmentObject(beatFluxViewModel)
+            }
         }
-        else {
-            WelcomePageView()
-                .environmentObject(beatFluxViewModel)
-        }
+        
     }
 }
 

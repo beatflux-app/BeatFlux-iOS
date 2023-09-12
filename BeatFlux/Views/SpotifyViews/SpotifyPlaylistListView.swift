@@ -163,12 +163,20 @@ private struct PlaylistRow: View {
           isPresented: $isPresentingConfirm) {
           Button("Delete Backup", role: .destructive) {
               if let savedPlaylistIndex = spotify.spotifyData.playlists.firstIndex(where: { $0.playlist.id == playlist.playlist.id }) {
-                  //playlist is already saved
-                  spotify.spotifyData.playlists.remove(at: savedPlaylistIndex)
-                  Task {
-                      await self.spotify.uploadSpotifyData()
+                      // Make a copy of the playlist to delete
+                      let playlistToDelete = spotify.spotifyData.playlists[savedPlaylistIndex]
+                      
+                      // Perform the deletion operation
+                      Task {
+                          await spotify.uploadSpecificFieldFromPlaylistCollection(playlist: playlistToDelete, delete: true)
+                          
+                          // If successful, update the array
+                          DispatchQueue.main.async {
+                              spotify.spotifyData.playlists.remove(at: savedPlaylistIndex)
+                          }
+
+                      }
                   }
-              }
            }
          } message: {
              Text("You cannot undo this action")

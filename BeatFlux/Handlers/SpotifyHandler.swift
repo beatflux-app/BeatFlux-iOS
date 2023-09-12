@@ -109,10 +109,6 @@ final class Spotify: ObservableObject {
             let data = try await DatabaseHandler.shared.getSpotifyData()
             DispatchQueue.main.async {
                 self.spotifyData = data
-                Task { [weak self] in
-                    guard let self = self else { return }
-                    await self.uploadSpotifyData()
-                }
             }
             
             
@@ -129,6 +125,24 @@ final class Spotify: ObservableObject {
         }
         catch {
             print("ERROR: Failed to upload user data: \(error.localizedDescription)")
+        }
+    }
+    
+    func uploadSpotifyAuthManager() async {
+        do {
+            try await DatabaseHandler.shared.uploadSpotifyAuthManager(from: spotifyData)
+        }
+        catch {
+            print("ERROR: Failed to upload spotify auth manager: \(error.localizedDescription)")
+        }
+    }
+    
+    func uploadSpecificFieldFromPlaylistCollection(playlist: PlaylistInfo, delete: Bool = false) async {
+        do {
+            try await DatabaseHandler.shared.uploadSpecificFieldFromPlaylistCollection(playlist: playlist, delete: delete)
+        }
+        catch {
+            print("ERROR: Failed to update specific field in the database: \(error.localizedDescription)")
         }
     }
     
@@ -268,6 +282,10 @@ final class Spotify: ObservableObject {
         // Save the data to the keychain.
         if DatabaseHandler.shared.user != nil {
             spotifyData.authorization_manager = self.api.authorizationManager
+            Task {
+                await uploadSpotifyAuthManager()
+            }
+            
         }
         else {
             print("ERROR: Unable to save user, user is nil")
@@ -286,6 +304,9 @@ final class Spotify: ObservableObject {
         
         if DatabaseHandler.shared.user != nil {
             spotifyData.authorization_manager = nil
+            Task {
+                await uploadSpotifyAuthManager()
+            }
         }
         else {
             print("ERROR: Unable to save user, user is nil")
@@ -381,24 +402,28 @@ final class Spotify: ObservableObject {
             for (index, playlist) in self.spotifyData.playlists.enumerated() {
                 if let fetchedPlaylist = fetchedPlaylists.items.first(where: { $0.id == playlist.playlist.id }) {
                     
-                    group.enter()
-                    
-                    self.convertSpotifyPlaylistToCustom(playlist: fetchedPlaylist, completion: { convertedPlaylist in
-                        DispatchQueue.main.async { [weak self] in
-                            guard let self = self else { return }
-                            self.spotifyData.playlists[index] = convertedPlaylist
-                        }
+                    if fetchedPlaylist.snapshotId != playlist.playlist.snapshotId {
+                        group.enter()
                         
-                        group.leave()
-                    })
+                        self.convertSpotifyPlaylistToCustom(playlist: fetchedPlaylist, completion: { convertedPlaylist in
+                            DispatchQueue.main.async { [weak self] in
+                                guard let self = self else { return }
+                                self.spotifyData.playlists[index] = convertedPlaylist
+                                Task {
+                                    await self.uploadSpecificFieldFromPlaylistCollection(playlist: convertedPlaylist, delete: false)
+                                }
+                            }
+                            
+                        })
+                    }
+                    else {
+                        print("Snapshot the same")
+                    }
+                    
+
                 }
             }
-            
-            group.notify(queue: .main) {
-                Task {
-                    await self.uploadSpotifyData()
-                }
-            }
+
             
             
 
@@ -417,7 +442,9 @@ final class Spotify: ObservableObject {
                     self.spotifyData.playlists.append(playlist)
                     Task { [weak self] in
                         guard let self = self else { return }
-                        await self.uploadSpotifyData()
+                        
+                        
+                        await self.uploadSpecificFieldFromPlaylistCollection(playlist: playlist)
                     }
                     completion()
                 }
@@ -445,7 +472,7 @@ final class Spotify: ObservableObject {
                     self.spotifyData.playlists.append(details)
                     Task { [weak self] in
                         guard let self = self else { return }
-                        await self.uploadSpotifyData()
+                        await self.uploadSpecificFieldFromPlaylistCollection(playlist: playlist)
                     }
                     completion()
                 }

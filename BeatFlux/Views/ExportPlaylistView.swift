@@ -62,12 +62,13 @@ struct ExportPlaylistView: View {
                                         .foregroundColor(.primary)
                                         .fontWeight(.semibold)
                                         .font(.headline)
-                                    Text("Overwrites the existing playlist in your library")
+                                    Text("Soon to be removed")
                                         .foregroundColor(.secondary)
                                         .font(.subheadline)
                                 }
                             }
                         }
+                        .disabled(true)
                     }
                 }
             }

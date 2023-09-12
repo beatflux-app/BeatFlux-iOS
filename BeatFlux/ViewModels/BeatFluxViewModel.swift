@@ -26,10 +26,6 @@ class BeatFluxViewModel: ObservableObject {
             DispatchQueue.main.async {
                 self.userData = nil
                 self.isViewModelFullyLoaded = false
-//                Task { [weak self] in
-//                    await self?.uploadUserData()
-//                    
-//                }
             }
             
             Task {
@@ -41,20 +37,7 @@ class BeatFluxViewModel: ObservableObject {
             
         }
     }
-    @Published var userData: UserModel? //{
-//        didSet {
-//            Task {
-//                do {
-//                    if userData != nil && isViewModelFullyLoaded {
-//                        try await uploadUserData()
-//                    }
-//                    
-//                } catch {
-//                    print("ERROR: Failed to upload user data: \(error.localizedDescription)")
-//                }
-//            }
-//        }
-    //}
+    @Published var userData: UserModel?
 
 
     
