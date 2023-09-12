@@ -26,10 +26,10 @@ class BeatFluxViewModel: ObservableObject {
             DispatchQueue.main.async {
                 self.userData = nil
                 self.isViewModelFullyLoaded = false
-                Task { [weak self] in
-                    await self?.uploadUserData()
-                    
-                }
+//                Task { [weak self] in
+//                    await self?.uploadUserData()
+//                    
+//                }
             }
             
             Task {
@@ -94,10 +94,11 @@ class BeatFluxViewModel: ObservableObject {
         monitor.start(queue: queue)
         
         Auth.auth().addStateDidChangeListener { [weak self] auth, user in
+            guard let self = self else { return }
             if let _ = user {
-                self?.isUserLoggedIn = true
+                self.isUserLoggedIn = true
             } else {
-                self?.isUserLoggedIn = false
+                self.isUserLoggedIn = false
             }
         }
         
@@ -119,7 +120,8 @@ class BeatFluxViewModel: ObservableObject {
             DispatchQueue.main.async {
                 self.userData = data
                 Task { [weak self] in
-                    await self?.uploadUserData()
+                    guard let self = self else { return }
+                    await self.uploadUserData()
                     
                 }
             }

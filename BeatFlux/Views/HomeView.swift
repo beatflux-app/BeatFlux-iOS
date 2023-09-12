@@ -67,7 +67,8 @@ struct HomeView: View {
                 }
                 .navigationTitle("Backups")
                 .refreshable {
-                        spotify.refreshUserPlaylistArray()
+                    spotify.refreshUserPlaylistArray()
+                    spotify.refreshUsersBackedUpPlaylistArray()
 
 //                      await beatFluxViewModel.retrieveUserData()
 //                      await spotify.retrieveSpotifyData()

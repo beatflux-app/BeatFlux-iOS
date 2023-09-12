@@ -35,17 +35,7 @@ final class Spotify: ObservableObject {
     @Published var isRetrievingTokens = false
     @Published var currentUser: SpotifyUser? = nil
     @Published var userPlaylists: [PlaylistInfo] = []
-    @Published var spotifyData: SpotifyDataModel = SpotifyDataModel.defaultData //{
-//        didSet {
-//            Task {
-//                do {
-//                    try await uploadSpotifyData()
-//                } catch {
-//                    print("ERROR: Failed to upload user data: \(error.localizedDescription)")
-//                }
-//            }
-//        }
-//    }
+    @Published var spotifyData: SpotifyDataModel = SpotifyDataModel.defaultData
     
     enum SpotifyError: Error {
         case nilSpotifyData
@@ -120,7 +110,8 @@ final class Spotify: ObservableObject {
             DispatchQueue.main.async {
                 self.spotifyData = data
                 Task { [weak self] in
-                    await self?.uploadSpotifyData()
+                    guard let self = self else { return }
+                    await self.uploadSpotifyData()
                 }
             }
             
@@ -355,6 +346,7 @@ final class Spotify: ObservableObject {
             .store(in: &cancellables)
     }
     
+    
     public func refreshUserPlaylistArray() {
         self.getUserPlaylists { playlists in
             
@@ -379,14 +371,52 @@ final class Spotify: ObservableObject {
         }
     }
     
+    public func refreshUsersBackedUpPlaylistArray() {
+        self.getUserPlaylists { [weak self] fetchedPlaylists in
+            guard let self = self else { return }
+            guard let fetchedPlaylists = fetchedPlaylists else { return }
+            
+            let group = DispatchGroup()
+            
+            for (index, playlist) in self.spotifyData.playlists.enumerated() {
+                if let fetchedPlaylist = fetchedPlaylists.items.first(where: { $0.id == playlist.playlist.id }) {
+                    
+                    group.enter()
+                    
+                    self.convertSpotifyPlaylistToCustom(playlist: fetchedPlaylist, completion: { convertedPlaylist in
+                        DispatchQueue.main.async { [weak self] in
+                            guard let self = self else { return }
+                            self.spotifyData.playlists[index] = convertedPlaylist
+                        }
+                        
+                        group.leave()
+                    })
+                }
+            }
+            
+            group.notify(queue: .main) {
+                Task {
+                    await self.uploadSpotifyData()
+                }
+            }
+            
+            
+
+        }
+        
+
+    }
+    
     public func backupPlaylist(playlist: PlaylistInfo, completion: @escaping () -> Void) {
         self.getUserPlaylists { fetchedPlaylists in
             guard let fetchedPlaylists else { return }
             
+            //if we don't find an existing playlist then add to the list
             guard let item = fetchedPlaylists.items.first(where: { $0.id == playlist.playlist.id }) else {
                 DispatchQueue.main.async {
                     self.spotifyData.playlists.append(playlist)
-                    Task {
+                    Task { [weak self] in
+                        guard let self = self else { return }
                         await self.uploadSpotifyData()
                     }
                     completion()
@@ -395,40 +425,31 @@ final class Spotify: ObservableObject {
             }
             
             //helps save on api calls
-            //if playlist.playlist.snapshotId != item.snapshotId {
-                //print("Different version")
-                
-                    self.convertSpotifyPlaylistToCustom(playlist: item) { details in
-                        if let index = self.userPlaylists.firstIndex(where: { $0.playlist.id == details.playlist.id }) {
-                            DispatchQueue.main.async {
-                                self.userPlaylists[index] = details
-                            }
-                            
-                        }
-                        else {
-                            DispatchQueue.main.async {
-                                self.userPlaylists.append(details)
-                            }
-                            
-                        }
-                        
-                        
-                        
-                        DispatchQueue.main.async {
-                            self.spotifyData.playlists.append(details)
-                            Task {
-                                await self.uploadSpotifyData()
-                            }
-                            completion()
-                        }
+            self.convertSpotifyPlaylistToCustom(playlist: item) { details in
+                if let index = self.userPlaylists.firstIndex(where: { $0.playlist.id == details.playlist.id }) {
+                    DispatchQueue.main.async {
+                        self.userPlaylists[index] = details
                     }
-                //}
-//                else {
-//                    DispatchQueue.main.async {
-//                        self.spotifyData.playlists.append(playlist)
-//                        completion()
-//                    }
-//                }
+                    
+                }
+                else {
+                    DispatchQueue.main.async {
+                        self.userPlaylists.append(details)
+                    }
+                    
+                }
+                
+                
+                
+                DispatchQueue.main.async {
+                    self.spotifyData.playlists.append(details)
+                    Task { [weak self] in
+                        guard let self = self else { return }
+                        await self.uploadSpotifyData()
+                    }
+                    completion()
+                }
+            }
         }
 
     }
