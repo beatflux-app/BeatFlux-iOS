@@ -185,26 +185,41 @@ final class DatabaseHandler {
                         // Reference to the playlists sub-collection
                         let playlistsCollection = self.firestore.collection("users").document(user.uid).collection("playlists")
                         
+                        let group = DispatchGroup()
+                        
+                        var playlists: [PlaylistInfo] = []
+                        
                         playlistsCollection.getDocuments { (querySnapshot, error) in
                             if let error = error {
                                 print("ERROR: \(error)")
                                 continuation.resume(throwing: error)
                                 return
                             }
-                            
-                            var playlists: [PlaylistInfo] = []
-                            
+
                             for document in querySnapshot!.documents {
                                 if let playlistData = document.get("data") as? String {
                                     let playlist = try? decoder.decode(PlaylistInfo.self, from: Data(playlistData.utf8))
-                                    if let playlist = playlist {
-                                        playlists.append(playlist)
+
+                                    if var playlist = playlist {
+                                        // Enter the group before starting the async operation
+                                        group.enter()
+
+                                        self.getPlaylistsVersionHistory(playlist: playlist) { versionHistory in
+                                            playlist.versionHistory = versionHistory
+                                            playlists.append(playlist)
+
+                                            // Leave the group when the operation is done
+                                            group.leave()
+                                        }
                                     }
                                 }
                             }
-                            
-                            spotifyData.playlists = playlists
-                            continuation.resume(returning: spotifyData)
+
+                            // Wait for all the async operations to complete
+                            group.notify(queue: .main) {
+                                spotifyData.playlists = playlists
+                                continuation.resume(returning: spotifyData)
+                            }
                         }
                         
                     } catch {
@@ -219,6 +234,42 @@ final class DatabaseHandler {
                 }
             }
         }
+    }
+    
+    func getPlaylistsVersionHistory(playlist: PlaylistInfo, completion: @escaping([priorBackupInfo]) -> ()) {
+        guard let user = user else { 
+            completion([])
+            return
+        }
+        let versionHistoryCollection = firestore.collection("users").document(user.uid).collection("playlists").document(playlist.playlist.id).collection("versionHistory")
+        let decoder = JSONDecoder()
+        var versionHistoryArray: [priorBackupInfo] = []
+        let group = DispatchGroup()
+        
+        group.enter()
+        
+        versionHistoryCollection.getDocuments { (querySnapshot, error) in
+            guard let querySnapshot = querySnapshot else {
+                group.leave()
+                return
+            }
+            for document in querySnapshot.documents {
+                if let versionHistroy = document.get("data") as? String {
+                    let backup = try? decoder.decode(priorBackupInfo.self, from: Data(versionHistroy.utf8))
+                    if let backup = backup {
+                        versionHistoryArray.append(backup)
+                    }
+                }
+            }
+            
+            group.leave()
+        }
+        group.notify(queue: .main) {
+            print("SUCCESS: All version histories for playlist: \(playlist.playlist.id) have been fetched: (\(versionHistoryArray.count))")
+            
+            completion(versionHistoryArray)
+        }
+        
     }
     
     
@@ -273,6 +324,9 @@ final class DatabaseHandler {
         }
         
         let playlistsCollection = firestore.collection("users").document(user.uid).collection("playlists")
+        let versionHistoryCollection = firestore.collection("users").document(user.uid).collection("playlists").document(playlist.playlist.id).collection("versionHistory")
+        
+        
         
         // Upload playlist individually
         let playlistEncoded = try JSONEncoder().encode(playlist)
@@ -281,6 +335,21 @@ final class DatabaseHandler {
         }
         if delete {
             return try await withCheckedThrowingContinuation { continuation in
+                versionHistoryCollection.getDocuments { snapshot, error in
+                    guard let snapshot = snapshot else { return }
+                    
+                    for document in snapshot.documents {
+                        document.reference.delete() { error in
+                            if let error = error {
+                                print("ERROR: Deleting field failed: \(error)")
+                                continuation.resume(throwing: error)
+                            } else {
+                                print("SUCCESS: Field was successfully deleted")
+                            }
+                        }
+                    }
+                }
+                
                 playlistsCollection.document(playlist.playlist.id).delete() { error in
                     if let error = error {
                         print("ERROR: Deleting field failed: \(error)")
@@ -296,13 +365,27 @@ final class DatabaseHandler {
         
         // Use playlist.id as the document ID for easier querying later
         return try await withCheckedThrowingContinuation { continuation in
-            
             playlistsCollection.document(playlist.playlist.id).setData(["data": playlistString], merge: true) { error in
                 if let error = error {
                     print("ERROR: Writing data failed: \(error)")
                     continuation.resume(throwing: error)
                 } else {
                     print("SUCCESS: Data was successfully written")
+                    
+                    let priorBackupsCollection = playlistsCollection.document(playlist.playlist.id).collection("versionHistory")
+                    
+                    let priorBackupInfoEncoded = try? JSONEncoder().encode(priorBackupInfo(playlist: playlist, versionDate: Date()))
+                    guard let priorBackupInfoEncoded = priorBackupInfoEncoded else { return }
+                    guard let priorBackupInfoString = String(data: priorBackupInfoEncoded, encoding: .utf8) else { return }
+                    
+                    priorBackupsCollection.document(UUID().uuidString).setData(["data": priorBackupInfoString]) { error in
+                        if let error = error {
+                            print("ERROR: Error while saving version history: \(error)")
+                        }
+                    }
+                    
+                    
+                    
                     continuation.resume()
                 }
             }

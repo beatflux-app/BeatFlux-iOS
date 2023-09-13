@@ -8,11 +8,30 @@
 import SwiftUI
 
 struct IntroIconView: View {
-    var body: some View {
-        Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
-    }
+    @State private var scale: CGFloat = 1.0
+        
+        var body: some View {
+            VStack {
+                Spacer()
+                Image("BeatFluxLogo")
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+                    .frame(width: 60, height: 60)
+                    .scaleEffect(scale)
+                    .onAppear {
+                        let animation = Animation.easeInOut(duration: 0.3)
+                            .repeatForever(autoreverses: true)
+                        withAnimation(animation) {
+                            scale = 1.1
+                        }
+                    }
+                Spacer()
+            }
+        }
 }
 
-#Preview {
-    IntroIconView()
+struct IntroIconView_Previews: PreviewProvider {
+    static var previews: some View {
+        IntroIconView()
+    }
 }

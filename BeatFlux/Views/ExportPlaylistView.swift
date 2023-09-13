@@ -19,7 +19,7 @@ struct ExportPlaylistView: View {
     var playlistToExport: PlaylistInfo
     
     var body: some View {
-        NavigationView {
+        
             Form {
                 NavigationLink(destination: CreateNewPlaylistView(playlistToExport: playlistToExport, showExportView: $showExportView)) {
                     HStack(spacing: 13) {
@@ -38,39 +38,6 @@ struct ExportPlaylistView: View {
                         }
                     }
                 }
-                
-                if spotify.userPlaylists.first(where: { $0.playlist.id == playlistToExport.playlist.id }) != nil {
-                    
-                    if let currentUserId = spotify.currentUser?.id,
-                       let playlistOwnerId = playlistToExport.playlist.owner?.id,
-                       currentUserId == playlistOwnerId {
-                        
-                        Button {
-                            let uris = spotify.retrieveTrackURIFromPlaylist(playlist: playlistToExport)
-
-                            spotify.replaceAllSongsInPlaylist(playlistToExport.playlist.uri, with: uris)
-                            
-                            showExportView = false
-                        } label: {
-                            HStack(spacing: 13) {
-                                Image(systemName: "arrow.left.arrow.right.square.fill")
-                                    .font(.largeTitle)
-                                    .foregroundColor(.accentColor)
-                                
-                                VStack(alignment: .leading, spacing: 1) {
-                                    Text("Overwrite your old playlist")
-                                        .foregroundColor(.primary)
-                                        .fontWeight(.semibold)
-                                        .font(.headline)
-                                    Text("Soon to be removed")
-                                        .foregroundColor(.secondary)
-                                        .font(.subheadline)
-                                }
-                            }
-                        }
-                        .disabled(true)
-                    }
-                }
             }
             .navigationTitle("Export Options")
             .navigationBarTitleDisplayMode(.inline)
@@ -85,5 +52,5 @@ struct ExportPlaylistView: View {
                 }
             }
         }
-    }
+    
 }

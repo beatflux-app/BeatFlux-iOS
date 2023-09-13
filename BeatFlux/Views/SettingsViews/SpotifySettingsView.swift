@@ -22,7 +22,16 @@ struct SpotifySettingsView: View {
                     .frame(width: 45)
                 
                 VStack(alignment: .leading) {
-                    RedactedView(isRedacted: !beatFluxViewModel.isConnected, text: Text(spotify.currentUser?.displayName ?? "Account Not Linked").fontWeight(.semibold))
+                    if (spotify.isSpotifyInitializationLoaded) {
+                        RedactedView(isRedacted: !beatFluxViewModel.isConnected, text: Text(spotify.currentUser?.displayName ?? "Account Not Linked").fontWeight(.semibold))
+                    }
+                    else {
+
+                        ProgressView()
+                        
+                        
+                    }
+                    
                         
                     Text("Spotify")
                         .foregroundColor(.secondary)

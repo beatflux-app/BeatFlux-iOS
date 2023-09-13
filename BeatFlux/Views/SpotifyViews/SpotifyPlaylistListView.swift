@@ -81,9 +81,13 @@ private struct PlaylistImage: View {
             if !playlist.playlist.images.isEmpty {
                 AsyncImage(urlString: playlist.playlist.images[0].url.absoluteString) {
                     Rectangle()
-                        .foregroundStyle(Color(UIColor.secondarySystemGroupedBackground))
+                        .foregroundStyle(Color.secondary)
                         .aspectRatio(contentMode: .fill)
                         .redacted(reason: .placeholder)
+                        .frame(width: 50, height: 50)
+                        .overlay {
+                            ProgressView()
+                        }
                 } content: {
                     Image(uiImage: $0)
                         .resizable()
@@ -135,6 +139,7 @@ private struct PlaylistRow: View {
             Spacer()
 
             Button {
+                UIImpactFeedbackGenerator(style: .medium).impactOccurred()
                 if spotify.spotifyData.playlists.firstIndex(where: { $0.playlist.id == playlist.playlist.id }) != nil {
                     //playlist is already saved
                     isPresentingConfirm = true
@@ -143,6 +148,7 @@ private struct PlaylistRow: View {
                     loadingPlaylistID = playlist.playlist.id
                     spotify.backupPlaylist(playlist: playlist) {
                         loadingPlaylistID = nil
+                        spotify.refreshUsersBackedUpPlaylistArray()
                     }
                     
                     
@@ -174,6 +180,9 @@ private struct PlaylistRow: View {
                           DispatchQueue.main.async {
                               spotify.spotifyData.playlists.remove(at: savedPlaylistIndex)
                           }
+                          
+                          spotify.refreshUserPlaylistArray()
+                          spotify.refreshUsersBackedUpPlaylistArray()
 
                       }
                   }

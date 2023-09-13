@@ -17,12 +17,22 @@ struct HomeView: View {
     @State var isLoading = false
     @State var showSpotifyPlaylistListView: Bool = false
     
+    
+    init() {
+
+//         //UINavigationBar.appearance().setBackgroundImage(UIImage(), for: UIBarMetrics.default)
+//         //UINavigationBar.appearance().shadowImage = UIImage()
+//         UINavigationBar.appearance().isTranslucent = false
+//         UINavigationBar.appearance().tintColor = .clear
+//         UINavigationBar.appearance().backgroundColor = .systemBackground
+    }
+    
     var body: some View {
         ZStack {
             NavigationView {
                 ScrollView {
                     VStack {
-                        if beatFluxViewModel.isViewModelFullyLoaded {
+                        if beatFluxViewModel.isViewModelFullyLoaded && spotify.isSpotifyInitializationLoaded {
                             if beatFluxViewModel.userData != nil {
                                 if !spotify.spotifyData.playlists.isEmpty {
                                     let playlists = spotify.spotifyData.playlists
@@ -31,15 +41,13 @@ struct HomeView: View {
                                     
                                     Grid {
                                         ForEach(0..<chunks.count, id: \.self) { index in
-                                            
-                                            GridRow(alignment: .top) {
-                                                ForEach(chunks[index], id: \.self) { playlist in
-                                                    PlaylistGridSquare(playlistInfo: playlist)
+                                                GridRow(alignment: .top) {
+                                                    ForEach(chunks[index], id: \.self) { playlist in
+                                                        PlaylistGridSquare(playlistInfo: playlist)
+                                                            .frame(maxWidth: .infinity, alignment: .leading) // Align to leading
+                                                    }
                                                 }
                                             }
-                                            
-                                            
-                                        }
                                     }
                                     .padding(.horizontal)
                                 }
@@ -50,31 +58,34 @@ struct HomeView: View {
                         }
                     }
                 }
-                .overlay {
-                    VStack(spacing: 20) {
-                        LoadingIndicator(color: .accentColor, lineWidth: 4.0)
-                            .frame(width: 25, height: 25)
-
-                        Text("Loading...")
-                            .foregroundStyle(.secondary)
-                            .fontWeight(.semibold)
-
-                    }
-                    .opacity(beatFluxViewModel.isViewModelFullyLoaded && spotify.isSpotifyInitializationLoaded ? 0 : 1)
-                }
                 .navigationTitle("Backups")
                 .refreshable {
                     spotify.refreshUserPlaylistArray()
                     spotify.refreshUsersBackedUpPlaylistArray()
+                    
+                    
 
 //                  await beatFluxViewModel.retrieveUserData()
-//                  await spotify.retrieveSpotifyData()
+                  //await spotify.retrieveSpotifyData()
                     
                 }
                 .scrollIndicators(.hidden)
                 
+                .toolbarBackground(Color(UIColor.systemBackground), for: .navigationBar)
+                
             }
-            
+            .overlay {
+                VStack(spacing: 20) {
+                    LoadingIndicator(color: .accentColor, lineWidth: 4.0)
+                        .frame(width: 25, height: 25)
+
+                    Text("Loading...")
+                        .foregroundStyle(.secondary)
+                        .fontWeight(.semibold)
+
+                }
+                .opacity(beatFluxViewModel.isViewModelFullyLoaded && spotify.isSpotifyInitializationLoaded ? 0 : 1)
+            }
             
             VStack {
                 Spacer()
@@ -168,10 +179,13 @@ private struct NoPlaylistsFoundView: View {
             Spacer()
             Image(systemName: "questionmark.app.dashed")
                 .font(.largeTitle)
+                .foregroundStyle(.secondary)
             Text("No Backups Found")
+                .foregroundStyle(.secondary)
                 .font(.title3)
                 .fontWeight(.semibold)
                 .padding(.top, 5)
+            
             
         }
     }
@@ -181,6 +195,7 @@ private struct PlaylistGridSquare: View {
     var playlistInfo: PlaylistInfo
     
     @State var showExportView: Bool = false
+    @State var showPlaylistVersionHistory = false
     
     var body: some View {
         
@@ -252,9 +267,26 @@ private struct PlaylistGridSquare: View {
                     
                 }
             }
+            Button {
+                showPlaylistVersionHistory = true
+            } label: {
+                HStack {
+                    Text("Version History")
+                    Spacer()
+                    Image(systemName: "clock")
+                }
+            }
         }))
         .sheet(isPresented: $showExportView) {
-            ExportPlaylistView(showExportView: $showExportView, playlistToExport: playlistInfo)
+            NavigationView {
+                ExportPlaylistView(showExportView: $showExportView, playlistToExport: playlistInfo)
+            }
+            
+        }
+        .sheet(isPresented: $showPlaylistVersionHistory) {
+            
+            PlaylistVersionHistory(showPlaylistVersionHistory: $showPlaylistVersionHistory, playlistInfo: playlistInfo)
+
         }
     }
 }

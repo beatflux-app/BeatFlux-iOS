@@ -51,6 +51,9 @@ struct InitializationPage: View {
                     .environmentObject(beatFluxViewModel)
             }
         }
+        else {
+            IntroIconView()
+        }
         
     }
 }

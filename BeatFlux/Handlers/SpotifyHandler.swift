@@ -97,9 +97,6 @@ final class Spotify: ObservableObject {
     
     func loadSpotifyData() async {
         await retrieveSpotifyData()
-        DispatchQueue.main.async {
-            self.isSpotifyInitializationLoaded = true
-        }
     }
     
 
@@ -110,6 +107,7 @@ final class Spotify: ObservableObject {
             DispatchQueue.main.async {
                 self.spotifyData = data
             }
+            
             
             
         }
@@ -138,7 +136,7 @@ final class Spotify: ObservableObject {
     }
     
     func uploadSpecificFieldFromPlaylistCollection(playlist: PlaylistInfo, delete: Bool = false) async {
-        do {
+        do {            
             try await DatabaseHandler.shared.uploadSpecificFieldFromPlaylistCollection(playlist: playlist, delete: delete)
         }
         catch {
@@ -165,6 +163,9 @@ final class Spotify: ObservableObject {
                 
                 guard let authManagerData = try await DatabaseHandler.shared.getSpotifyData().authorization_manager else {
                     print("Did NOT find authorization information in keychain")
+                    DispatchQueue.main.async {
+                        self.isSpotifyInitializationLoaded = true
+                    }
                     return
                 }
 
@@ -177,25 +178,32 @@ final class Spotify: ObservableObject {
                 if !self.api.authorizationManager.accessTokenIsExpired() {
                     self.autoRefreshTokensWhenExpired()
                 }
-                self.api.authorizationManager.refreshTokens(
-                    onlyIfExpired: true
-                )
-                .sink(receiveCompletion: { completion in
-                    switch completion {
-                        case .finished:
-                            break
-                        case .failure(let error):
-                            print(
-                                "ERROR: Spotify.init: couldn't refresh tokens:\n\(error)"
-                            )
-                    }
-                })
-                .store(in: &self.cancellables)
+                DispatchQueue.main.async {
+                    self.api.authorizationManager.refreshTokens(
+                        onlyIfExpired: true
+                    )
+                    .sink(receiveCompletion: { completion in
+                        switch completion {
+                            case .finished:
+                                break
+                            case .failure(let error):
+                                print(
+                                    "ERROR: Spotify.init: couldn't refresh tokens:\n\(error)"
+                                )
+                        }
+                    })
+                    .store(in: &self.cancellables)
+                }
+
                 
                 
             }
             catch {
                 print("ERROR: Unable to get user data from database")
+            }
+            
+            DispatchQueue.main.async {
+                self.isSpotifyInitializationLoaded = true
             }
             
         }
@@ -331,8 +339,8 @@ final class Spotify: ObservableObject {
                         print("ERROR: Couldn't retrieve current user: \(error)")
                     }
                 },
-                receiveValue: { user in
-                    self.currentUser = user
+                receiveValue: { [weak self] user in
+                    self?.currentUser = user
                 }
             )
             .store(in: &cancellables)
@@ -367,10 +375,15 @@ final class Spotify: ObservableObject {
             .store(in: &cancellables)
     }
     
+    public func getPlaylistVersionHistory(playlist: PlaylistInfo, completion: @escaping ([priorBackupInfo]) -> ()) {
+        DatabaseHandler.shared.getPlaylistsVersionHistory(playlist: playlist) { priorBackUps in
+            completion(priorBackUps)
+        }
+    }
+    
     
     public func refreshUserPlaylistArray() {
         self.getUserPlaylists { playlists in
-            
             var playlistsToAdd: [PlaylistInfo] = []
             
             if let playlists = playlists {
@@ -406,18 +419,35 @@ final class Spotify: ObservableObject {
                         group.enter()
                         
                         self.convertSpotifyPlaylistToCustom(playlist: fetchedPlaylist, completion: { convertedPlaylist in
-                            DispatchQueue.main.async { [weak self] in
-                                guard let self = self else { return }
-                                self.spotifyData.playlists[index] = convertedPlaylist
-                                Task {
-                                    await self.uploadSpecificFieldFromPlaylistCollection(playlist: convertedPlaylist, delete: false)
-                                }
-                            }
+                                    DispatchQueue.main.async { [weak self] in
+                                        guard let self = self else { return }
+                                        self.spotifyData.playlists[index] = convertedPlaylist
+                                    }
+                                    
+                                    
+                                    Task {
+                                        await self.uploadSpecificFieldFromPlaylistCollection(playlist: convertedPlaylist, delete: false)
+                                        
+                                        self.getPlaylistVersionHistory(playlist: convertedPlaylist) { priorBackupInfo in
+                                            DispatchQueue.main.async { [weak self] in
+                                                guard let self = self else { return }
+                                                self.spotifyData.playlists[index].versionHistory = priorBackupInfo
+                                            }
+                                            
+                                        }
+                                    }
+                                    
+                                
+                                
+                            
                             
                         })
                     }
                     else {
                         print("Snapshot the same")
+                        getPlaylistVersionHistory(playlist: playlist) { priorBackupInfo in
+                            self.spotifyData.playlists[index].versionHistory = priorBackupInfo
+                        }
                     }
                     
 
@@ -438,16 +468,16 @@ final class Spotify: ObservableObject {
             
             //if we don't find an existing playlist then add to the list
             guard let item = fetchedPlaylists.items.first(where: { $0.id == playlist.playlist.id }) else {
-                DispatchQueue.main.async {
-                    self.spotifyData.playlists.append(playlist)
+                    DispatchQueue.main.async { [weak self] in
+                        guard let self = self else { return }
+                        self.spotifyData.playlists.append(playlist)
+                    }
                     Task { [weak self] in
                         guard let self = self else { return }
-                        
-                        
                         await self.uploadSpecificFieldFromPlaylistCollection(playlist: playlist)
                     }
                     completion()
-                }
+                
                 return
             }
             
@@ -484,9 +514,7 @@ final class Spotify: ObservableObject {
     public func convertSpotifyPlaylistToCustom(playlist: Playlist<PlaylistItemsReference>, completion: @escaping (PlaylistInfo) -> Void) {
         self.retrievePlaylistItem(fetchedPlaylist: playlist) { fetchedDetails in
             let playlistDetails = PlaylistInfo(playlist: fetchedDetails.playlist, tracks: fetchedDetails.tracks, lastFetched: Date())
-            
             completion(playlistDetails)
-
         }
     }
     
@@ -538,11 +566,11 @@ final class Spotify: ObservableObject {
                 case .failure(let error):
                     print("ERROR: Couldn't create playlist based on backed up version:\n\(error)")
                 }
-            }, receiveValue: { playlistObject in
+            }, receiveValue: { [weak self] playlistObject in
 //                if !playlistInfo.playlist.images.isEmpty {
 //                    self.uploadSpotifyPlaylistImage(playlist: playlistObject.uri, image: playlistInfo.playlist.images[0])
 //                }
-                self.uploadTracksToPlaylist(exportedPlaylist: playlistInfo, newPlaylistURI: playlistObject.uri) {
+                self?.uploadTracksToPlaylist(exportedPlaylist: playlistInfo, newPlaylistURI: playlistObject.uri) {
                     completion(playlistObject)
                 }
 

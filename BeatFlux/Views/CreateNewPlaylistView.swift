@@ -47,7 +47,6 @@ struct CreateNewPlaylistView: View {
                 spotify.uploadSpotifyPlaylistFromBackup(playlistInfo: playlistToExport, playlistName: playlistName, isPublic: isPublic, isCollaborative: isCollaborative, description: description) { playlistObject in
                     isLoading = false
                     showExportView = false
-                    spotify.refreshUserPlaylistArray()
                 }
                 
                 

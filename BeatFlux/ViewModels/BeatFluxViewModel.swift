@@ -28,20 +28,25 @@ class BeatFluxViewModel: ObservableObject {
                 self.isViewModelFullyLoaded = false
             }
             
-            Task {
-                if self.isUserLoggedIn {
+            
+            if self.isUserLoggedIn {
+                Task {
                     await self.loadUserData()
                 }
             }
+            else {
+                DispatchQueue.main.async {
+                    self.isViewModelFullyLoaded = true
+                }
+                
+            }
+            
             
             
         }
     }
     @Published var userData: UserModel?
 
-
-    
-    
     enum UserError: Error {
         case nilUserData
     }
