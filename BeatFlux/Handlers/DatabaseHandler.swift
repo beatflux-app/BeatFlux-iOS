@@ -174,58 +174,63 @@ final class DatabaseHandler {
                 if let document = document, document.exists {
                     var spotifyData: SpotifyDataModel = SpotifyDataModel.defaultData
                     
-                    do {
-                        let decoder = JSONDecoder()
-                        
-                        if let authorizationManager = document.get("authorization_manager") as? String {
+                
+                    let decoder = JSONDecoder()
+                    
+                    if let authorizationManager = document.get("authorization_manager") as? String {
+                        do {
                             let authManager = try decoder.decode(AuthorizationCodeFlowManager.self, from: Data(authorizationManager.utf8))
                             spotifyData.authorization_manager = authManager
                         }
+                        catch {
+                            print("ERROR: Unable to decode authorization manager \(error.localizedDescription)")
+                        }
                         
-                        // Reference to the playlists sub-collection
-                        let playlistsCollection = self.firestore.collection("users").document(user.uid).collection("playlists")
                         
-                        let group = DispatchGroup()
                         
-                        var playlists: [PlaylistInfo] = []
                         
-                        playlistsCollection.getDocuments { (querySnapshot, error) in
-                            if let error = error {
-                                print("ERROR: \(error)")
-                                continuation.resume(throwing: error)
-                                return
-                            }
+                    }
+                    
+                    // Reference to the playlists sub-collection
+                    let playlistsCollection = self.firestore.collection("users").document(user.uid).collection("playlists")
+                    
+                    let group = DispatchGroup()
+                    
+                    var playlists: [PlaylistInfo] = []
+                    
+                    playlistsCollection.getDocuments { (querySnapshot, error) in
+                        if let error = error {
+                            print("ERROR: \(error)")
+                            continuation.resume(throwing: error)
+                            return
+                        }
 
-                            for document in querySnapshot!.documents {
-                                if let playlistData = document.get("data") as? String {
-                                    let playlist = try? decoder.decode(PlaylistInfo.self, from: Data(playlistData.utf8))
+                        for document in querySnapshot!.documents {
+                            if let playlistData = document.get("data") as? String {
+                                let playlist = try? decoder.decode(PlaylistInfo.self, from: Data(playlistData.utf8))
 
-                                    if var playlist = playlist {
-                                        // Enter the group before starting the async operation
-                                        group.enter()
+                                if var playlist = playlist {
+                                    // Enter the group before starting the async operation
+                                    group.enter()
 
-                                        self.getPlaylistsVersionHistory(playlist: playlist) { versionHistory in
-                                            playlist.versionHistory = versionHistory
-                                            playlists.append(playlist)
+                                    self.getPlaylistsVersionHistory(playlist: playlist) { versionHistory in
+                                        playlist.versionHistory = versionHistory
+                                        playlists.append(playlist)
 
-                                            // Leave the group when the operation is done
-                                            group.leave()
-                                        }
+                                        // Leave the group when the operation is done
+                                        group.leave()
                                     }
                                 }
                             }
-
-                            // Wait for all the async operations to complete
-                            group.notify(queue: .main) {
-                                spotifyData.playlists = playlists
-                                continuation.resume(returning: spotifyData)
-                            }
                         }
-                        
-                    } catch {
-                        print("ERROR: decoding data: \(error)")
-                        continuation.resume(throwing: error)
+
+                        // Wait for all the async operations to complete
+                        group.notify(queue: .main) {
+                            spotifyData.playlists = playlists
+                            continuation.resume(returning: spotifyData)
+                        }
                     }
+                        
                     
                 } else {
                     print("HANDLED ERROR: Document does not exist, initializing data")
