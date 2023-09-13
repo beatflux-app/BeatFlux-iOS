@@ -383,27 +383,37 @@ final class Spotify: ObservableObject {
     
     
     public func refreshUserPlaylistArray() {
+        // Create a dispatch group
+        let group = DispatchGroup()
+        
         self.getUserPlaylists { playlists in
             var playlistsToAdd: [PlaylistInfo] = []
             
             if let playlists = playlists {
                 for playlist in playlists.items {
                     
+                    // Enter the group before starting the async operation
+                    group.enter()
+                    
                     var details = PlaylistInfo(playlist: playlist, lastFetched: Date())
                     self.retrievePlaylistItem(fetchedPlaylist: playlist) { info in
                         details.tracks = info.tracks
+                        playlistsToAdd.append(details)
+                        
+                        // Leave the group when the operation is done
+                        group.leave()
                     }
-                    playlistsToAdd.append(details)
+                    
                 }
             }
             
-            DispatchQueue.main.async {
+            // Wait for all the async operations to complete
+            group.notify(queue: .main) {
                 self.userPlaylists = playlistsToAdd
             }
-            
-
         }
     }
+
     
     public func refreshUsersBackedUpPlaylistArray() {
         self.getUserPlaylists { [weak self] fetchedPlaylists in
