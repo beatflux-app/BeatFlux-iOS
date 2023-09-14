@@ -43,11 +43,18 @@ struct CreateNewPlaylistView: View {
                 .disabled(isLoading)
             
             Button {
-                isLoading = true
-                spotify.uploadSpotifyPlaylistFromBackup(playlistInfo: playlistToExport, playlistName: playlistName, isPublic: isPublic, isCollaborative: isCollaborative, description: description) { playlistObject in
-                    isLoading = false
-                    showExportView = false
+                Task {
+                    DispatchQueue.main.async {
+                        isLoading = true
+                    }
+                    let _ = try await spotify.uploadSpotifyPlaylistFromBackup(playlistInfo: playlistToExport, playlistName: playlistName, isPublic: isPublic, isCollaborative: isCollaborative, description: description)
+                    DispatchQueue.main.async {
+                        isLoading = false
+                        showExportView = false
+                    }
+
                 }
+                
                 
                 
             } label: {

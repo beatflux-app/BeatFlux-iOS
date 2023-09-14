@@ -146,10 +146,14 @@ private struct PlaylistRow: View {
                 }
                 else {
                     loadingPlaylistID = playlist.playlist.id
-                    spotify.backupPlaylist(playlist: playlist) {
+                    Task {
+                        await spotify.backupPlaylist(playlist: playlist)
                         loadingPlaylistID = nil
-                        spotify.refreshUsersPlaylists(options: .backupPlaylists)
+                        await spotify.refreshUsersPlaylists(options: .backupPlaylists)
                     }
+
+                        
+                    
                     
                     
                 }
@@ -181,7 +185,7 @@ private struct PlaylistRow: View {
                               spotify.spotifyData.playlists.remove(at: savedPlaylistIndex)
                           }
                           
-                          spotify.refreshUsersPlaylists(options: .all)
+                          await spotify.refreshUsersPlaylists(options: .all)
 
                       }
                   }

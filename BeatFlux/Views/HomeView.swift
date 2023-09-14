@@ -60,16 +60,11 @@ struct HomeView: View {
                 }
                 .navigationTitle("Backups")
                 .refreshable {
-                    spotify.refreshUsersPlaylists(options: .all)
-                    
-                    
-
-//                  await beatFluxViewModel.retrieveUserData()
-                  //await spotify.retrieveSpotifyData()
-                    
+                    Task {
+                        await spotify.refreshUsersPlaylists(options: .all)
+                    }
                 }
                 .scrollIndicators(.hidden)
-                
                 .toolbarBackground(Color(UIColor.systemBackground), for: .navigationBar)
                 
             }

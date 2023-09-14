@@ -144,34 +144,27 @@ struct SpotifyAuthenticationView: View {
         
     }
     
-    func getPlaylists() {
-        spotify.getUserPlaylists { playlists in
-            guard let playlists = playlists else {
-                return
-            }
-            
-            for playlist in playlists.items {
-                spotify.convertSpotifyPlaylistToCustom(playlist: playlist) { details in
-                    if let index = spotify.spotifyData.playlists.firstIndex(where: { $0.playlist.id == details.playlist.id }) { //check if the playlist already exists; if it does overwrite it
-                        DispatchQueue.main.async {
-                            spotify.spotifyData.playlists[index] = details
-                            Task {
-                                await spotify.uploadSpecificFieldFromPlaylistCollection(playlist: details, delete: false)
-                            }
-                        }
-                    }
-                    else {
-                        DispatchQueue.main.async {
-                            spotify.spotifyData.playlists.append(details)
-                            Task {
-                                await spotify.uploadSpecificFieldFromPlaylistCollection(playlist: details, delete: false)
-                            }
-                        }
-                    }
+    func getPlaylists() async {
+        let playlists = try? await spotify.getUserPlaylists()
+        guard let playlists = playlists else {
+            return
+        }
+        
+        for playlist in playlists.items {
+            let details = await spotify.convertSpotifyPlaylistToCustom(playlist: playlist)
+            guard let details = details else { return }
+            if let index = spotify.spotifyData.playlists.firstIndex(where: { $0.playlist.id == details.playlist.id }) { //check if the playlist already exists; if it does overwrite it
+                DispatchQueue.main.async {
+                    spotify.spotifyData.playlists[index] = details
                 }
-                
+                await spotify.uploadSpecificFieldFromPlaylistCollection(playlist: details, delete: false)
             }
-
+            else {
+                DispatchQueue.main.async {
+                    spotify.spotifyData.playlists.append(details)
+                }
+                await spotify.uploadSpecificFieldFromPlaylistCollection(playlist: details, delete: false)
+            }
         }
     }
 }
