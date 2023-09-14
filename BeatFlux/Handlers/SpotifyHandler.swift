@@ -150,15 +150,19 @@ final class Spotify: ObservableObject {
         
         self.api.apiRequestLogger.logLevel = .trace
         
-        self.api.authorizationManagerDidChange
-            .receive(on: RunLoop.main)
-            .sink(receiveValue: authorizationManagerDidChange)
-            .store(in: &cancellables)
-        
-        self.api.authorizationManagerDidDeauthorize
-            .receive(on: RunLoop.main)
-            .sink(receiveValue: authorizationManagerDidDeauthorize)
-            .store(in: &cancellables)
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+            self.api.authorizationManagerDidChange
+                .receive(on: RunLoop.main)
+                .sink(receiveValue: authorizationManagerDidChange)
+                .store(in: &self.cancellables)
+            
+            self.api.authorizationManagerDidDeauthorize
+                .receive(on: RunLoop.main)
+                .sink(receiveValue: authorizationManagerDidDeauthorize)
+                .store(in: &self.cancellables)
+        }
+
         Task {
             do {
                 await loadSpotifyData()
@@ -546,61 +550,69 @@ final class Spotify: ObservableObject {
             case authRequestDenied(String)
         }
         
-        self.api.authorizationManager.requestAccessAndRefreshTokens(
-            redirectURIWithQuery: url,
-            state: self.authorizationState
-        )
-        .receive(on: RunLoop.main)
-        .sink(receiveCompletion: { completion in
-            DispatchQueue.main.async { [weak self] in
-                self?.isRetrievingTokens = false
-            }
-
-            switch completion {
-            case .finished:
-                DispatchQueue.main.async {
-                    result(true, nil)
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+            self.api.authorizationManager.requestAccessAndRefreshTokens(
+                redirectURIWithQuery: url,
+                state: self.authorizationState
+            )
+            .receive(on: RunLoop.main)
+            .sink(receiveCompletion: { completion in
+                DispatchQueue.main.async { [weak self] in
+                    self?.isRetrievingTokens = false
                 }
-            case .failure(let error):
-                print("ERROR: Couldn't retrieve access and refresh tokens:\n\(error)")
-                if let authError = error as? SpotifyAuthorizationError, authError.accessWasDenied {
+
+                switch completion {
+                case .finished:
                     DispatchQueue.main.async {
-                        result(false, ErrorTypes.authRequestDenied("Authorization request denied"))
+                        result(true, nil)
+                    }
+                case .failure(let error):
+                    print("ERROR: Couldn't retrieve access and refresh tokens:\n\(error)")
+                    if let authError = error as? SpotifyAuthorizationError, authError.accessWasDenied {
+                        DispatchQueue.main.async {
+                            result(false, ErrorTypes.authRequestDenied("Authorization request denied"))
+                        }
+                    }
+                    else {
+                        DispatchQueue.main.async {
+                            result(false, error)
+                        }
                     }
                 }
-                else {
-                    DispatchQueue.main.async {
-                        result(false, error)
-                    }
-                }
-            }
 
-        })
-        .store(in: &cancellables)
+            })
+            .store(in: &self.cancellables)
+        }
+        
     }
     
     public func uploadSpotifyPlaylistFromBackup(playlistInfo: PlaylistInfo, playlistName: String, isPublic: Bool, isCollaborative: Bool, description: String, completion: @escaping (Playlist<PlaylistItems>)->Void) {
-        self.api.createPlaylist(for: self.currentUser!.uri, PlaylistDetails(name: playlistName, isPublic: isPublic, isCollaborative: isCollaborative, description: description))
-            .receive(on: RunLoop.main)
-            .sink(receiveCompletion: { completion in
-                switch completion {
-                case .finished:
-                    print("SUCCESS: Created playlist from backed up data")
-                case .failure(let error):
-                    print("ERROR: Couldn't create playlist based on backed up version:\n\(error)")
-                }
-            }, receiveValue: { [weak self] playlistObject in
-//                if !playlistInfo.playlist.images.isEmpty {
-//                    self.uploadSpotifyPlaylistImage(playlist: playlistObject.uri, image: playlistInfo.playlist.images[0])
-//                }
-                self?.uploadTracksToPlaylist(exportedPlaylist: playlistInfo, newPlaylistURI: playlistObject.uri) {
-                    completion(playlistObject)
-                }
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+            self.api.createPlaylist(for: self.currentUser!.uri, PlaylistDetails(name: playlistName, isPublic: isPublic, isCollaborative: isCollaborative, description: description))
+                .receive(on: RunLoop.main)
+                .sink(receiveCompletion: { completion in
+                    switch completion {
+                    case .finished:
+                        print("SUCCESS: Created playlist from backed up data")
+                    case .failure(let error):
+                        print("ERROR: Couldn't create playlist based on backed up version:\n\(error)")
+                    }
+                }, receiveValue: { [weak self] playlistObject in
+    //                if !playlistInfo.playlist.images.isEmpty {
+    //                    self.uploadSpotifyPlaylistImage(playlist: playlistObject.uri, image: playlistInfo.playlist.images[0])
+    //                }
+                    self?.uploadTracksToPlaylist(exportedPlaylist: playlistInfo, newPlaylistURI: playlistObject.uri) {
+                        completion(playlistObject)
+                    }
 
-                
-               
-            })
-            .store(in: &cancellables)
+                    
+                   
+                })
+                .store(in: &self.cancellables)
+        }
+        
     }
     
     
@@ -620,16 +632,21 @@ final class Spotify: ObservableObject {
                 if let validImage = newUIImage, let jpegData = validImage.jpegData(compressionQuality: 0.5) {
                     let base64EncodedData = jpegData.base64EncodedData()
                     
-                    self.api.uploadPlaylistImage(playlist, imageData: base64EncodedData)
-                        .receive(on: RunLoop.main)
-                        .sink { completion in
-                            switch completion {
-                            case .finished: break
-                            case .failure(let error):
-                                print("ERROR: Unable to upload playlist image: \(error)")
+                    DispatchQueue.main.async { [weak self] in
+                        guard let self = self else { return }
+                        
+                        self.api.uploadPlaylistImage(playlist, imageData: base64EncodedData)
+                            .receive(on: RunLoop.main)
+                            .sink { completion in
+                                switch completion {
+                                case .finished: break
+                                case .failure(let error):
+                                    print("ERROR: Unable to upload playlist image: \(error)")
+                                }
                             }
-                        }
-                        .store(in: &self.cancellables)
+                            .store(in: &self.cancellables)
+                    }
+
                 }
             }
         }
@@ -649,68 +666,60 @@ final class Spotify: ObservableObject {
         let uris = self.retrieveTrackURIFromPlaylist(playlist: exportedPlaylist)
         print(uris)
         
-        self.api.addToPlaylist(newPlaylistURI, uris: uris)
-            .receive(on: RunLoop.main)
-            .sink(receiveCompletion: { completion in
-                switch completion {
-                case .finished: break
-                case .failure(let error):
-                    print("ERROR: Unable to upload songs to playlist: \(error)")
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+            
+            self.api.addToPlaylist(newPlaylistURI, uris: uris)
+                .receive(on: RunLoop.main)
+                .sink(receiveCompletion: { completion in
+                    switch completion {
+                    case .finished: break
+                    case .failure(let error):
+                        print("ERROR: Unable to upload songs to playlist: \(error)")
+                        result()
+                    }
+                    
+                    
+                }, receiveValue: { returnValue in
                     result()
-                }
-                
-                
-            }, receiveValue: { returnValue in
-                result()
-            })
-            .store(in: &self.cancellables)
+                })
+                .store(in: &self.cancellables)
+        }
+        
     }
     
-    public func replaceAllSongsInPlaylist(_ playlist: SpotifyURIConvertible, with uriArray: [SpotifyURIConvertible]) {
-        self.api.replaceAllPlaylistItems(playlist, with: uriArray)
-            .receive(on: RunLoop.main)
-            .sink { completion in
-                switch completion {
-                case .finished:
-                    print("SUCCESS: Replaced all the songs in the playlist")
-                case .failure(let error):
-                    print("ERROR: Unable to replace all the songs in the playlist: \(error)")
-                }
-            } receiveValue: { _ in
-                
-            }
-            .store(in: &cancellables)
-
-    }
     
     public func unfollowPlaylist(uri: SpotifyURIConvertible) {
-        self.api.unfollowPlaylistForCurrentUser(uri)
-            .receive(on: RunLoop.main)
-            .sink { completion in
-                switch completion {
-                case .finished:
-                    print("SUCCESS: Unfollowed playlist")
-                case .failure(let error):
-                    print("ERROR: Unable to unfollow playlist: \(error)")
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+            self.api.unfollowPlaylistForCurrentUser(uri)
+                .receive(on: RunLoop.main)
+                .sink { completion in
+                    switch completion {
+                    case .finished:
+                        print("SUCCESS: Unfollowed playlist")
+                    case .failure(let error):
+                        print("ERROR: Unable to unfollow playlist: \(error)")
+                    }
                 }
-            }
-            .store(in: &cancellables)
+                .store(in: &self.cancellables)
+        }
+        
 
     }
     
     public func retrieveTrackURIFromPlaylist(playlist: PlaylistInfo) -> [SpotifyURIConvertible] {
         var uris: [SpotifyURIConvertible] = []
-        
-        print(playlist)
+
         
         for track in playlist.tracks {
             if let uri = track.item?.uri {
                 print("valid uri")
                 uris.append(uri)
-                print(uri)
+                print("SUCCESS: Valid URI \(uri)")
             }
             else {
-                print("not valid uri")
+                print("ERROR: Not valid URI")
             }
             
         }
