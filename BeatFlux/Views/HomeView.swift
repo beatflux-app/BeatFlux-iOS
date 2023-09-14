@@ -60,8 +60,7 @@ struct HomeView: View {
                 }
                 .navigationTitle("Backups")
                 .refreshable {
-                    spotify.refreshUserPlaylistArray()
-                    spotify.refreshUsersBackedUpPlaylistArray()
+                    spotify.refreshUsersPlaylists(options: .all)
                     
                     
 

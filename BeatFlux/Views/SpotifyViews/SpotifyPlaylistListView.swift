@@ -148,7 +148,7 @@ private struct PlaylistRow: View {
                     loadingPlaylistID = playlist.playlist.id
                     spotify.backupPlaylist(playlist: playlist) {
                         loadingPlaylistID = nil
-                        spotify.refreshUsersBackedUpPlaylistArray()
+                        spotify.refreshUsersPlaylists(options: .backupPlaylists)
                     }
                     
                     
@@ -181,8 +181,7 @@ private struct PlaylistRow: View {
                               spotify.spotifyData.playlists.remove(at: savedPlaylistIndex)
                           }
                           
-                          spotify.refreshUserPlaylistArray()
-                          spotify.refreshUsersBackedUpPlaylistArray()
+                          spotify.refreshUsersPlaylists(options: .all)
 
                       }
                   }

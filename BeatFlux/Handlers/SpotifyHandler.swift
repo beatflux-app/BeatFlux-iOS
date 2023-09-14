@@ -179,7 +179,7 @@ final class Spotify: ObservableObject {
                 
                 self.api.authorizationManager = authManagerData
                 
-                refreshUserPlaylistArray()
+                refreshUsersPlaylists(options: .libraryPlaylists)
             
                 if !self.api.authorizationManager.accessTokenIsExpired() {
                     self.autoRefreshTokensWhenExpired()
@@ -289,7 +289,7 @@ final class Spotify: ObservableObject {
             
             self.retrieveCurrentUser()
             
-            self.refreshUserPlaylistArray()
+            self.refreshUsersPlaylists(options: .libraryPlaylists)
             
             
         }
@@ -397,97 +397,94 @@ final class Spotify: ObservableObject {
         }
     }
     
+    public enum PlaylistRefreshOptions {
+        case libraryPlaylists
+        case backupPlaylists
+        case all
+    }
     
-    public func refreshUserPlaylistArray() {
+    public func refreshUsersPlaylists(options: PlaylistRefreshOptions) {
         // Create a dispatch group
         let group = DispatchGroup()
-        
-        self.getUserPlaylists { playlists in
-            var playlistsToAdd: [PlaylistInfo] = []
-            
-            if let playlists = playlists {
-                for playlist in playlists.items {
-                    
-                    // Enter the group before starting the async operation
-                    group.enter()
-                    
-                    var details = PlaylistInfo(playlist: playlist, lastFetched: Date())
-                    self.retrievePlaylistItem(fetchedPlaylist: playlist) { info in
-                        details.tracks = info.tracks
-                        playlistsToAdd.append(details)
-                        
-                        // Leave the group when the operation is done
-                        group.leave()
-                    }
-                    
-                }
-            }
-            
-            // Wait for all the async operations to complete
-            group.notify(queue: .main) {
-                self.userPlaylists = playlistsToAdd
-            }
-        }
-    }
 
-    
-    public func refreshUsersBackedUpPlaylistArray() {
-        self.getUserPlaylists { [weak self] fetchedPlaylists in
-            guard let self = self else { return }
-            guard let fetchedPlaylists = fetchedPlaylists else { return }
-            
-            let group = DispatchGroup()
-            
-            for (index, playlist) in self.spotifyData.playlists.enumerated() {
-                if let fetchedPlaylist = fetchedPlaylists.items.first(where: { $0.id == playlist.playlist.id }) {
-                    
-                    if fetchedPlaylist.snapshotId != playlist.playlist.snapshotId {
+            self.getUserPlaylists { playlists in
+                var playlistsToAdd: [PlaylistInfo] = []
+                guard let playlists = playlists else { return }
+                
+                if (options == .all || options == .libraryPlaylists) {
+                    for playlist in playlists.items {
+                        
+                        // Enter the group before starting the async operation
                         group.enter()
                         
-                        self.convertSpotifyPlaylistToCustom(playlist: fetchedPlaylist, completion: { convertedPlaylist in
+                        var details = PlaylistInfo(playlist: playlist, lastFetched: Date())
+                        self.retrievePlaylistItem(fetchedPlaylist: playlist) { info in
+                            details.tracks = info.tracks
+                            playlistsToAdd.append(details)
+                            
+                            // Leave the group when the operation is done
+                            group.leave()
+                        }
+                        
+                    }
+                    
+                    // Wait for all the async operations to complete
+                    group.notify(queue: .main) {
+                        self.userPlaylists = playlistsToAdd
+                    }
+                }
+                
+                if (options == .all || options == .backupPlaylists) {
+                    for (index, playlist) in self.spotifyData.playlists.enumerated() {
+                        if let fetchedPlaylist = playlists.items.first(where: { $0.id == playlist.playlist.id }) {
+                            
+                            if fetchedPlaylist.snapshotId != playlist.playlist.snapshotId {
+                                group.enter()
+                                
+                                self.convertSpotifyPlaylistToCustom(playlist: fetchedPlaylist, completion: { convertedPlaylist in
                                     DispatchQueue.main.async { [weak self] in
                                         guard let self = self else { return }
                                         self.spotifyData.playlists[index] = convertedPlaylist
                                     }
                                     
                                     
-                                    Task {
-                                        await self.uploadSpecificFieldFromPlaylistCollection(playlist: convertedPlaylist, delete: false)
-                                        
-                                        self.getPlaylistVersionHistory(playlist: convertedPlaylist) { priorBackupInfo in
+                                    Task { [weak self] in
+                                        await self?.uploadSpecificFieldFromPlaylistCollection(playlist: convertedPlaylist, delete: false)
+                                        self?.getPlaylistVersionHistory(playlist: convertedPlaylist) { priorBackupInfo in
                                             DispatchQueue.main.async { [weak self] in
-                                                guard let self = self else { return }
-                                                self.spotifyData.playlists[index].versionHistory = priorBackupInfo
+                                                self?.spotifyData.playlists[index].versionHistory = priorBackupInfo
                                             }
-                                            
                                         }
                                     }
                                     
-                                
-                                
+                                    group.leave()
+                                    
+                                    
+                                    
+                                    
+                                })
+                            }
+                            else {
+                                self.getPlaylistVersionHistory(playlist: playlist) { priorBackupInfo in
+                                    DispatchQueue.main.async { [weak self] in
+                                        self?.spotifyData.playlists[index].versionHistory = priorBackupInfo
+                                    }
+                                    
+                                }
+                            }
                             
                             
-                        })
-                    }
-                    else {
-                        print("Snapshot the same")
-                        getPlaylistVersionHistory(playlist: playlist) { priorBackupInfo in
-                            self.spotifyData.playlists[index].versionHistory = priorBackupInfo
                         }
                     }
                     
-
                 }
+                
+                
+                
             }
-
-            
-            
-
-        }
         
-
+        
     }
-    
     public func backupPlaylist(playlist: PlaylistInfo, completion: @escaping () -> Void) {
         self.getUserPlaylists { fetchedPlaylists in
             guard let fetchedPlaylists else { return }
