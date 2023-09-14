@@ -46,7 +46,8 @@ final class Spotify: ObservableObject {
     private var isUserAuthLoggedIn: Bool = false {
         didSet {
             Task {
-                DispatchQueue.main.async {
+                DispatchQueue.main.async { [weak self] in
+                    guard let self = self else { return }
                     self.cancellables.removeAll()
                     self.currentUser = nil
                     self.isAuthorized = false
@@ -54,6 +55,7 @@ final class Spotify: ObservableObject {
                     
                     print("SUCCESS: All spotify api cancellables removed successfully")
                     if self.isUserAuthLoggedIn {
+                        print(self.cancellables)
                         self.initializeSpotify()
                     }
                 }
@@ -104,8 +106,8 @@ final class Spotify: ObservableObject {
     func retrieveSpotifyData() async {
         do {
             let data = try await DatabaseHandler.shared.getSpotifyData()
-            DispatchQueue.main.async {
-                self.spotifyData = data
+            DispatchQueue.main.async { [weak self] in
+                self?.spotifyData = data
             }
             
             
@@ -163,8 +165,8 @@ final class Spotify: ObservableObject {
                 
                 guard let authManagerData = try await DatabaseHandler.shared.getSpotifyData().authorization_manager else {
                     print("Did NOT find authorization information in keychain")
-                    DispatchQueue.main.async {
-                        self.isSpotifyInitializationLoaded = true
+                    DispatchQueue.main.async { [weak self] in
+                        self?.isSpotifyInitializationLoaded = true
                     }
                     return
                 }
@@ -178,7 +180,8 @@ final class Spotify: ObservableObject {
                 if !self.api.authorizationManager.accessTokenIsExpired() {
                     self.autoRefreshTokensWhenExpired()
                 }
-                DispatchQueue.main.async {
+                DispatchQueue.main.async { [weak self] in
+                    guard let self = self else { return }
                     self.api.authorizationManager.refreshTokens(
                         onlyIfExpired: true
                     )
@@ -202,8 +205,8 @@ final class Spotify: ObservableObject {
                 print("ERROR: Unable to get user data from database")
             }
             
-            DispatchQueue.main.async {
-                self.isSpotifyInitializationLoaded = true
+            DispatchQueue.main.async { [weak self] in
+                self?.isSpotifyInitializationLoaded = true
             }
             
         }
@@ -330,33 +333,42 @@ final class Spotify: ObservableObject {
             print("ERROR: User is not authorized")
             return
         }
-
-        self.api.currentUserProfile()
-            .receive(on: RunLoop.main)
-            .sink(
-                receiveCompletion: { completion in
-                    if case .failure(let error) = completion {
-                        print("ERROR: Couldn't retrieve current user: \(error)")
+        
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+            self.api.currentUserProfile()
+                .receive(on: RunLoop.main)
+                .sink(
+                    receiveCompletion: { completion in
+                        if case .failure(let error) = completion {
+                            print("ERROR: Couldn't retrieve current user: \(error)")
+                        }
+                    },
+                    receiveValue: { [weak self] user in
+                        self?.currentUser = user
                     }
-                },
-                receiveValue: { [weak self] user in
-                    self?.currentUser = user
-                }
-            )
-            .store(in: &cancellables)
+                )
+                .store(in: &self.cancellables)
+        }
+
         
     }
     
     
     public func getUserPlaylists(completion: @escaping (PagingObject<Playlist<PlaylistItemsReference>>?) -> Void) {
-        
-        self.api.currentUserPlaylists()
-            .extendPages(self.api)
-            .sink(receiveCompletion: { _ in },
-              receiveValue: { results in
-                  completion(results)
-              })
-            .store(in: &cancellables)
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+            self.api.currentUserPlaylists()
+                .extendPages(self.api)
+                .receive(on: RunLoop.main)
+                .sink(receiveCompletion: { _ in },
+                      receiveValue: { results in
+                    print(self.cancellables)
+                    completion(results)
+                })
+                .store(in: &self.cancellables)
+        }
+
     }
     
     public func retrievePlaylistItem(fetchedPlaylist: Playlist<PlaylistItemsReference>, completion: @escaping (PlaylistInfo) -> Void) {
@@ -494,28 +506,29 @@ final class Spotify: ObservableObject {
             //helps save on api calls
             self.convertSpotifyPlaylistToCustom(playlist: item) { details in
                 if let index = self.userPlaylists.firstIndex(where: { $0.playlist.id == details.playlist.id }) {
-                    DispatchQueue.main.async {
-                        self.userPlaylists[index] = details
+                    DispatchQueue.main.async { [weak self] in
+                        self?.userPlaylists[index] = details
                     }
                     
                 }
                 else {
-                    DispatchQueue.main.async {
-                        self.userPlaylists.append(details)
+                    DispatchQueue.main.async { [weak self] in
+                        self?.userPlaylists.append(details)
                     }
                     
                 }
                 
                 
                 
-                DispatchQueue.main.async {
-                    self.spotifyData.playlists.append(details)
-                    Task { [weak self] in
-                        guard let self = self else { return }
-                        await self.uploadSpecificFieldFromPlaylistCollection(playlist: playlist)
-                    }
-                    completion()
+                DispatchQueue.main.async { [weak self] in
+                    self?.spotifyData.playlists.append(details)
                 }
+                Task { [weak self] in
+                    guard let self = self else { return }
+                    await self.uploadSpecificFieldFromPlaylistCollection(playlist: playlist)
+                }
+                completion()
+                
             }
         }
 
@@ -539,8 +552,8 @@ final class Spotify: ObservableObject {
         )
         .receive(on: RunLoop.main)
         .sink(receiveCompletion: { completion in
-            DispatchQueue.main.async {
-                self.isRetrievingTokens = false
+            DispatchQueue.main.async { [weak self] in
+                self?.isRetrievingTokens = false
             }
 
             switch completion {
