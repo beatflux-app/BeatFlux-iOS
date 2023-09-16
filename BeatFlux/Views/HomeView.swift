@@ -8,6 +8,7 @@
 import SwiftUI
 import SpotifyWebAPI
 import Combine
+import Shimmer
 
 struct HomeView: View {
     @EnvironmentObject var beatFluxViewModel: BeatFluxViewModel
@@ -32,7 +33,7 @@ struct HomeView: View {
             NavigationView {
                 ScrollView {
                     VStack {
-                        if beatFluxViewModel.isViewModelFullyLoaded && spotify.isSpotifyInitializationLoaded {
+                        if beatFluxViewModel.isViewModelFullyLoaded && spotify.isBackupsLoaded {
                             if beatFluxViewModel.userData != nil {
                                 if !spotify.spotifyData.playlists.isEmpty {
                                     let playlists = spotify.spotifyData.playlists
@@ -69,16 +70,15 @@ struct HomeView: View {
                 
             }
             .overlay {
-                VStack(spacing: 20) {
-                    LoadingIndicator(color: .accentColor, lineWidth: 4.0)
-                        .frame(width: 25, height: 25)
+                VStack(spacing: 15) {
+                    ProgressView()
 
                     Text("Loading...")
                         .foregroundStyle(.secondary)
-                        .fontWeight(.semibold)
+                        
 
                 }
-                .opacity(beatFluxViewModel.isViewModelFullyLoaded && spotify.isSpotifyInitializationLoaded ? 0 : 1)
+                .opacity(beatFluxViewModel.isViewModelFullyLoaded && spotify.isBackupsLoaded ? 0 : 1)
             }
             
             VStack {
@@ -201,23 +201,24 @@ private struct PlaylistGridSquare: View {
                 
                 AsyncImage(urlString: playlistInfo.playlist.images[0].url.absoluteString) {
                     Rectangle()
-                        .foregroundStyle(Color(UIColor.secondarySystemGroupedBackground))
                         .aspectRatio(contentMode: .fill)
                         .frame(width: (UIScreen.main.bounds.width / 2) - 25, height: (UIScreen.main.bounds.width / 2) - 25)
-                        .redacted(reason: .placeholder)
+                        .foregroundColor(.secondary)
+                        .shimmering()
                 } content: {
                     Image(uiImage: $0)
                         .resizable()
                         .scaledToFill()
                         .frame(width: (UIScreen.main.bounds.width / 2) - 25, height: (UIScreen.main.bounds.width / 2) - 25)
                         .clipped()
+                        
                 }
                 .clipped()
                 .cornerRadius(12)
             }
             else {
                 Rectangle()
-                    .foregroundStyle(Color(UIColor.secondarySystemGroupedBackground))
+                    .foregroundStyle(Color(UIColor.tertiarySystemBackground))
                     .aspectRatio(contentMode: .fill)
                     .frame(width: (UIScreen.main.bounds.width / 2) - 25, height: (UIScreen.main.bounds.width / 2) - 25)
                     .redacted(reason: .placeholder)

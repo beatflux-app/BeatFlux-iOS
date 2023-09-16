@@ -208,22 +208,21 @@ final class DatabaseHandler {
                 
                 let querySnapshot = try await playlistsCollection.getDocuments()
 
+                print(querySnapshot.documents.count)
                 
                 for document in querySnapshot.documents {
-                    if let playlistData = document.get("data") as? String {
-                        let playlist = try? decoder.decode(PlaylistInfo.self, from: Data(playlistData.utf8))
+                    if var playlist = try document.data(as: PlaylistInfo?.self) {
+                        print(playlist.playlist.name)
+                            
+                        let versionHistory = await self.getPlaylistsVersionHistory(playlist: playlist)
+                        print(versionHistory)
+                        playlist.versionHistory = versionHistory
+                        playlists.append(playlist)
+                            
                         
-                        if var playlist = playlist {
-                            
-                            let versionHistory = await self.getPlaylistsVersionHistory(playlist: playlist)
-
-                            playlist.versionHistory = versionHistory
-                            playlists.append(playlist)
-                            
-                        }
                     }
                 }
-                    
+                
                 spotifyData.playlists = playlists
                 
                 return spotifyData
@@ -250,24 +249,27 @@ final class DatabaseHandler {
         do {
             let querySnapshot = try await versionHistoryCollection.getDocuments()
 
-            for document in querySnapshot.documents {
-                if let versionHistroy = document.get("data") as? String {
-                    let backup = try? decoder.decode(priorBackupInfo.self, from: Data(versionHistroy.utf8))
-                    if let backup = backup {
+            await withTaskGroup(of: priorBackupInfo?.self) { group in
+                for document in querySnapshot.documents {
+                    group.addTask {
+                        return try? document.data(as: priorBackupInfo.self)
+                    }
+                }
+                
+                for await result in group {
+                    if let backup = result {
                         versionHistoryArray.append(backup)
                     }
                 }
             }
-           
+
             print("SUCCESS: All version histories for playlist: \(playlist.playlist.id) have been fetched: (\(versionHistoryArray.count))")
         }
         catch {
             print("ERROR: Error while fetching playlists version history \(error.localizedDescription)")
         }
         
-    
         return versionHistoryArray
-        
     }
     
     
@@ -318,20 +320,22 @@ final class DatabaseHandler {
     
     
     
-    func uploadSpecificFieldFromPlaylistCollection(playlist: PlaylistInfo, delete: Bool = false) async throws {
+    func uploadSpecificFieldFromPlaylistCollection(playlist: PlaylistInfo, delete: Bool = false) async {
         
         guard let user = user else {
-            throw UserError.nilUser
+            
+            print("ERROR: User does not exist")
+            return
         }
         
         let playlistsCollection = firestore.collection("users").document(user.uid).collection("playlists")
         let versionHistoryCollection = firestore.collection("users").document(user.uid).collection("playlists").document(playlist.playlist.id).collection("versionHistory")
-        
+        let priorBackupsCollection = playlistsCollection.document(playlist.playlist.id).collection("versionHistory")
 
-        let playlistEncoded = try JSONEncoder().encode(playlist)
-        guard let playlistString = String(data: playlistEncoded, encoding: .utf8) else {
-            return
-        }
+        //let playlistEncoded = try JSONEncoder().encode(playlist)
+//        guard let playlistString = String(data: playlistEncoded, encoding: .utf8) else {
+//            return
+//        }
         
         if delete {
             do {
@@ -346,31 +350,35 @@ final class DatabaseHandler {
             }
             catch {
                 print("ERROR: Error while deleting field from playlist collection \(error.localizedDescription)")
-                
-                throw error
             }
             
         }
         else {
-            do {
-                try await playlistsCollection.document(playlist.playlist.id).setData(["data": playlistString], merge: true)
-                
-                    
-                print("SUCCESS: Data was successfully written")
-                
-                let priorBackupsCollection = playlistsCollection.document(playlist.playlist.id).collection("versionHistory")
-                
-                let priorBackupInfoEncoded = try? JSONEncoder().encode(priorBackupInfo(playlist: playlist, versionDate: Date()))
-                guard let priorBackupInfoEncoded = priorBackupInfoEncoded else { return }
-                guard let priorBackupInfoString = String(data: priorBackupInfoEncoded, encoding: .utf8) else { return }
-                
-                try await priorBackupsCollection.document(UUID().uuidString).setData(["data": priorBackupInfoString])
+            
+            playlistsCollection.document(playlist.playlist.id).setData(from: playlist)
+                .subscribe(on: DispatchQueue.global(qos: .background))
+                .receive(on: DispatchQueue.main) // Switch back to the main queue for the result
+                .sink(receiveCompletion: { completion in
+                    if case .failure(let error) = completion {
+                        print("ERROR: Error while getting users playlists \(error.localizedDescription)")
+                        return
+                    }
+                }, receiveValue: { results in
+                    priorBackupsCollection.document(UUID().uuidString).setData(from: priorBackupInfo(playlist: playlist, versionDate: Date()))
+                        .subscribe(on: DispatchQueue.global(qos: .background))
+                        .receive(on: DispatchQueue.main) // Switch back to the main queue for the result
+                        .sink(receiveCompletion: { completion in
+                            if case .failure(let error) = completion {
+                                print("ERROR: Error while saving playlists backups \(error.localizedDescription)")
+                                return
+                            }
+                        }, receiveValue: { results in
+                            print("SUCCESS: Data was successfully written")
+                        })
+                        .store(in: &self.cancellables)
+                })
+                .store(in: &cancellables)
 
-            }
-            catch {
-                print("ERROR: Error occured when saving playlist collection \(error.localizedDescription)")
-                throw error
-            }
         }
         
         
@@ -403,52 +411,7 @@ final class DatabaseHandler {
         }
     }
     
-    func uploadSpotifyData(from data: SpotifyDataModel) async throws {
-        guard let user = user else {
-            print("ERROR: Failed to upload data to database because the user is nil")
-            throw UserError.nilUser
-        }
-        
-        do {
-
-                try deleteAllPlaylists()
-                // Serialize and upload authorization_manager
-                let authManagerEncoded = try JSONEncoder().encode(data.authorization_manager)
-                let authDataString = String(data: authManagerEncoded, encoding: .utf8)
-                
-                guard let authDataString = authDataString else {
-                    return
-                }
-
-                try await firestore.collection("users")
-                    .document(user.uid)
-                    .setData(["authorization_manager": authDataString], merge: true)
-                
-                // Reference to the playlists sub-collection
-                let playlistsCollection = firestore.collection("users").document(user.uid).collection("playlists")
-                
-                // Upload each playlist individually
-                for playlist in data.playlists {
-                    let playlistEncoded = try JSONEncoder().encode(playlist)
-                    let playlistString = String(data: playlistEncoded, encoding: .utf8)
-                    
-                    guard let playlistString = playlistString else {
-                        continue
-                    }
-                    
-                    // Use playlist.id as the document ID for easier querying later
-                    try await playlistsCollection.document(playlist.playlist.id)
-                        .setData(["data": playlistString], merge: true)
-                }
-                
-                print("SUCCESS: Data was successfully written")
-                
-            } catch {
-                print("ERROR: Unable to encode: \(error)")
-                throw error
-            }
-        
-    }
+  
     
     func deleteAllPlaylists() throws {
         guard let user = user else {

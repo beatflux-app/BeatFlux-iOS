@@ -11,6 +11,8 @@ struct SpotifyPlaylistListView: View {
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject var spotify: Spotify
     @State var loadingPlaylistID: String?
+    @State var isRefreshing: Bool = false
+    
     
     var body: some View {
         NavigationView {
@@ -25,12 +27,15 @@ struct SpotifyPlaylistListView: View {
                                     .foregroundStyle(.secondary)
                             }
                             else {
-                                ForEach(spotify.userPlaylists, id: \.self) { playlist in
-                                    PlaylistRow(loadingPlaylistID: $loadingPlaylistID, playlist: playlist)
-                                        .environmentObject(spotify)
-                                    
+                                
+                                    ForEach(spotify.userPlaylists.sorted(by: { $0.playlist.name < $1.playlist.name }), id: \.self) { playlist in
+                                        PlaylistRow(loadingPlaylistID: $loadingPlaylistID, playlist: playlist)
+                                            .environmentObject(spotify)
+                                    }
                                 }
-                            }
+
+
+                            
                         }
                         
                         
@@ -39,20 +44,23 @@ struct SpotifyPlaylistListView: View {
                     
                     
                     Section("Playlists From Other Accounts") {
+                        
                         if spotify.spotifyData.playlists.isEmpty {
                             Text("None")
                                 .foregroundStyle(.secondary)
                         }
                         else {
-                            ForEach(spotify.spotifyData.playlists, id: \.self) { playlist in
-                                if (spotify.userPlaylists.first(where:  { $0.playlist.id == playlist.playlist.id }) == nil) {
-                                    
-                                    PlaylistRow(loadingPlaylistID: $loadingPlaylistID, playlist: playlist)
-                                        .environmentObject(spotify)
-                                    
+                            
+                                ForEach(spotify.spotifyData.playlists, id: \.self) { playlist in
+                                    if (spotify.userPlaylists.first(where:  { $0.playlist.id == playlist.playlist.id }) == nil) {
+                                        
+                                        PlaylistRow(loadingPlaylistID: $loadingPlaylistID, playlist: playlist)
+                                            .environmentObject(spotify)
+                                    }
                                 }
                             }
-                        }
+ 
+                        
                         
                     }
                     
@@ -64,7 +72,7 @@ struct SpotifyPlaylistListView: View {
                         
                 }
                 else {
-                    VStack {
+                    VStack(spacing: 15) {
                         Spacer()
                         ProgressView()
                         Text("LOADING...")
@@ -81,7 +89,7 @@ struct SpotifyPlaylistListView: View {
                     Button(action: { dismiss() }) {
                         Text("")
                     }.buttonStyle(ExitButtonStyle(buttonSize: 30, symbolScale: 0.4))
-
+                    
                 }
                 
                 
@@ -158,14 +166,20 @@ private struct PlaylistRow: View {
                 
                 Task {
                     DispatchQueue.main.async {
-                        loadingPlaylistID = playlist.playlist.id
+                        withAnimation(.easeInOut(duration: 0.3)) {
+                            loadingPlaylistID = playlist.playlist.id
+                        }
+                        
                     }
                     
                     await spotify.backupPlaylist(playlist: playlist)
 
                     
                     DispatchQueue.main.async {
-                        loadingPlaylistID = nil
+                        withAnimation {
+                            loadingPlaylistID = nil
+                        }
+                        
                     }
                     
                     
@@ -178,17 +192,17 @@ private struct PlaylistRow: View {
                 VStack(alignment: .leading) {
                     Text(playlist.playlist.name)
                         .fontWeight(.semibold)
+                        .foregroundColor(.primary)
                     Text(playlist.playlist.owner?.displayName ?? "Unknown")
                         .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .foregroundColor(.secondary)
                 }
                 
                 Spacer()
 
 
                 if loadingPlaylistID == playlist.playlist.id {
-                    LoadingIndicator(color: .accentColor, lineWidth: 3.0)
-                            .frame(width: 15, height: 15)
+                    ProgressView()
                 }
                 else {
                     Image(systemName: (spotify.spotifyData.playlists.first(where: { $0.playlist.id == playlist.playlist.id }) != nil) ? "checkmark.circle.fill" : "circle")
@@ -209,8 +223,12 @@ private struct PlaylistRow: View {
                       
                       // Perform the deletion operation
                       Task {
-                          DispatchQueue.main.async {
-                              spotify.spotifyData.playlists.remove(at: savedPlaylistIndex)
+                          withAnimation {
+                              DispatchQueue.main.async {
+                                  spotify.spotifyData.playlists.remove(at: savedPlaylistIndex)
+                                  
+                              }
+                              
                           }
                           
                           await spotify.uploadSpecificFieldFromPlaylistCollection(playlist: playlistToDelete, delete: true)

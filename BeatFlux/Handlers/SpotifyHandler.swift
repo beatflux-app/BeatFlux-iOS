@@ -30,6 +30,7 @@ final class Spotify: ObservableObject {
     var authorizationState = String.randomURLSafe(length: 128)
     
     @Published var isSpotifyInitializationLoaded = false
+    @Published var isBackupsLoaded = false
     @Published var isAuthorized = false
     
     @Published var isRetrievingTokens = false
@@ -101,10 +102,6 @@ final class Spotify: ObservableObject {
         
     }
     
-    func loadSpotifyData() async {
-        await retrieveSpotifyData()
-    }
-    
 
 
     func retrieveSpotifyData() async {
@@ -122,15 +119,7 @@ final class Spotify: ObservableObject {
         }
 
     }
-    
-    func uploadSpotifyData() async {
-        do {
-            try await DatabaseHandler.shared.uploadSpotifyData(from: spotifyData)
-        }
-        catch {
-            print("ERROR: Failed to upload user data: \(error.localizedDescription)")
-        }
-    }
+
     
     func uploadSpotifyAuthManager() async {
         do {
@@ -142,13 +131,8 @@ final class Spotify: ObservableObject {
     }
     
     func uploadSpecificFieldFromPlaylistCollection(playlist: PlaylistInfo, delete: Bool = false) async {
-        do {            
-            try await DatabaseHandler.shared.uploadSpecificFieldFromPlaylistCollection(playlist: playlist, delete: delete)
+            await DatabaseHandler.shared.uploadSpecificFieldFromPlaylistCollection(playlist: playlist, delete: delete)
             print("Finished")
-        }
-        catch {
-            print("ERROR: Failed to update specific field in the database: \(error.localizedDescription)")
-        }
     }
     
     func initializeSpotify() {
@@ -168,66 +152,42 @@ final class Spotify: ObservableObject {
 
         Task {
             do {
-                //DispatchQueue.main.async {
-                    await loadSpotifyData()
-                //}
+                // Concurrently fetch data and check authorization
+                let spotifyDataTask = Task { await retrieveSpotifyData() }
+                let authManagerDataTask = Task { try await DatabaseHandler.shared.getSpotifyData().authorization_manager }
                 
+                let authManagerData = try await authManagerDataTask.value
                 
-                guard let authManagerData = try await DatabaseHandler.shared.getSpotifyData().authorization_manager else {
+                // Check for authorization info
+                guard let authManagerData = authManagerData else {
                     print("Did NOT find authorization information in keychain")
                     DispatchQueue.main.async { [weak self] in
                         self?.isSpotifyInitializationLoaded = true
+                        self?.isBackupsLoaded = true
                     }
                     return
                 }
-
+                
                 print("Found authorization information in database")
-                
                 self.api.authorizationManager = authManagerData
-                
-            
                 if !self.api.authorizationManager.accessTokenIsExpired() {
                     self.autoRefreshTokensWhenExpired()
                 }
-
-                    self.api.authorizationManager.refreshTokens(
-                        onlyIfExpired: true
-                    )
-                    .sink(receiveCompletion: { completion in
-                        switch completion {
-                            case .finished:
-                                break
-                            case .failure(let error):
-                                print(
-                                    "ERROR: Spotify.init: couldn't refresh tokens:\n\(error)"
-                                )
-                        }
-                    })
-                    .store(in: &self.cancellables)
                 
-                Task {
-                    //DispatchQueue.main.async {
-                        await refreshUsersPlaylists(options: .libraryPlaylists, priority: .high)
-                    //}
-                    
-                    
-                    DispatchQueue.main.async { [weak self] in
-                        self?.isSpotifyInitializationLoaded = true
-                    }
-                }
-                
-                
-            }
-            catch {
-                print("ERROR: Unable to get user data from database")
+                await spotifyDataTask.value
                 
                 DispatchQueue.main.async { [weak self] in
+                    self?.isBackupsLoaded = true
+                }
+                
+                
+            } catch {
+                print("ERROR: Unable to get user data from database")
+                DispatchQueue.main.async { [weak self] in
                     self?.isSpotifyInitializationLoaded = true
+                    self?.isBackupsLoaded = true
                 }
             }
-            
-
-            
         }
 
     }
@@ -289,41 +249,44 @@ final class Spotify: ObservableObject {
         //UIApplication.shared.open(url)
         
     }
-    
+    var startTime = Date()
     func authorizationManagerDidChange() {
-        
         DispatchQueue.main.async {
             self.isAuthorized = self.api.authorizationManager.isAuthorized()
+            print("Spotify.authorizationManagerDidChange: isAuthorized:", self.isAuthorized)
 
-            print(
-                "Spotify.authorizationManagerDidChange: isAuthorized:",
-                self.isAuthorized
-            )
-            
             self.autoRefreshTokensWhenExpired()
-            
             self.retrieveCurrentUser()
             
+            // Concurrently run tasks to speed up the function.
             Task {
-                await self.refreshUsersPlaylists(options: .libraryPlaylists, priority: .high)
+                let playlistRefreshTask = Task {
+                    await self.refreshUsersPlaylists(options: .libraryPlaylists, priority: .high)
+                    
+                    DispatchQueue.main.async { [weak self] in
+                        self?.isSpotifyInitializationLoaded = true
+                    }
+                }
+                let uploadSpotifyAuthManagerTask = Task {
+                    await self.uploadSpotifyAuthManager()
+                }
+
+                // Wait for both tasks to complete
+                await playlistRefreshTask
+                await uploadSpotifyAuthManagerTask
+                
+
+                
+                print("Time Elapsed: \(Date().timeIntervalSince1970 - self.startTime.timeIntervalSince1970)")
             }
-            
-            
-            
         }
-            
-        // Save the data to the keychain.
+
+        // Save the data to the keychain only if the user is not nil.
         if DatabaseHandler.shared.user != nil {
             spotifyData.authorization_manager = self.api.authorizationManager
-            Task {
-                await uploadSpotifyAuthManager()
-            }
-            
-        }
-        else {
+        } else {
             print("ERROR: Unable to save user, user is nil")
         }
-        
     }
     
     func authorizationManagerDidDeauthorize() {
@@ -386,9 +349,9 @@ final class Spotify: ObservableObject {
         if priority == .low {
             selectedQueue = DispatchQueue.global(qos: .background)
         } else if priority == .medium {
-            selectedQueue = DispatchQueue.global(qos: .userInteractive)
-        } else if priority == .high {
             selectedQueue = DispatchQueue.global(qos: .default)
+        } else if priority == .high {
+            selectedQueue = DispatchQueue.global(qos: .userInteractive)
         }
         
         return try await withCheckedThrowingContinuation { continuation in
@@ -444,62 +407,103 @@ final class Spotify: ObservableObject {
     public func refreshUsersPlaylists(options: PlaylistRefreshOptions, priority: DatabaseHandler.Priorities) async {
 
         do {
-            let playlists = try await self.getUserPlaylists(priority: priority)
+            let fetchedPlaylists = try await self.getUserPlaylists(priority: priority)
+
             
-            
-            
-            
+
             
             if (options == .all || options == .libraryPlaylists) {
-                var playlistsToAdd: [PlaylistInfo] = []
-                
-                for playlist in playlists.items {
-                    print(playlist.name)
-                    var details = PlaylistInfo(playlist: playlist, lastFetched: Date())
-                    let playlistInfo = try await self.retrievePlaylistItem(fetchedPlaylist: playlist)
+                var updatedPlaylists: [PlaylistInfo] = []
+
+                for fetchedPlaylist in fetchedPlaylists.items {
+                    if let index = userPlaylists.firstIndex(where: { $0.playlist.id == fetchedPlaylist.id }) {
+                        // This playlist already exists in userPlaylists
+                        let userPlaylist = userPlaylists[index]
+                        
+                        if fetchedPlaylist.snapshotId != userPlaylist.playlist.snapshotId {
+                            // The playlist was changed, so save a new version
+                            do {
+                                let playlistInfo = try await self.retrievePlaylistItem(fetchedPlaylist: fetchedPlaylist)
+                                var updatedPlaylist = PlaylistInfo(playlist: fetchedPlaylist, lastFetched: Date())
+                                updatedPlaylist.tracks = playlistInfo.tracks
+                                updatedPlaylists.append(updatedPlaylist)
+                            } catch {
+                                print("Error retrieving playlist item: \(error)")
+                            }
+                        } else {
+                            // The playlist has not changed, keep the old version
+                            updatedPlaylists.append(userPlaylist)
+                        }
+                    }
+                    // If you want to add new playlists, uncomment the following else block
                     
-                    details.tracks = playlistInfo.tracks
-                    playlistsToAdd.append(details)
+                    else {
+                        // This is a new playlist, add it to userPlaylists
+                        do {
+                            let playlistInfo = try await self.retrievePlaylistItem(fetchedPlaylist: fetchedPlaylist)
+                            var newPlaylist = PlaylistInfo(playlist: fetchedPlaylist, lastFetched: Date())
+                            newPlaylist.tracks = playlistInfo.tracks
+                            updatedPlaylists.append(newPlaylist)
+                        } catch {
+                            print("Error retrieving playlist item: \(error)")
+                        }
+                    }
+                    
                 }
 
-                DispatchQueue.main.async {
-                    self.userPlaylists = playlistsToAdd
+                DispatchQueue.main.async { [weak self] in
+                    self?.userPlaylists = updatedPlaylists
                 }
-                
-                
             }
+
+
+
+
+
+
+
             
             if (options == .all || options == .backupPlaylists) {
                 for (index, playlist) in self.spotifyData.playlists.enumerated() {
-                    if let fetchedPlaylist = playlists.items.first(where: { $0.id == playlist.playlist.id }) {
+                    if let fetchedPlaylist = fetchedPlaylists.items.first(where: { $0.id == playlist.playlist.id }) {
                         
                         if fetchedPlaylist.snapshotId != playlist.playlist.snapshotId {
                             
+                            
+                           
+                            
                             let convertedPlaylist = await self.convertSpotifyPlaylistToCustom(playlist: fetchedPlaylist)
-                            
-                            guard let convertedPlaylist = convertedPlaylist else { return }
-                            
+
                             DispatchQueue.main.async { [weak self] in
+                                //copy the version history over to a variable
+                                var playlistVersionHistory = playlist.versionHistory
+                                playlistVersionHistory.append(priorBackupInfo(playlist: playlist, versionDate: Date()))
+                                
+                                guard var convertedPlaylist = convertedPlaylist else { return }
+                                
+                                Task {
+                                    await self?.uploadSpecificFieldFromPlaylistCollection(playlist: convertedPlaylist, delete: false)
+                                }
+                                
+                                convertedPlaylist.versionHistory = playlistVersionHistory
+                                
                                 self?.spotifyData.playlists[index] = convertedPlaylist
+                                
+
                             }
                             
                         
-                            await self.uploadSpecificFieldFromPlaylistCollection(playlist: convertedPlaylist, delete: false)
-                            let priorBackupInfo = await self.getPlaylistVersionHistory(playlist: convertedPlaylist)
-                            DispatchQueue.main.async { [weak self] in
-                                self?.spotifyData.playlists[index].versionHistory = priorBackupInfo
-                            }
+                            
+//                            let priorBackupInfo = await self.getPlaylistVersionHistory(playlist: convertedPlaylist)
+//                            DispatchQueue.main.async { [weak self] in
+//                                self?.spotifyData.playlists[index].versionHistory = priorBackupInfo
+//                            }
                             
                             
-                        }
-                        else {
-                            let priorBackupInfo = await self.getPlaylistVersionHistory(playlist: playlist)
-                            DispatchQueue.main.async { [weak self] in
-                                self?.spotifyData.playlists[index].versionHistory = priorBackupInfo
-                            }
                         }
                         
                     }
+                    
                 }
 
             }
@@ -532,31 +536,32 @@ final class Spotify: ObservableObject {
             
             //helps save on api calls
             let details = await self.convertSpotifyPlaylistToCustom(playlist: item)
-            
-            guard let details = details else { return }
-        
-            if let index = self.userPlaylists.firstIndex(where: { $0.playlist.id == details.playlist.id }) {
-                DispatchQueue.main.async { [weak self] in
-                    self?.userPlaylists[index] = details
-                }
-                
-            }
-            else {
-                DispatchQueue.main.async { [weak self] in
-                    self?.userPlaylists.append(details)
-                }
-                
-            }
-            
-            
-            
             DispatchQueue.main.async { [weak self] in
+                guard var details = details else { return }
+                details.versionHistory.append(priorBackupInfo(playlist: details, versionDate: Date()))
+                
+                if let index = self?.userPlaylists.firstIndex(where: { $0.playlist.id == details.playlist.id }) {
+                    
+                    self?.userPlaylists[index] = details
+                    
+                    
+                }
+                else {
+                    
+                    self?.userPlaylists.append(details)
+                    
+                    
+                }
+                
                 self?.spotifyData.playlists.append(details)
+                
+                Task { [weak self] in
+                    guard let self = self else { return }
+                    await self.uploadSpecificFieldFromPlaylistCollection(playlist: playlist)
+                }
             }
-            Task { [weak self] in
-                guard let self = self else { return }
-                await self.uploadSpecificFieldFromPlaylistCollection(playlist: playlist)
-            }
+
+
             
                 
             
