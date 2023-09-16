@@ -168,7 +168,10 @@ final class Spotify: ObservableObject {
 
         Task {
             do {
-                await loadSpotifyData()
+                //DispatchQueue.main.async {
+                    await loadSpotifyData()
+                //}
+                
                 
                 guard let authManagerData = try await DatabaseHandler.shared.getSpotifyData().authorization_manager else {
                     print("Did NOT find authorization information in keychain")
@@ -181,9 +184,6 @@ final class Spotify: ObservableObject {
                 print("Found authorization information in database")
                 
                 self.api.authorizationManager = authManagerData
-                Task {
-                    await refreshUsersPlaylists(options: .libraryPlaylists)
-                }
                 
             
                 if !self.api.authorizationManager.accessTokenIsExpired() {
@@ -205,17 +205,28 @@ final class Spotify: ObservableObject {
                     })
                     .store(in: &self.cancellables)
                 
-
+                Task {
+                    //DispatchQueue.main.async {
+                        await refreshUsersPlaylists(options: .libraryPlaylists, priority: .high)
+                    //}
+                    
+                    
+                    DispatchQueue.main.async { [weak self] in
+                        self?.isSpotifyInitializationLoaded = true
+                    }
+                }
                 
                 
             }
             catch {
                 print("ERROR: Unable to get user data from database")
+                
+                DispatchQueue.main.async { [weak self] in
+                    self?.isSpotifyInitializationLoaded = true
+                }
             }
             
-            DispatchQueue.main.async { [weak self] in
-                self?.isSpotifyInitializationLoaded = true
-            }
+
             
         }
 
@@ -294,7 +305,7 @@ final class Spotify: ObservableObject {
             self.retrieveCurrentUser()
             
             Task {
-                await self.refreshUsersPlaylists(options: .libraryPlaylists)
+                await self.refreshUsersPlaylists(options: .libraryPlaylists, priority: .high)
             }
             
             
@@ -368,11 +379,22 @@ final class Spotify: ObservableObject {
         
     }
     
-    public func getUserPlaylists() async throws -> PagingObject<Playlist<PlaylistItemsReference>> {
+    public func getUserPlaylists(priority: DatabaseHandler.Priorities) async throws -> PagingObject<Playlist<PlaylistItemsReference>> {
+        var localCancellable: Set<AnyCancellable> = []
+        var selectedQueue: DispatchQueue = DispatchQueue.global(qos: .background)
+
+        if priority == .low {
+            selectedQueue = DispatchQueue.global(qos: .background)
+        } else if priority == .medium {
+            selectedQueue = DispatchQueue.global(qos: .userInteractive)
+        } else if priority == .high {
+            selectedQueue = DispatchQueue.global(qos: .default)
+        }
+        
         return try await withCheckedThrowingContinuation { continuation in
             self.api.currentUserPlaylists()
                 .extendPages(self.api)
-                .subscribe(on: DispatchQueue.global(qos: .background))
+                .subscribe(on: selectedQueue)
                 .receive(on: DispatchQueue.main) // Switch back to the main queue for the result
                 .sink(receiveCompletion: { completion in
                     if case .failure(let error) = completion {
@@ -382,13 +404,15 @@ final class Spotify: ObservableObject {
                 }, receiveValue: { results in
                     continuation.resume(returning: results)
                 })
-                .store(in: &self.cancellables)
+                .store(in: &localCancellable)
         }
     }
 
     
     
     public func retrievePlaylistItem(fetchedPlaylist: Playlist<PlaylistItemsReference>) async throws -> PlaylistInfo {
+        var localCancellable: Set<AnyCancellable> = []
+        
         return try await withCheckedThrowingContinuation { continuation in
             self.api.playlistItems(fetchedPlaylist.uri)
                 .subscribe(on: DispatchQueue.global(qos: .background))
@@ -400,7 +424,7 @@ final class Spotify: ObservableObject {
                 }, receiveValue: { pagingObject in
                     continuation.resume(returning: PlaylistInfo(playlist: fetchedPlaylist, tracks: pagingObject.items, lastFetched: Date()))
                 })
-                .store(in: &self.cancellables)
+                .store(in: &localCancellable)
         }
     }
 
@@ -417,17 +441,20 @@ final class Spotify: ObservableObject {
         case all
     }
     
-    public func refreshUsersPlaylists(options: PlaylistRefreshOptions) async {
+    public func refreshUsersPlaylists(options: PlaylistRefreshOptions, priority: DatabaseHandler.Priorities) async {
 
         do {
-            let playlists = try await self.getUserPlaylists()
+            let playlists = try await self.getUserPlaylists(priority: priority)
             
             
             
-            var playlistsToAdd: [PlaylistInfo] = []
+            
             
             if (options == .all || options == .libraryPlaylists) {
+                var playlistsToAdd: [PlaylistInfo] = []
+                
                 for playlist in playlists.items {
+                    print(playlist.name)
                     var details = PlaylistInfo(playlist: playlist, lastFetched: Date())
                     let playlistInfo = try await self.retrievePlaylistItem(fetchedPlaylist: playlist)
                     
@@ -484,15 +511,20 @@ final class Spotify: ObservableObject {
     
     public func backupPlaylist(playlist: PlaylistInfo) async {
         do {
-            let fetchedPlaylists = try await self.getUserPlaylists()
+            let fetchedPlaylists = try await self.getUserPlaylists(priority: .low)
                 
             //if we don't find an existing playlist then add to the list
             guard let item = fetchedPlaylists.items.first(where: { $0.id == playlist.playlist.id }) else {
-                DispatchQueue.main.async { [weak self] in
-                    self?.spotifyData.playlists.append(playlist)
-                }
                 Task { [weak self] in
-                    await self?.uploadSpecificFieldFromPlaylistCollection(playlist: playlist)
+                    guard let self = self else { return }
+                    await self.uploadSpecificFieldFromPlaylistCollection(playlist: playlist)
+                    let priorBackupInfo = await self.getPlaylistVersionHistory(playlist: playlist)
+                    DispatchQueue.main.async { [weak self] in
+                        var updatedPlaylist = playlist
+                        
+                        updatedPlaylist.versionHistory = priorBackupInfo
+                        self?.spotifyData.playlists.append(updatedPlaylist)
+                    }
                 }
                 
                 return

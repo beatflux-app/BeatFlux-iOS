@@ -61,7 +61,7 @@ struct HomeView: View {
                 .navigationTitle("Backups")
                 .refreshable {
                     Task {
-                        await spotify.refreshUsersPlaylists(options: .all)
+                        await spotify.refreshUsersPlaylists(options: .all, priority: .low)
                     }
                 }
                 .scrollIndicators(.hidden)

@@ -15,8 +15,11 @@ struct SpotifyPlaylistListView: View {
     var body: some View {
         NavigationView {
             Group {
-                    Form {
+                if spotify.isSpotifyInitializationLoaded {
+                Form {
+                    
                         Section("Your Spotify Library") {
+                            
                             if spotify.userPlaylists.isEmpty {
                                 Text("None")
                                     .foregroundStyle(.secondary)
@@ -28,28 +31,48 @@ struct SpotifyPlaylistListView: View {
                                     
                                 }
                             }
-
                         }
                         
-                        Section("Playlists From Other Accounts") {
-                            if spotify.spotifyData.playlists.isEmpty {
-                                Text("None")
-                                    .foregroundStyle(.secondary)
-                            }
-                            else {
-                                ForEach(spotify.spotifyData.playlists, id: \.self) { playlist in
-                                    if (spotify.userPlaylists.first(where:  { $0.playlist.id == playlist.playlist.id }) == nil) {
-                                        
-                                        PlaylistRow(loadingPlaylistID: $loadingPlaylistID, playlist: playlist)
-                                            .environmentObject(spotify)
-
-                                    }
+                        
+                        
+                    
+                    
+                    
+                    Section("Playlists From Other Accounts") {
+                        if spotify.spotifyData.playlists.isEmpty {
+                            Text("None")
+                                .foregroundStyle(.secondary)
+                        }
+                        else {
+                            ForEach(spotify.spotifyData.playlists, id: \.self) { playlist in
+                                if (spotify.userPlaylists.first(where:  { $0.playlist.id == playlist.playlist.id }) == nil) {
+                                    
+                                    PlaylistRow(loadingPlaylistID: $loadingPlaylistID, playlist: playlist)
+                                        .environmentObject(spotify)
+                                    
                                 }
                             }
-                            
                         }
                         
                     }
+                    
+                    
+                }
+                
+                            
+                        
+                        
+                }
+                else {
+                    VStack {
+                        Spacer()
+                        ProgressView()
+                        Text("LOADING...")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        Spacer()
+                    }
+                }
             }
             .navigationTitle("Add Playlists")
             .navigationBarTitleDisplayMode(.inline)
@@ -125,39 +148,44 @@ private struct PlaylistRow: View {
     @State private var isPresentingConfirm = false
     
     var body: some View {
-        HStack {
-            PlaylistImage(playlist: playlist)
-            
-            VStack(alignment: .leading) {
-                Text(playlist.playlist.name)
-                    .fontWeight(.semibold)
-                Text(playlist.playlist.owner?.displayName ?? "Unknown")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+        Button {
+            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+            if spotify.spotifyData.playlists.firstIndex(where: { $0.playlist.id == playlist.playlist.id }) != nil {
+                //playlist is already saved
+                isPresentingConfirm = true
             }
-            
-            Spacer()
-
-            Button {
-                UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-                if spotify.spotifyData.playlists.firstIndex(where: { $0.playlist.id == playlist.playlist.id }) != nil {
-                    //playlist is already saved
-                    isPresentingConfirm = true
-                }
-                else {
-                    loadingPlaylistID = playlist.playlist.id
-                    Task {
-                        await spotify.backupPlaylist(playlist: playlist)
-                        loadingPlaylistID = nil
-                        await spotify.refreshUsersPlaylists(options: .backupPlaylists)
+            else {
+                
+                Task {
+                    DispatchQueue.main.async {
+                        loadingPlaylistID = playlist.playlist.id
                     }
-
-                        
                     
+                    await spotify.backupPlaylist(playlist: playlist)
+
+                    
+                    DispatchQueue.main.async {
+                        loadingPlaylistID = nil
+                    }
                     
                     
                 }
-            } label: {
+            }
+        } label: {
+            HStack {
+                PlaylistImage(playlist: playlist)
+                
+                VStack(alignment: .leading) {
+                    Text(playlist.playlist.name)
+                        .fontWeight(.semibold)
+                    Text(playlist.playlist.owner?.displayName ?? "Unknown")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                
+                Spacer()
+
+
                 if loadingPlaylistID == playlist.playlist.id {
                     LoadingIndicator(color: .accentColor, lineWidth: 3.0)
                             .frame(width: 15, height: 15)
@@ -166,9 +194,12 @@ private struct PlaylistRow: View {
                     Image(systemName: (spotify.spotifyData.playlists.first(where: { $0.playlist.id == playlist.playlist.id }) != nil) ? "checkmark.circle.fill" : "circle")
                         .font(.title3)
                 }
+                    
                 
             }
         }
+        .disabled(loadingPlaylistID != nil)
+
         .confirmationDialog("Are you sure?",
           isPresented: $isPresentingConfirm) {
           Button("Delete Backup", role: .destructive) {
@@ -178,14 +209,16 @@ private struct PlaylistRow: View {
                       
                       // Perform the deletion operation
                       Task {
-                          await spotify.uploadSpecificFieldFromPlaylistCollection(playlist: playlistToDelete, delete: true)
-                          
-                          // If successful, update the array
                           DispatchQueue.main.async {
                               spotify.spotifyData.playlists.remove(at: savedPlaylistIndex)
                           }
                           
-                          await spotify.refreshUsersPlaylists(options: .all)
+                          await spotify.uploadSpecificFieldFromPlaylistCollection(playlist: playlistToDelete, delete: true)
+                          
+                          // If successful, update the array
+                         
+                          //await spotify.refreshUsersPlaylists(options: .backupPlaylists)
+                          
 
                       }
                   }
@@ -204,3 +237,4 @@ struct PlaylistListView_Previews: PreviewProvider {
             .environmentObject(Spotify())
     }
 }
+

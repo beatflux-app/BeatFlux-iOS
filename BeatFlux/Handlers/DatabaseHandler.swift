@@ -36,6 +36,12 @@ final class DatabaseHandler {
         case couldNotConvertToJSON
     }
     
+    public enum Priorities {
+        case low
+        case medium
+        case high
+    }
+    
     func initializeUser(firstName: String, lastName: String) {
         guard let user = user else { return }
         
@@ -197,7 +203,6 @@ final class DatabaseHandler {
                 
                 let playlistsCollection = self.firestore.collection("users").document(user.uid).collection("playlists")
                 
-                let group = DispatchGroup()
                 
                 var playlists: [PlaylistInfo] = []
                 
@@ -209,7 +214,6 @@ final class DatabaseHandler {
                         let playlist = try? decoder.decode(PlaylistInfo.self, from: Data(playlistData.utf8))
                         
                         if var playlist = playlist {
-                            group.enter()
                             
                             let versionHistory = await self.getPlaylistsVersionHistory(playlist: playlist)
 
@@ -324,76 +328,52 @@ final class DatabaseHandler {
         let versionHistoryCollection = firestore.collection("users").document(user.uid).collection("playlists").document(playlist.playlist.id).collection("versionHistory")
         
 
-        
-        // Upload playlist individually
-        
         let playlistEncoded = try JSONEncoder().encode(playlist)
         guard let playlistString = String(data: playlistEncoded, encoding: .utf8) else {
             return
         }
+        
         if delete {
-            return try await withCheckedThrowingContinuation { continuation in
-                DispatchQueue.global(qos: .background).async {
-                    versionHistoryCollection.getDocuments { snapshot, error in
-                        guard let snapshot = snapshot else { return }
-                        
-                        for document in snapshot.documents {
-                            document.reference.delete() { error in
-                                if let error = error {
-                                    print("ERROR: Deleting field failed: \(error)")
-                                    continuation.resume(throwing: error)
-                                } else {
-                                    print("SUCCESS: Field was successfully deleted")
-                                }
-                            }
-                        }
-                    }
-                    
-                    playlistsCollection.document(playlist.playlist.id).delete() { error in
-                        if let error = error {
-                            print("ERROR: Deleting field failed: \(error)")
-                            continuation.resume(throwing: error)
-                        } else {
-                            print("SUCCESS: Field was successfully deleted")
-                            continuation.resume()
-                        }
-                    }
+            do {
+                let snapshot = try await versionHistoryCollection.getDocuments()
+            
+                for document in snapshot.documents {
+                    try await document.reference.delete()
                 }
                 
+                try await playlistsCollection.document(playlist.playlist.id).delete()
+                
             }
-        }
-        
-        
-        // Use playlist.id as the document ID for easier querying later
-        return try await withCheckedThrowingContinuation { continuation in
-            DispatchQueue.global(qos: .background).async {
-                playlistsCollection.document(playlist.playlist.id).setData(["data": playlistString], merge: true) { error in
-                    if let error = error {
-                        print("ERROR: Writing data failed: \(error)")
-                        continuation.resume(throwing: error)
-                    } else {
-                        print("SUCCESS: Data was successfully written")
-                        
-                        let priorBackupsCollection = playlistsCollection.document(playlist.playlist.id).collection("versionHistory")
-                        
-                        let priorBackupInfoEncoded = try? JSONEncoder().encode(priorBackupInfo(playlist: playlist, versionDate: Date()))
-                        guard let priorBackupInfoEncoded = priorBackupInfoEncoded else { return }
-                        guard let priorBackupInfoString = String(data: priorBackupInfoEncoded, encoding: .utf8) else { return }
-                        
-                        priorBackupsCollection.document(UUID().uuidString).setData(["data": priorBackupInfoString]) { error in
-                            if let error = error {
-                                print("ERROR: Error while saving version history: \(error)")
-                            }
-                        }
-                        
-                        
-                        
-                        continuation.resume()
-                    }
-                }
+            catch {
+                print("ERROR: Error while deleting field from playlist collection \(error.localizedDescription)")
+                
+                throw error
             }
             
         }
+        else {
+            do {
+                try await playlistsCollection.document(playlist.playlist.id).setData(["data": playlistString], merge: true)
+                
+                    
+                print("SUCCESS: Data was successfully written")
+                
+                let priorBackupsCollection = playlistsCollection.document(playlist.playlist.id).collection("versionHistory")
+                
+                let priorBackupInfoEncoded = try? JSONEncoder().encode(priorBackupInfo(playlist: playlist, versionDate: Date()))
+                guard let priorBackupInfoEncoded = priorBackupInfoEncoded else { return }
+                guard let priorBackupInfoString = String(data: priorBackupInfoEncoded, encoding: .utf8) else { return }
+                
+                try await priorBackupsCollection.document(UUID().uuidString).setData(["data": priorBackupInfoString])
+
+            }
+            catch {
+                print("ERROR: Error occured when saving playlist collection \(error.localizedDescription)")
+                throw error
+            }
+        }
+        
+        
     }
     
     func uploadSpotifyAuthManager(from data: SpotifyDataModel) async throws {

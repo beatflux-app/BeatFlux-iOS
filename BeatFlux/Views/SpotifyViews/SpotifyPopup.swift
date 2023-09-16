@@ -144,8 +144,8 @@ struct SpotifyAuthenticationView: View {
         
     }
     
-    func getPlaylists() async {
-        let playlists = try? await spotify.getUserPlaylists()
+    func getPlaylists(priority: DatabaseHandler.Priorities) async {
+        let playlists = try? await spotify.getUserPlaylists(priority: priority)
         guard let playlists = playlists else {
             return
         }
