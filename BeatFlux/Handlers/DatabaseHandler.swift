@@ -11,13 +11,14 @@ import FirebaseFirestore
 import FirebaseAuth
 import Combine
 import CombineFirebaseFirestore
-import FirebaseDatabase
+import FirebaseFirestoreSwift
 import SpotifyWebAPI
 
 final class DatabaseHandler {
     
     let firestore = Firestore.firestore()
-    let database = Database.database()
+    let settings = FirestoreSettings()
+    let database = Firestore.firestore()
     private var cancellables = Set<AnyCancellable>()
     
     
@@ -40,6 +41,13 @@ final class DatabaseHandler {
         case low
         case medium
         case high
+    }
+    
+    
+    init() {
+        let settings = FirestoreSettings()
+        settings.cacheSizeBytes = FirestoreCacheSizeUnlimited
+        database.settings = settings
     }
     
     func initializeUser(firstName: String, lastName: String) {
@@ -106,74 +114,74 @@ final class DatabaseHandler {
             print("ERROR: Failed to get data from database because the user is nil")
             throw UserError.nilUser
         }
-
-        return try await withCheckedThrowingContinuation { continuation in
-            let docRef = firestore.collection("users").document(user.uid)
+        
+        let docRef = firestore.collection("users").document(user.uid)
+        do {
+            let document = try await docRef.getDocument()
             
-            DispatchQueue.global(qos: .background).async {
-                docRef.getDocument { (document, error) in
-                    if let document = document, document.exists {
-                        self.updateFieldIfNil(docRef: docRef, document: document, fieldName: "first_name", defaultValue: UserModel.defaultData.first_name)
-                        self.updateFieldIfNil(docRef: docRef, document: document, fieldName: "last_name", defaultValue: UserModel.defaultData.last_name)
-                        self.updateFieldIfNil(docRef: docRef, document: document, fieldName: "is_using_dark", defaultValue: UserModel.defaultData.is_using_dark)
-                        self.updateFieldIfNil(docRef: docRef, document: document, fieldName: "account_link_shown", defaultValue: UserModel.defaultData.account_link_shown)
-                        
-                        let firstName = document.get("first_name") as? String ?? UserModel.defaultData.first_name
-                        let last_name = document.get("last_name") as? String ?? UserModel.defaultData.last_name
-                        let email = document.get("email") as? String
-                        let isUsingDark = document.get("is_using_dark") as? Bool ?? UserModel.defaultData.is_using_dark
-                        let accountLinkShown = document.get("account_link_shown") as? Bool ?? UserModel.defaultData.account_link_shown
-                        
-                        var spotifyDataModel: SpotifyDataModel = SpotifyDataModel(authorization_manager: nil, playlists: [])
-                        
-                        if let spotifyData = document.get("spotify_data") as? [String: Any] {
+            if document.exists {
+                self.updateFieldIfNil(docRef: docRef, document: document, fieldName: "first_name", defaultValue: UserModel.defaultData.first_name)
+                self.updateFieldIfNil(docRef: docRef, document: document, fieldName: "last_name", defaultValue: UserModel.defaultData.last_name)
+                self.updateFieldIfNil(docRef: docRef, document: document, fieldName: "is_using_dark", defaultValue: UserModel.defaultData.is_using_dark)
+                self.updateFieldIfNil(docRef: docRef, document: document, fieldName: "account_link_shown", defaultValue: UserModel.defaultData.account_link_shown)
+                
+                let firstName = document.get("first_name") as? String ?? UserModel.defaultData.first_name
+                let last_name = document.get("last_name") as? String ?? UserModel.defaultData.last_name
+                let email = document.get("email") as? String
+                let isUsingDark = document.get("is_using_dark") as? Bool ?? UserModel.defaultData.is_using_dark
+                let accountLinkShown = document.get("account_link_shown") as? Bool ?? UserModel.defaultData.account_link_shown
+                
+                var spotifyDataModel: SpotifyDataModel = SpotifyDataModel(authorization_manager: nil, playlists: [])
+                
+                if let spotifyData = document.get("spotify_data") as? [String: Any] {
+                    
+                    if let authorizationManager = spotifyData["authorization_manager"] as? String {
+                        do {
+                            let decoder = JSONDecoder()
+                            let authManager = try decoder.decode(AuthorizationCodeFlowManager.self, from: Data(authorizationManager.utf8))
                             
-                            if let authorizationManager = spotifyData["authorization_manager"] as? String {
-                                do {
-                                    let decoder = JSONDecoder()
-                                    let authManager = try decoder.decode(AuthorizationCodeFlowManager.self, from: Data(authorizationManager.utf8))
-                                    
-                                    spotifyDataModel.authorization_manager = authManager
-                                    
-                                } catch {
-                                    print("ERROR: decoding AuthorizationCodeFlowManager: \(error)")
-                                }
-                            }
+                            spotifyDataModel.authorization_manager = authManager
                             
-                            if let playlistsData = spotifyData["playlists"] as? String {
-                                do {
-                                    let decoder = JSONDecoder()
-                                    let playlists = try decoder.decode([PlaylistInfo].self, from: Data(playlistsData.utf8))
-                                    spotifyDataModel.playlists = playlists
-                                } catch {
-                                    print("ERROR: decoding playlist details: \(error)")
-                                }
-                            }
-                            
-                            
+                        } catch {
+                            print("ERROR: decoding AuthorizationCodeFlowManager: \(error)")
                         }
-                        
-                        
-                        let returnValue = UserModel(
-                            first_name: firstName,
-                            last_name: last_name,
-                            email: email,
-                            is_using_dark: isUsingDark,
-                            account_link_shown: accountLinkShown)
-                        
-                        continuation.resume(returning: returnValue)
-                    } else {
-                        print("Document does not exist, initlizing data (ERROR HANDLED)")
-                        self.initializeUser(firstName: UserModel.defaultData.first_name, lastName: UserModel.defaultData.first_name)
-                        continuation.resume(throwing: error ?? UserError.nilUser)
                     }
+                    
+                    if let playlistsData = spotifyData["playlists"] as? String {
+                        do {
+                            let decoder = JSONDecoder()
+                            let playlists = try decoder.decode([PlaylistInfo].self, from: Data(playlistsData.utf8))
+                            spotifyDataModel.playlists = playlists
+                        } catch {
+                            print("ERROR: decoding playlist details: \(error)")
+                        }
+                    }
+                    
+                    
                 }
+                
+                
+                let returnValue = UserModel(
+                    first_name: firstName,
+                    last_name: last_name,
+                    email: email,
+                    is_using_dark: isUsingDark,
+                    account_link_shown: accountLinkShown)
+                
+                return returnValue
+            } else {
+                print("Document does not exist, initlizing data (ERROR HANDLED)")
+                self.initializeUser(firstName: UserModel.defaultData.first_name, lastName: UserModel.defaultData.last_name)
+                return UserModel(first_name: UserModel.defaultData.first_name, last_name: UserModel.defaultData.last_name)
             }
-            
+        }
+        catch {
+            print("ERROR: Error occured when fetching user data \(error.localizedDescription)")
+            throw error
         }
     }
     
-    func getSpotifyData() async throws -> SpotifyDataModel {
+    func getSpotifyData(source: FirestoreSource) async throws -> SpotifyDataModel {
         
                 
         guard let user = self.user else {
@@ -183,7 +191,7 @@ final class DatabaseHandler {
         do {
             let docRef = self.firestore.collection("users").document(user.uid)
             
-            let document = try await docRef.getDocument()
+            let document = try await docRef.getDocument(source: source)
 
             
             if document.exists {
@@ -206,16 +214,13 @@ final class DatabaseHandler {
                 
                 var playlists: [PlaylistInfo] = []
                 
-                let querySnapshot = try await playlistsCollection.getDocuments()
+                let querySnapshot = try await playlistsCollection.getDocuments(source: source)
 
-                print(querySnapshot.documents.count)
                 
                 for document in querySnapshot.documents {
                     if var playlist = try document.data(as: PlaylistInfo?.self) {
-                        print(playlist.playlist.name)
                             
-                        let versionHistory = await self.getPlaylistsVersionHistory(playlist: playlist)
-                        print(versionHistory)
+                        let versionHistory = await self.getPlaylistsVersionHistory(playlist: playlist, source: source)
                         playlist.versionHistory = versionHistory
                         playlists.append(playlist)
                             
@@ -240,14 +245,16 @@ final class DatabaseHandler {
         }
     }
     
-    func getPlaylistsVersionHistory(playlist: PlaylistInfo) async -> [priorBackupInfo] {
+    
+    
+    func getPlaylistsVersionHistory(playlist: PlaylistInfo, source: FirestoreSource) async -> [priorBackupInfo] {
         guard let user = user else { return [] }
         let versionHistoryCollection = firestore.collection("users").document(user.uid).collection("playlists").document(playlist.playlist.id).collection("versionHistory")
         let decoder = JSONDecoder()
         var versionHistoryArray: [priorBackupInfo] = []
         
         do {
-            let querySnapshot = try await versionHistoryCollection.getDocuments()
+            let querySnapshot = try await versionHistoryCollection.getDocuments(source: source)
 
             await withTaskGroup(of: priorBackupInfo?.self) { group in
                 for document in querySnapshot.documents {
@@ -320,7 +327,7 @@ final class DatabaseHandler {
     
     
     
-    func uploadSpecificFieldFromPlaylistCollection(playlist: PlaylistInfo, delete: Bool = false) async {
+    func uploadSpecificFieldFromPlaylistCollection(playlist: PlaylistInfo, delete: Bool = false, source: FirestoreSource) async {
         
         guard let user = user else {
             
@@ -332,10 +339,6 @@ final class DatabaseHandler {
         let versionHistoryCollection = firestore.collection("users").document(user.uid).collection("playlists").document(playlist.playlist.id).collection("versionHistory")
         let priorBackupsCollection = playlistsCollection.document(playlist.playlist.id).collection("versionHistory")
 
-        //let playlistEncoded = try JSONEncoder().encode(playlist)
-//        guard let playlistString = String(data: playlistEncoded, encoding: .utf8) else {
-//            return
-//        }
         
         if delete {
             do {
@@ -412,6 +415,33 @@ final class DatabaseHandler {
     }
     
   
+    func getSpotifyAuthManager() async throws -> AuthorizationCodeFlowManager? {
+        guard let user = user else { throw UserError.nilUser }
+        
+        let docRef = self.firestore.collection("users").document(user.uid)
+        let document = try await docRef.getDocument()
+
+        
+        if document.exists {
+            var spotifyData: SpotifyDataModel = SpotifyDataModel.defaultData
+            let decoder = JSONDecoder()
+            
+            if let authorizationManager = document.get("authorization_manager") as? String {
+                do {
+                    let authManager = try decoder.decode(AuthorizationCodeFlowManager.self, from: Data(authorizationManager.utf8))
+                    spotifyData.authorization_manager = authManager
+                    return authManager
+                    
+                    
+                } catch {
+                    throw error
+                }
+            }
+        }
+        
+        return nil
+    }
+    
     
     func deleteAllPlaylists() throws {
         guard let user = user else {
@@ -421,7 +451,7 @@ final class DatabaseHandler {
         let playlistsCollection = firestore.collection("users").document(user.uid).collection("playlists")
         DispatchQueue.global(qos: .background).async {
             // Fetch all documents in the sub-collection
-            playlistsCollection.getDocuments { (querySnapshot, error) in
+            playlistsCollection.getDocuments() { (querySnapshot, error) in
                 if let error = error {
                     print("ERROR: \(error)")
                     return

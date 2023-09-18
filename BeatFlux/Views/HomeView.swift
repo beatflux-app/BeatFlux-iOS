@@ -32,7 +32,7 @@ struct HomeView: View {
         ZStack {
             NavigationView {
                 ScrollView {
-                    VStack {
+                    
                         if beatFluxViewModel.isViewModelFullyLoaded && spotify.isBackupsLoaded {
                             if beatFluxViewModel.userData != nil {
                                 if !spotify.spotifyData.playlists.isEmpty {
@@ -57,12 +57,12 @@ struct HomeView: View {
                                 }
                             }
                         }
-                    }
+                    
                 }
                 .navigationTitle("Backups")
                 .refreshable {
                     Task {
-                        await spotify.refreshUsersPlaylists(options: .all, priority: .low)
+                        await spotify.refreshUsersPlaylists(options: .all, priority: .low, source: .default)
                     }
                 }
                 .scrollIndicators(.hidden)

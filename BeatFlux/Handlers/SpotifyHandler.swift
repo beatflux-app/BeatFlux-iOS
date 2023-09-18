@@ -2,6 +2,7 @@ import SpotifyWebAPI
 import UIKit
 import SwiftUI
 import Foundation
+import FirebaseFirestore
 import FirebaseCore
 import FirebaseAuth
 import Combine
@@ -104,18 +105,19 @@ final class Spotify: ObservableObject {
     
 
 
-    func retrieveSpotifyData() async {
+    func retrieveSpotifyData(source: FirestoreSource) async -> SpotifyDataModel? {
         do {
-            let data = try await DatabaseHandler.shared.getSpotifyData()
+            let data = try await DatabaseHandler.shared.getSpotifyData(source: source)
             DispatchQueue.main.async { [weak self] in
                 self?.spotifyData = data
             }
             
-            
+            return data
             
         }
         catch {
             print("ERROR: Failed to retrieve spotify data: \(error.localizedDescription)")
+            return nil
         }
 
     }
@@ -130,8 +132,18 @@ final class Spotify: ObservableObject {
         }
     }
     
-    func uploadSpecificFieldFromPlaylistCollection(playlist: PlaylistInfo, delete: Bool = false) async {
-            await DatabaseHandler.shared.uploadSpecificFieldFromPlaylistCollection(playlist: playlist, delete: delete)
+    func getSpotifyAuthManager() async -> AuthorizationCodeFlowManager? {
+        do {
+            return try await DatabaseHandler.shared.getSpotifyAuthManager()
+        }
+        catch {
+            print("ERROR: Failed to get spotify auth manager \(error.localizedDescription)")
+            return nil
+        }
+    }
+    
+    func uploadSpecificFieldFromPlaylistCollection(playlist: PlaylistInfo, delete: Bool = false, source: FirestoreSource) async {
+        await DatabaseHandler.shared.uploadSpecificFieldFromPlaylistCollection(playlist: playlist, delete: delete, source: source)
             print("Finished")
     }
     
@@ -151,12 +163,15 @@ final class Spotify: ObservableObject {
         
 
         Task {
-            do {
-                // Concurrently fetch data and check authorization
-                let spotifyDataTask = Task { await retrieveSpotifyData() }
-                let authManagerDataTask = Task { try await DatabaseHandler.shared.getSpotifyData().authorization_manager }
+
+                let spotifyDataFetched = await retrieveSpotifyData(source: .cache)
+            
+                let authManagerData = await getSpotifyAuthManager()
                 
-                let authManagerData = try await authManagerDataTask.value
+                // Concurrently fetch data and check authorization
+                
+
+                guard spotifyDataFetched != nil else { return }
                 
                 // Check for authorization info
                 guard let authManagerData = authManagerData else {
@@ -167,6 +182,10 @@ final class Spotify: ObservableObject {
                     }
                     return
                 }
+                DispatchQueue.main.async {
+                    self.spotifyData.authorization_manager = authManagerData
+                }
+                
                 
                 print("Found authorization information in database")
                 self.api.authorizationManager = authManagerData
@@ -174,20 +193,10 @@ final class Spotify: ObservableObject {
                     self.autoRefreshTokensWhenExpired()
                 }
                 
-                await spotifyDataTask.value
-                
                 DispatchQueue.main.async { [weak self] in
                     self?.isBackupsLoaded = true
                 }
                 
-                
-            } catch {
-                print("ERROR: Unable to get user data from database")
-                DispatchQueue.main.async { [weak self] in
-                    self?.isSpotifyInitializationLoaded = true
-                    self?.isBackupsLoaded = true
-                }
-            }
         }
 
     }
@@ -259,25 +268,29 @@ final class Spotify: ObservableObject {
             self.retrieveCurrentUser()
             
             // Concurrently run tasks to speed up the function.
+            
             Task {
-                let playlistRefreshTask = Task {
-                    await self.refreshUsersPlaylists(options: .libraryPlaylists, priority: .high)
+                if self.retrieveUsersLibraryFromCache() == nil {
+                   
+                    await self.refreshUsersPlaylists(options: .libraryPlaylists, priority: .high, source: .default)
                     
                     DispatchQueue.main.async { [weak self] in
                         self?.isSpotifyInitializationLoaded = true
                     }
-                }
-                let uploadSpotifyAuthManagerTask = Task {
-                    await self.uploadSpotifyAuthManager()
-                }
 
-                // Wait for both tasks to complete
-                await playlistRefreshTask
-                await uploadSpotifyAuthManagerTask
+                    print("Time Elapsed: \(Date().timeIntervalSince1970 - self.startTime.timeIntervalSince1970)")
+                }
+                else {
+                    DispatchQueue.main.async { [weak self] in
+                        self?.isSpotifyInitializationLoaded = true
+                    }
+                    print("Fetched users library from cache")
+                }
+               
+                await self.uploadSpotifyAuthManager()
+                
                 
 
-                
-                print("Time Elapsed: \(Date().timeIntervalSince1970 - self.startTime.timeIntervalSince1970)")
             }
         }
 
@@ -286,6 +299,37 @@ final class Spotify: ObservableObject {
             spotifyData.authorization_manager = self.api.authorizationManager
         } else {
             print("ERROR: Unable to save user, user is nil")
+        }
+    }
+    
+    func saveUsersLibraryToCache() {
+        let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
+        let archiveURL = documentsDirectory.appendingPathComponent("usersLibraryPlaylists").appendingPathExtension("plist")
+
+        do {
+            let encodedData = try PropertyListEncoder().encode(userPlaylists)
+            try encodedData.write(to: archiveURL)
+        } catch {
+            print("Error encoding spotifyData: \(error)")
+        }
+    }
+    
+    func retrieveUsersLibraryFromCache() -> [PlaylistInfo]? {
+        let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
+        let archiveURL = documentsDirectory.appendingPathComponent("usersLibraryPlaylists").appendingPathExtension("plist")
+        
+        do {
+            let retrievedData = try Data(contentsOf: archiveURL)
+            let decodedData = try PropertyListDecoder().decode([PlaylistInfo].self, from: retrievedData)
+            DispatchQueue.main.async {
+                self.userPlaylists = decodedData
+            }
+            return decodedData
+            
+            
+        } catch {
+            print("Error decoding spotifyData: \(error)")
+            return nil
         }
     }
     
@@ -394,8 +438,8 @@ final class Spotify: ObservableObject {
 
 
 
-    public func getPlaylistVersionHistory(playlist: PlaylistInfo) async -> [priorBackupInfo] {
-        return await DatabaseHandler.shared.getPlaylistsVersionHistory(playlist: playlist)
+    public func getPlaylistVersionHistory(playlist: PlaylistInfo, source: FirestoreSource) async -> [priorBackupInfo] {
+        return await DatabaseHandler.shared.getPlaylistsVersionHistory(playlist: playlist, source: source)
     }
     
     public enum PlaylistRefreshOptions {
@@ -404,7 +448,7 @@ final class Spotify: ObservableObject {
         case all
     }
     
-    public func refreshUsersPlaylists(options: PlaylistRefreshOptions, priority: DatabaseHandler.Priorities) async {
+    public func refreshUsersPlaylists(options: PlaylistRefreshOptions, priority: DatabaseHandler.Priorities, source: FirestoreSource) async {
 
         do {
             let fetchedPlaylists = try await self.getUserPlaylists(priority: priority)
@@ -453,7 +497,9 @@ final class Spotify: ObservableObject {
 
                 DispatchQueue.main.async { [weak self] in
                     self?.userPlaylists = updatedPlaylists
+                    self?.saveUsersLibraryToCache()
                 }
+                
             }
 
 
@@ -482,7 +528,7 @@ final class Spotify: ObservableObject {
                                 guard var convertedPlaylist = convertedPlaylist else { return }
                                 
                                 Task {
-                                    await self?.uploadSpecificFieldFromPlaylistCollection(playlist: convertedPlaylist, delete: false)
+                                    await self?.uploadSpecificFieldFromPlaylistCollection(playlist: convertedPlaylist, delete: false, source: source)
                                 }
                                 
                                 convertedPlaylist.versionHistory = playlistVersionHistory
@@ -513,6 +559,8 @@ final class Spotify: ObservableObject {
         }
     }
     
+    
+    
     public func backupPlaylist(playlist: PlaylistInfo) async {
         do {
             let fetchedPlaylists = try await self.getUserPlaylists(priority: .low)
@@ -521,8 +569,8 @@ final class Spotify: ObservableObject {
             guard let item = fetchedPlaylists.items.first(where: { $0.id == playlist.playlist.id }) else {
                 Task { [weak self] in
                     guard let self = self else { return }
-                    await self.uploadSpecificFieldFromPlaylistCollection(playlist: playlist)
-                    let priorBackupInfo = await self.getPlaylistVersionHistory(playlist: playlist)
+                    await self.uploadSpecificFieldFromPlaylistCollection(playlist: playlist, source: .default)
+                    let priorBackupInfo = await self.getPlaylistVersionHistory(playlist: playlist, source: .default)
                     DispatchQueue.main.async { [weak self] in
                         var updatedPlaylist = playlist
                         
@@ -557,7 +605,7 @@ final class Spotify: ObservableObject {
                 
                 Task { [weak self] in
                     guard let self = self else { return }
-                    await self.uploadSpecificFieldFromPlaylistCollection(playlist: playlist)
+                    await self.uploadSpecificFieldFromPlaylistCollection(playlist: playlist, source: .default)
                 }
             }
 

@@ -30,6 +30,7 @@ struct BeatFluxApp: App {
                 .environmentObject(beatFluxViewModel)
                 .environmentObject(spotify)
         }
+        
     }
 }
 

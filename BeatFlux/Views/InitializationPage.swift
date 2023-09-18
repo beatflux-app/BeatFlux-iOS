@@ -34,6 +34,16 @@ struct InitializationPage: View {
                         }
                         .tag(0)
                     
+//                    SpotifyPlaylistListView()
+//                        .onAppear {
+//                            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+//                        }
+//                        .environmentObject(spotify)
+//                        .tabItem {
+//                            Label("Playlists", systemImage: "books.vertical.fill")
+//                        }
+//                        .tag(1)
+                    
                     SettingsView()
                         .onAppear {
                             UIImpactFeedbackGenerator(style: .medium).impactOccurred()
@@ -41,7 +51,7 @@ struct InitializationPage: View {
                         .tabItem {
                             Label("Settings", systemImage: "gearshape.fill")
                         }
-                        .tag(1)
+                        .tag(2)
                         
                 }
                 
