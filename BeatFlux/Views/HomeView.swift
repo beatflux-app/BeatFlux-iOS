@@ -271,6 +271,7 @@ private struct PlaylistGridSquare: View {
                     Image(systemName: "clock")
                 }
             }
+            .disabled(true)
         }))
         .sheet(isPresented: $showExportView) {
             NavigationView {
@@ -280,7 +281,7 @@ private struct PlaylistGridSquare: View {
         }
         .sheet(isPresented: $showPlaylistVersionHistory) {
             
-            PlaylistVersionHistory(showPlaylistVersionHistory: $showPlaylistVersionHistory, playlistInfo: playlistInfo)
+            //PlaylistVersionHistory(showPlaylistVersionHistory: $showPlaylistVersionHistory, playlistInfo: playlistInfo)
 
         }
     }

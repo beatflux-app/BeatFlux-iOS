@@ -219,9 +219,6 @@ final class DatabaseHandler {
                 
                 for document in querySnapshot.documents {
                     if var playlist = try document.data(as: PlaylistInfo?.self) {
-                            
-                        let versionHistory = await self.getPlaylistsVersionHistory(playlist: playlist, source: source)
-                        playlist.versionHistory = versionHistory
                         playlists.append(playlist)
                             
                         
@@ -245,39 +242,6 @@ final class DatabaseHandler {
         }
     }
     
-    
-    
-    func getPlaylistsVersionHistory(playlist: PlaylistInfo, source: FirestoreSource) async -> [priorBackupInfo] {
-        guard let user = user else { return [] }
-        let versionHistoryCollection = firestore.collection("users").document(user.uid).collection("playlists").document(playlist.playlist.id).collection("versionHistory")
-        let decoder = JSONDecoder()
-        var versionHistoryArray: [priorBackupInfo] = []
-        
-        do {
-            let querySnapshot = try await versionHistoryCollection.getDocuments(source: source)
-
-            await withTaskGroup(of: priorBackupInfo?.self) { group in
-                for document in querySnapshot.documents {
-                    group.addTask {
-                        return try? document.data(as: priorBackupInfo.self)
-                    }
-                }
-                
-                for await result in group {
-                    if let backup = result {
-                        versionHistoryArray.append(backup)
-                    }
-                }
-            }
-
-            print("SUCCESS: All version histories for playlist: \(playlist.playlist.id) have been fetched: (\(versionHistoryArray.count))")
-        }
-        catch {
-            print("ERROR: Error while fetching playlists version history \(error.localizedDescription)")
-        }
-        
-        return versionHistoryArray
-    }
     
     
     public func updateFirestoreField<T: Encodable>(collection: String, documentId: String, field: String, newValue: T?) throws {
@@ -336,18 +300,12 @@ final class DatabaseHandler {
         }
         
         let playlistsCollection = firestore.collection("users").document(user.uid).collection("playlists")
-        let versionHistoryCollection = firestore.collection("users").document(user.uid).collection("playlists").document(playlist.playlist.id).collection("versionHistory")
-        let priorBackupsCollection = playlistsCollection.document(playlist.playlist.id).collection("versionHistory")
+        
 
         
         if delete {
             do {
-                let snapshot = try await versionHistoryCollection.getDocuments()
-            
-                for document in snapshot.documents {
-                    try await document.reference.delete()
-                }
-                
+
                 try await playlistsCollection.document(playlist.playlist.id).delete()
                 
             }
@@ -367,18 +325,8 @@ final class DatabaseHandler {
                         return
                     }
                 }, receiveValue: { results in
-                    priorBackupsCollection.document(UUID().uuidString).setData(from: priorBackupInfo(playlist: playlist, versionDate: Date()))
-                        .subscribe(on: DispatchQueue.global(qos: .background))
-                        .receive(on: DispatchQueue.main) // Switch back to the main queue for the result
-                        .sink(receiveCompletion: { completion in
-                            if case .failure(let error) = completion {
-                                print("ERROR: Error while saving playlists backups \(error.localizedDescription)")
-                                return
-                            }
-                        }, receiveValue: { results in
-                            print("SUCCESS: Data was successfully written")
-                        })
-                        .store(in: &self.cancellables)
+                    
+                    print("SUCCESS: Data was successfully written")
                 })
                 .store(in: &cancellables)
 

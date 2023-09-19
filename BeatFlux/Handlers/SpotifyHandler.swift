@@ -437,10 +437,6 @@ final class Spotify: ObservableObject {
 
 
 
-
-    public func getPlaylistVersionHistory(playlist: PlaylistInfo, source: FirestoreSource) async -> [priorBackupInfo] {
-        return await DatabaseHandler.shared.getPlaylistsVersionHistory(playlist: playlist, source: source)
-    }
     
     public enum PlaylistRefreshOptions {
         case libraryPlaylists
@@ -522,28 +518,17 @@ final class Spotify: ObservableObject {
 
                             DispatchQueue.main.async { [weak self] in
                                 //copy the version history over to a variable
-                                var playlistVersionHistory = playlist.versionHistory
-                                playlistVersionHistory.append(priorBackupInfo(playlist: playlist, versionDate: Date()))
-                                
                                 guard var convertedPlaylist = convertedPlaylist else { return }
                                 
                                 Task {
                                     await self?.uploadSpecificFieldFromPlaylistCollection(playlist: convertedPlaylist, delete: false, source: source)
                                 }
-                                
-                                convertedPlaylist.versionHistory = playlistVersionHistory
-                                
+
                                 self?.spotifyData.playlists[index] = convertedPlaylist
                                 
 
                             }
                             
-                        
-                            
-//                            let priorBackupInfo = await self.getPlaylistVersionHistory(playlist: convertedPlaylist)
-//                            DispatchQueue.main.async { [weak self] in
-//                                self?.spotifyData.playlists[index].versionHistory = priorBackupInfo
-//                            }
                             
                             
                         }
@@ -570,11 +555,8 @@ final class Spotify: ObservableObject {
                 Task { [weak self] in
                     guard let self = self else { return }
                     await self.uploadSpecificFieldFromPlaylistCollection(playlist: playlist, source: .default)
-                    let priorBackupInfo = await self.getPlaylistVersionHistory(playlist: playlist, source: .default)
                     DispatchQueue.main.async { [weak self] in
                         var updatedPlaylist = playlist
-                        
-                        updatedPlaylist.versionHistory = priorBackupInfo
                         self?.spotifyData.playlists.append(updatedPlaylist)
                     }
                 }
@@ -586,8 +568,7 @@ final class Spotify: ObservableObject {
             let details = await self.convertSpotifyPlaylistToCustom(playlist: item)
             DispatchQueue.main.async { [weak self] in
                 guard var details = details else { return }
-                details.versionHistory.append(priorBackupInfo(playlist: details, versionDate: Date()))
-                
+
                 if let index = self?.userPlaylists.firstIndex(where: { $0.playlist.id == details.playlist.id }) {
                     
                     self?.userPlaylists[index] = details
