@@ -19,6 +19,15 @@ extension View {
     func border(_ color: Color, width: CGFloat, cornerRadius: CGFloat) -> some View {
         overlay(RoundedRectangle(cornerRadius: cornerRadius).stroke(color, lineWidth: width))
     }
+    
+    func formPlaylistTitle(font: Font = .title3, fontWeight: Font.Weight = .semibold) -> some View {
+        modifier(FormTitle(font: font, fontWeight: fontWeight))
+    }
+}
+
+extension URLCache {
+    
+    static let imageCache = URLCache(memoryCapacity: 512*1000*1000, diskCapacity: 10*1000*1000*1000)
 }
 
 extension String {

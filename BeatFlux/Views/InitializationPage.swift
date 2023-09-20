@@ -13,20 +13,58 @@ struct InitializationPage: View {
     @EnvironmentObject var beatFluxViewModel: BeatFluxViewModel
     @EnvironmentObject var spotify: Spotify
 
+    @State private var selectedTab = 0
+    
     init() {
         UIView.appearance(whenContainedInInstancesOf: [UIAlertController.self]).tintColor = UIColor(named: "AccentColor")
     }
     
     var body: some View {
-        if beatFluxViewModel.isUserLoggedIn {
-            HomeView()
-                .environmentObject(beatFluxViewModel)
-                .environmentObject(spotify)
+        if beatFluxViewModel.isViewModelFullyLoaded {
+            if beatFluxViewModel.isUserLoggedIn {
+                TabView(selection: $selectedTab) {
+                    HomeView()
+                        .onAppear {
+                            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                        }
+                        .environmentObject(beatFluxViewModel)
+                        .environmentObject(spotify)
+                        .tabItem {
+                            Label("Home", systemImage: "house.fill")
+                        }
+                        .tag(0)
+                    
+//                    SpotifyPlaylistListView()
+//                        .onAppear {
+//                            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+//                        }
+//                        .environmentObject(spotify)
+//                        .tabItem {
+//                            Label("Playlists", systemImage: "books.vertical.fill")
+//                        }
+//                        .tag(1)
+                    
+                    SettingsView()
+                        .onAppear {
+                            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                        }
+                        .tabItem {
+                            Label("Settings", systemImage: "gearshape.fill")
+                        }
+                        .tag(2)
+                        
+                }
+                
+            }
+            else {
+                WelcomePageView()
+                    .environmentObject(beatFluxViewModel)
+            }
         }
         else {
-            WelcomePageView()
-                .environmentObject(beatFluxViewModel)
+            IntroIconView()
         }
+        
     }
 }
 

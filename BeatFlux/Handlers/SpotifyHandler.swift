@@ -2,7 +2,7 @@ import SpotifyWebAPI
 import UIKit
 import SwiftUI
 import Foundation
-import KeychainAccess
+import FirebaseFirestore
 import FirebaseCore
 import FirebaseAuth
 import Combine
@@ -31,22 +31,13 @@ final class Spotify: ObservableObject {
     var authorizationState = String.randomURLSafe(length: 128)
     
     @Published var isSpotifyInitializationLoaded = false
+    @Published var isBackupsLoaded = false
     @Published var isAuthorized = false
     
     @Published var isRetrievingTokens = false
     @Published var currentUser: SpotifyUser? = nil
-    @Published var userPlaylists: [PlaylistDetails] = []
-    @Published var spotifyData: SpotifyDataModel = SpotifyDataModel.defaultData {
-        didSet {
-            Task {
-                do {
-                    try await uploadSpotifyData()
-                } catch {
-                    print("ERROR: Failed to upload user data: \(error.localizedDescription)")
-                }
-            }
-        }
-    }
+    @Published var userPlaylists: [PlaylistInfo] = []
+    @Published var spotifyData: SpotifyDataModel = SpotifyDataModel.defaultData
     
     enum SpotifyError: Error {
         case nilSpotifyData
@@ -57,13 +48,20 @@ final class Spotify: ObservableObject {
     private var isUserAuthLoggedIn: Bool = false {
         didSet {
             Task {
-                DispatchQueue.main.async {
+                self.cancellables.removeAll()
+                
+                
+                
+                DispatchQueue.main.async { [weak self] in
+                    guard let self = self else { return }
+                    
                     self.currentUser = nil
                     self.isAuthorized = false
                     self.isRetrievingTokens = false
-                    self.cancellables.removeAll()
+                    
                     print("SUCCESS: All spotify api cancellables removed successfully")
                     if self.isUserAuthLoggedIn {
+                        print(self.cancellables)
                         self.initializeSpotify()
                     }
                 }
@@ -105,90 +103,100 @@ final class Spotify: ObservableObject {
         
     }
     
-    func loadSpotifyData() async {
-        await retrieveSpotifyData()
-        DispatchQueue.main.async {
-            self.isSpotifyInitializationLoaded = true
-        }
-    }
-    
 
 
-    func retrieveSpotifyData() async {
+    func retrieveSpotifyData(source: FirestoreSource) async -> SpotifyDataModel? {
         do {
-            let data = try await DatabaseHandler.shared.getSpotifyData()
-            DispatchQueue.main.async {
-                self.spotifyData = data
+            let data = try await DatabaseHandler.shared.getSpotifyData(source: source)
+            DispatchQueue.main.async { [weak self] in
+                self?.spotifyData = data
             }
+            
+            return data
             
         }
         catch {
-            print("ERROR: Failed to retrieve user data: \(error.localizedDescription)")
+            print("ERROR: Failed to retrieve spotify data: \(error.localizedDescription)")
+            return nil
         }
 
     }
+
     
-    func uploadSpotifyData() async throws {
+    func uploadSpotifyAuthManager() async {
         do {
-            try await DatabaseHandler.shared.uploadSpotifyData(from: spotifyData)
+            try await DatabaseHandler.shared.uploadSpotifyAuthManager(from: spotifyData)
         }
         catch {
-            print("ERROR: Failed to upload user data: \(error.localizedDescription)")
+            print("ERROR: Failed to upload spotify auth manager: \(error.localizedDescription)")
         }
+    }
+    
+    func getSpotifyAuthManager() async -> AuthorizationCodeFlowManager? {
+        do {
+            return try await DatabaseHandler.shared.getSpotifyAuthManager()
+        }
+        catch {
+            print("ERROR: Failed to get spotify auth manager \(error.localizedDescription)")
+            return nil
+        }
+    }
+    
+    func uploadSpecificFieldFromPlaylistCollection(playlist: PlaylistInfo, delete: Bool = false, source: FirestoreSource) async {
+        await DatabaseHandler.shared.uploadSpecificFieldFromPlaylistCollection(playlist: playlist, delete: delete, source: source)
+            print("Finished")
     }
     
     func initializeSpotify() {
         
         self.api.apiRequestLogger.logLevel = .trace
-        
+
         self.api.authorizationManagerDidChange
-            .receive(on: RunLoop.main)
+            .receive(on: DispatchQueue.main)
             .sink(receiveValue: authorizationManagerDidChange)
-            .store(in: &cancellables)
+            .store(in: &self.cancellables)
         
         self.api.authorizationManagerDidDeauthorize
-            .receive(on: RunLoop.main)
+            .receive(on: DispatchQueue.main)
             .sink(receiveValue: authorizationManagerDidDeauthorize)
-            .store(in: &cancellables)
+            .store(in: &self.cancellables)
+        
+
         Task {
-            do {
-                await loadSpotifyData()
+
+            let spotifyDataFetched = await retrieveSpotifyData(source: .default)
+            
+                let authManagerData = await getSpotifyAuthManager()
                 
-                guard let authManagerData = try await DatabaseHandler.shared.getSpotifyData().authorization_manager else {
+                // Concurrently fetch data and check authorization
+                
+
+                guard spotifyDataFetched != nil else { return }
+                
+                // Check for authorization info
+                guard let authManagerData = authManagerData else {
                     print("Did NOT find authorization information in keychain")
+                    DispatchQueue.main.async { [weak self] in
+                        self?.isSpotifyInitializationLoaded = true
+                        self?.isBackupsLoaded = true
+                    }
                     return
                 }
-
+                DispatchQueue.main.async {
+                    self.spotifyData.authorization_manager = authManagerData
+                }
+                
+                
                 print("Found authorization information in database")
-                
                 self.api.authorizationManager = authManagerData
-                
-                refreshUserPlaylistArray()
-            
                 if !self.api.authorizationManager.accessTokenIsExpired() {
                     self.autoRefreshTokensWhenExpired()
                 }
-                self.api.authorizationManager.refreshTokens(
-                    onlyIfExpired: true
-                )
-                .sink(receiveCompletion: { completion in
-                    switch completion {
-                        case .finished:
-                            break
-                        case .failure(let error):
-                            print(
-                                "ERROR: Spotify.init: couldn't refresh tokens:\n\(error)"
-                            )
-                    }
-                })
-                .store(in: &self.cancellables)
                 
+                DispatchQueue.main.async { [weak self] in
+                    self?.isBackupsLoaded = true
+                }
                 
-            }
-            catch {
-                print("ERROR: Unable to get user data from database")
-            }
-            
         }
 
     }
@@ -228,13 +236,17 @@ final class Spotify: ObservableObject {
             // Otherwise, an error will be thrown.
             state: authorizationState,
             scopes: [
+                .ugcImageUpload,
+                .userLibraryModify,
                 .userReadPlaybackState,
                 .userModifyPlaybackState,
                 .playlistModifyPrivate,
                 .playlistModifyPublic,
                 .userLibraryRead,
                 .userLibraryModify,
-                .userReadRecentlyPlayed
+                .userReadRecentlyPlayed,
+                .playlistReadPrivate,
+                .playlistReadCollaborative,
             ]
         )!
         
@@ -246,47 +258,100 @@ final class Spotify: ObservableObject {
         //UIApplication.shared.open(url)
         
     }
-    
+    var startTime = Date()
     func authorizationManagerDidChange() {
-        
         DispatchQueue.main.async {
             self.isAuthorized = self.api.authorizationManager.isAuthorized()
+            print("Spotify.authorizationManagerDidChange: isAuthorized:", self.isAuthorized)
 
-            print(
-                "Spotify.authorizationManagerDidChange: isAuthorized:",
-                self.isAuthorized
-            )
-            
             self.autoRefreshTokensWhenExpired()
-            
             self.retrieveCurrentUser()
             
-            self.refreshUserPlaylistArray()
+            // Concurrently run tasks to speed up the function.
             
-            
+            Task {
+                if self.retrieveUsersLibraryFromCache() == nil {
+                   
+                    await self.refreshUsersPlaylists(options: .libraryPlaylists, priority: .high, source: .default)
+                    
+                    DispatchQueue.main.async { [weak self] in
+                        self?.isSpotifyInitializationLoaded = true
+                    }
+
+                    print("Time Elapsed: \(Date().timeIntervalSince1970 - self.startTime.timeIntervalSince1970)")
+                }
+                else {
+                    DispatchQueue.main.async { [weak self] in
+                        self?.isSpotifyInitializationLoaded = true
+                    }
+                    print("Fetched users library from cache")
+                }
+               
+                await self.uploadSpotifyAuthManager()
+                
+                
+
+            }
         }
-            
-        // Save the data to the keychain.
+
+        // Save the data to the keychain only if the user is not nil.
         if DatabaseHandler.shared.user != nil {
             spotifyData.authorization_manager = self.api.authorizationManager
-        }
-        else {
+        } else {
             print("ERROR: Unable to save user, user is nil")
         }
+    }
+    
+    func saveUsersLibraryToCache() {
+        let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
+        let archiveURL = documentsDirectory.appendingPathComponent("usersLibraryPlaylists").appendingPathExtension("plist")
+
+        do {
+            let encodedData = try PropertyListEncoder().encode(userPlaylists)
+            try encodedData.write(to: archiveURL)
+        } catch {
+            print("Error encoding spotifyData: \(error)")
+        }
+    }
+    
+    func retrieveUsersLibraryFromCache() -> [PlaylistInfo]? {
+        let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
+        let archiveURL = documentsDirectory.appendingPathComponent("usersLibraryPlaylists").appendingPathExtension("plist")
         
+        do {
+            let retrievedData = try Data(contentsOf: archiveURL)
+            let decodedData = try PropertyListDecoder().decode([PlaylistInfo].self, from: retrievedData)
+            DispatchQueue.main.async {
+                self.userPlaylists = decodedData
+            }
+            return decodedData
+            
+            
+        } catch {
+            print("Error decoding spotifyData: \(error)")
+            return nil
+        }
     }
     
     func authorizationManagerDidDeauthorize() {
         withAnimation() {
             self.isAuthorized = false
         }
-        
-        self.currentUser = nil
-        self.refreshTokensCancellable = nil
-        self.userPlaylists = []
+        DispatchQueue.main.async { [weak self] in
+            self?.currentUser = nil
+            self?.refreshTokensCancellable = nil
+            self?.userPlaylists = []
+        }
+
         
         if DatabaseHandler.shared.user != nil {
-            spotifyData.authorization_manager = nil
+            DispatchQueue.main.async { [weak self] in
+                self?.spotifyData.authorization_manager = nil
+            }
+            
+            Task {
+                await uploadSpotifyAuthManager()
+            }
         }
         else {
             print("ERROR: Unable to save user, user is nil")
@@ -303,81 +368,280 @@ final class Spotify: ObservableObject {
             return
         }
 
-        self.api.currentUserProfile()
-            .receive(on: RunLoop.main)
-            .sink(
-                receiveCompletion: { completion in
-                    if case .failure(let error) = completion {
-                        print("ERROR: Couldn't retrieve current user: \(error)")
+            self.api.currentUserProfile()
+                .receive(on: DispatchQueue.main)
+                .sink(
+                    receiveCompletion: { completion in
+                        if case .failure(let error) = completion {
+                            print("ERROR: Couldn't retrieve current user: \(error)")
+                        }
+                    },
+                    receiveValue: { [weak self] user in
+                        self?.currentUser = user
                     }
-                },
-                receiveValue: { user in
-                    self.currentUser = user
-                }
-            )
-            .store(in: &cancellables)
+                )
+                .store(in: &self.cancellables)
+        
+
         
     }
     
-    
-    public func getUserPlaylists(completion: @escaping (PagingObject<Playlist<PlaylistItemsReference>>?) -> Void) {
+    public func getUserPlaylists(priority: DatabaseHandler.Priorities) async throws -> PagingObject<Playlist<PlaylistItemsReference>> {
+        var localCancellable: Set<AnyCancellable> = []
+        var selectedQueue: DispatchQueue = DispatchQueue.global(qos: .background)
 
-        self.api.currentUserPlaylists()
-            .extendPages(self.api)
-            .sink(receiveCompletion: { _ in },
-              receiveValue: { results in
-                  completion(results)
-              })
-            .store(in: &cancellables)
+        if priority == .low {
+            selectedQueue = DispatchQueue.global(qos: .background)
+        } else if priority == .medium {
+            selectedQueue = DispatchQueue.global(qos: .default)
+        } else if priority == .high {
+            selectedQueue = DispatchQueue.global(qos: .userInteractive)
+        }
+        
+        return try await withCheckedThrowingContinuation { continuation in
+            self.api.currentUserPlaylists()
+                .extendPages(self.api)
+                .subscribe(on: selectedQueue)
+                .receive(on: DispatchQueue.main) // Switch back to the main queue for the result
+                .sink(receiveCompletion: { completion in
+                    if case .failure(let error) = completion {
+                        print("ERROR: Error while getting users playlists \(error.localizedDescription)")
+                        continuation.resume(throwing: error)
+                    }
+                }, receiveValue: { results in
+                    continuation.resume(returning: results)
+                })
+                .store(in: &localCancellable)
+        }
+    }
+
+    
+    
+    public func retrievePlaylistItem(fetchedPlaylist: Playlist<PlaylistItemsReference>) async throws -> PlaylistInfo {
+        var localCancellable: Set<AnyCancellable> = []
+        
+        return try await withCheckedThrowingContinuation { continuation in
+            self.api.playlistItems(fetchedPlaylist.uri)
+                .subscribe(on: DispatchQueue.global(qos: .background))
+                .receive(on: DispatchQueue.main)
+                .sink(receiveCompletion: { completion in
+                    if case .failure(let error) = completion {
+                        print("ERROR: Error while getting playlist item \(error.localizedDescription)")
+                        continuation.resume(throwing: error)
+                    }
+                }, receiveValue: { pagingObject in
+                    continuation.resume(returning: PlaylistInfo(playlist: fetchedPlaylist, tracks: pagingObject.items, lastFetched: Date()))
+                })
+                .store(in: &localCancellable)
+        }
+    }
+
+    func getPlaylistSnapshots(playlist: PlaylistInfo) async -> [PlaylistSnapshot] {
+        do {
+            return try await DatabaseHandler.shared.getPlaylistSnapshots(playlist: playlist)
+        }
+        catch {
+            print("ERROR: Error while getting playlist snapshots \(error.localizedDescription)")
+            return []
+        }
     }
     
-    public func retrievePlaylistItem(fetchedPlaylist: Playlist<PlaylistItemsReference>, completion: @escaping (PlaylistDetails) -> Void) {
-        self.api.playlistItems(fetchedPlaylist.uri)
-            .sink(receiveCompletion: { completion in
-                switch completion {
-                case .finished:
-                    print("SUCCESS:RETRIEVE_PLAYLIST_ITEM:Finished fetching playlist items")
-                case .failure(let error):
-                    print("ERROR:RETRIEVE_PLAYLIST_ITEM:Failed to get playlist items: \(error)")
+    func deletePlaylistSnapshot(playlist: PlaylistSnapshot) async {
+        do {
+            try await DatabaseHandler.shared.deletePlaylistSnapshot(playlistSnapshot: playlist)
+        }
+        catch {
+            print("ERROR: Error while deleting playlist snapshot \(error.localizedDescription)")
+        }
+    }
+    
+    func uploadPlaylistSnapshot(snapshot: PlaylistSnapshot) {
+        do {
+            try DatabaseHandler.shared.uploadPlaylistSnapshot(snapshot: snapshot)
+        }
+        catch {
+            print("ERROR: Failed to upload playlist snapshot to database \(error.localizedDescription)")
+        }
+    }
+
+    
+    public enum PlaylistRefreshOptions {
+        case libraryPlaylists
+        case backupPlaylists
+        case all
+    }
+    
+    
+    
+    public func refreshUsersPlaylists(options: PlaylistRefreshOptions, priority: DatabaseHandler.Priorities, source: FirestoreSource) async {
+
+        do {
+            let fetchedPlaylists = try await self.getUserPlaylists(priority: priority)
+
+            
+
+            
+            if (options == .all || options == .libraryPlaylists) {
+                var updatedPlaylists: [PlaylistInfo] = []
+
+                for fetchedPlaylist in fetchedPlaylists.items {
+                    if let index = userPlaylists.firstIndex(where: { $0.playlist.id == fetchedPlaylist.id }) {
+                        // This playlist already exists in userPlaylists
+                        let userPlaylist = userPlaylists[index]
+                        
+                        if fetchedPlaylist.snapshotId != userPlaylist.playlist.snapshotId {
+                            // The playlist was changed, so save a new version
+                            
+                            let playlistInfo = try await self.retrievePlaylistItem(fetchedPlaylist: fetchedPlaylist)
+                            
+                            updatedPlaylists.append(PlaylistInfo(playlist: fetchedPlaylist, tracks: playlistInfo.tracks, lastFetched: Date()))
+                            
+                        } else {
+                            // The playlist has not changed, keep the old version
+                            updatedPlaylists.append(userPlaylist)
+                        }
+                    }
+                    // If you want to add new playlists, uncomment the following else block
+                    
+                    else {
+                        // This is a new playlist, add it to userPlaylists
+                        let playlistInfo = try await self.retrievePlaylistItem(fetchedPlaylist: fetchedPlaylist)
+                        
+                        updatedPlaylists.append(PlaylistInfo(playlist: fetchedPlaylist, tracks: playlistInfo.tracks, lastFetched: Date()))
+                    }
+                    
+                }
+
+                let copiedUpdatedPlaylists = updatedPlaylists  // Copy the array to keep on the main thread
+
+                DispatchQueue.main.async { [weak self] in
+                    guard let self = self else { return }
+                    if self.userPlaylists != copiedUpdatedPlaylists {
+                        self.userPlaylists = copiedUpdatedPlaylists
+                        self.saveUsersLibraryToCache()
+                    }
+                }
+                    
+            }
+                
+            
+
+
+
+
+
+
+
+            
+            if (options == .all || options == .backupPlaylists) {
+                for (index, playlist) in self.spotifyData.playlists.enumerated() {
+                    if let fetchedPlaylist = fetchedPlaylists.items.first(where: { $0.id == playlist.playlist.id }) {
+                        
+                        if fetchedPlaylist.snapshotId != playlist.playlist.snapshotId {
+                            
+                            
+                           
+                            
+                            let convertedPlaylist = await self.convertSpotifyPlaylistToCustom(playlist: fetchedPlaylist)
+
+                            DispatchQueue.main.async { [weak self] in
+                                //copy the version history over to a variable
+                                guard let convertedPlaylist = convertedPlaylist else { return }
+                                
+                                Task {
+                                    await self?.uploadSpecificFieldFromPlaylistCollection(playlist: convertedPlaylist, delete: false, source: source)
+                                }
+
+                                self?.spotifyData.playlists[index] = convertedPlaylist
+                                
+
+                            }
+                            
+                            
+                            
+                        }
+                        
+                    }
+                    
+                }
+
+            }
+        }
+        catch {
+            print("ERROR: Error while refreshing users playlist \(error.localizedDescription)")
+        }
+    }
+    
+    
+    
+    public func backupPlaylist(playlist: PlaylistInfo) async {
+        do {
+            let fetchedPlaylists = try await self.getUserPlaylists(priority: .low)
+                
+            //if we don't find an existing playlist then add to the list
+            guard let item = fetchedPlaylists.items.first(where: { $0.id == playlist.playlist.id }) else {
+                Task { [weak self] in
+                    guard let self = self else { return }
+                    await self.uploadSpecificFieldFromPlaylistCollection(playlist: playlist, source: .default)
+                    DispatchQueue.main.async { [weak self] in
+                        let updatedPlaylist = playlist
+                        self?.spotifyData.playlists.append(updatedPlaylist)
+                    }
                 }
                 
-            }, receiveValue: { pagingObject in
-                completion(PlaylistDetails(playlist: fetchedPlaylist, tracks: pagingObject.items, lastFetched: Date()))
-            })
-            .store(in: &cancellables)
-    }
-    
-    public func refreshUserPlaylistArray() {
-        self.getUserPlaylists { playlists in
+                return
+            }
             
-            var playlistsToAdd: [PlaylistDetails] = []
-            
-            if let playlists = playlists {
-                for playlist in playlists.items {
+            //helps save on api calls
+            let details = await self.convertSpotifyPlaylistToCustom(playlist: item)
+            DispatchQueue.main.async { [weak self] in
+                guard let details = details else { return }
+
+                if let index = self?.userPlaylists.firstIndex(where: { $0.playlist.id == details.playlist.id }) {
                     
-                    var details = PlaylistDetails(playlist: playlist, lastFetched: Date())
-                    self.retrievePlaylistItem(fetchedPlaylist: playlist) { info in
-                        details.tracks = info.tracks
-                    }
-                    playlistsToAdd.append(details)
+                    self?.userPlaylists[index] = details
+                    
+                    
+                }
+                else {
+                    
+                    self?.userPlaylists.append(details)
+                    
+                    
+                }
+                
+                self?.spotifyData.playlists.append(details)
+                
+                Task { [weak self] in
+                    guard let self = self else { return }
+                    await self.uploadSpecificFieldFromPlaylistCollection(playlist: playlist, source: .default)
                 }
             }
-            
-            DispatchQueue.main.async {
-                self.userPlaylists = playlistsToAdd
-            }
-            
 
+
+            
+                
+            
         }
+        catch {
+            print("ERROR: Error while backing up playlists \(error.localizedDescription)")
+        }
+        
+
     }
     
-    public func convertSpotifyPlaylistToCustom(playlist: Playlist<PlaylistItemsReference>, completion: @escaping (PlaylistDetails) -> Void) {
-        self.retrievePlaylistItem(fetchedPlaylist: playlist) { fetchedDetails in
-            let playlistDetails = PlaylistDetails(playlist: fetchedDetails.playlist, tracks: fetchedDetails.tracks, lastFetched: Date())
-            
-            completion(playlistDetails)
-
+    public func convertSpotifyPlaylistToCustom(playlist: Playlist<PlaylistItemsReference>) async -> PlaylistInfo? {
+        do {
+            let fetchedDetails = try await self.retrievePlaylistItem(fetchedPlaylist: playlist)
+            let playlistDetails = PlaylistInfo(playlist: fetchedDetails.playlist, tracks: fetchedDetails.tracks, lastFetched: Date())
+            return playlistDetails
         }
+        catch {
+            print("ERROR: Error occured when converting spotify playlist to custom playlist \(error.localizedDescription)")
+            return nil
+        }
+
+        
     }
     
     public func requestAccessAndRefreshTokens(url: URL, result: @escaping (Bool, Error?) -> Void) {
@@ -385,39 +649,175 @@ final class Spotify: ObservableObject {
             case authRequestDenied(String)
         }
         
+
         self.api.authorizationManager.requestAccessAndRefreshTokens(
             redirectURIWithQuery: url,
             state: self.authorizationState
         )
-        .receive(on: RunLoop.main)
+        .receive(on: DispatchQueue.main)
         .sink(receiveCompletion: { completion in
-            DispatchQueue.main.async {
-                self.isRetrievingTokens = false
+            DispatchQueue.main.async { [weak self] in
+                self?.isRetrievingTokens = false
             }
 
             switch completion {
             case .finished:
-                DispatchQueue.main.async {
-                    result(true, nil)
-                }
+                
+                result(true, nil)
+                
             case .failure(let error):
                 print("ERROR: Couldn't retrieve access and refresh tokens:\n\(error)")
                 if let authError = error as? SpotifyAuthorizationError, authError.accessWasDenied {
-                    DispatchQueue.main.async {
-                        result(false, ErrorTypes.authRequestDenied("Authorization request denied"))
-                    }
+                    
+                    result(false, ErrorTypes.authRequestDenied("Authorization request denied"))
+                    
                 }
                 else {
-                    DispatchQueue.main.async {
-                        result(false, error)
-                    }
+                    
+                    result(false, error)
+                    
                 }
             }
 
         })
-        .store(in: &cancellables)
+        .store(in: &self.cancellables)
+        
+        
     }
     
+    public func uploadSpotifyPlaylistFromBackup(playlistInfo: PlaylistInfo, playlistName: String, isPublic: Bool, isCollaborative: Bool, description: String) async throws -> Playlist<PlaylistItems> {
+
+        
+        return try await withCheckedThrowingContinuation { continuation in
+            self.api.createPlaylist(for: self.currentUser!.uri, PlaylistDetails(name: playlistName, isPublic: isPublic, isCollaborative: isCollaborative, description: description))
+                .receive(on: DispatchQueue.main)
+                .sink(receiveCompletion: { completion in
+                    switch completion {
+                    case .finished:
+                        print("SUCCESS: Created playlist from backed up data")
+                    case .failure(let error):
+                        print("ERROR: Couldn't create playlist based on backed up version:\n\(error)")
+                        continuation.resume(throwing: error)
+                    }
+                }, receiveValue: { playlistObject in
+                    Task {
+                        do {
+                            try await self.uploadTracksToPlaylist(exportedPlaylist: playlistInfo, newPlaylistURI: playlistObject.uri)
+                            continuation.resume(returning: playlistObject)
+                        } catch {
+                            continuation.resume(throwing: error)
+                        }
+                    }
+                })
+                .store(in: &self.cancellables)
+        }
+    }
+
+
+
+    
+    
+    public func uploadSpotifyPlaylistImage(playlist: SpotifyURIConvertible, image: SpotifyImage) {
+        
+        guard let url = URL(string: "https://i.scdn.co/image/ab67706c0000bebbdce8ac805e4a1a9469083388") else {
+            print("Invalid URL")
+            return
+        }
+
+        let task = URLSession.shared.dataTask(with: url) { (data, response, error) in
+            if let error = error {
+                print("Error: \(error)")
+            } else if let data = data {
+                let newUIImage: UIImage? = UIImage(data: data)
+                if let validImage = newUIImage, let jpegData = validImage.jpegData(compressionQuality: 0.5) {
+                    let base64EncodedData = jpegData.base64EncodedData()
+                    
+                    DispatchQueue.global(qos: .background).async { [weak self] in
+                        guard let self = self else { return }
+                        
+                        self.api.uploadPlaylistImage(playlist, imageData: base64EncodedData)
+                            .receive(on: DispatchQueue.main)
+                            .sink { completion in
+                                switch completion {
+                                case .finished: break
+                                case .failure(let error):
+                                    print("ERROR: Unable to upload playlist image: \(error)")
+                                }
+                            }
+                            .store(in: &self.cancellables)
+                    }
+
+                }
+            }
+        }
+        
+
+        task.resume()
+        
+            
+        
+        
+    }
+    
+    public func uploadTracksToPlaylist(exportedPlaylist: PlaylistInfo, newPlaylistURI: SpotifyURIConvertible) async throws {
+        
+        let uris = self.retrieveTrackURIFromPlaylist(playlist: exportedPlaylist)
+
+        var cancellables = Set<AnyCancellable>()
+
+        try await withCheckedThrowingContinuation { continuation in
+            self.api.addToPlaylist(newPlaylistURI, uris: uris)
+                .receive(on: DispatchQueue.main)
+                .sink(receiveCompletion: { completion in
+                    switch completion {
+                    case .finished: break
+                    case .failure(let error):
+                        print("ERROR: Unable to upload songs to playlist: \(error)")
+                        continuation.resume(throwing: error)
+                    }
+                }, receiveValue: { returnValue in
+                    // Use 'returnValue' if you want
+                    continuation.resume()
+                })
+                .store(in: &cancellables)
+        }
+    }
+    
+    
+    public func unfollowPlaylist(uri: SpotifyURIConvertible) {
+        self.api.unfollowPlaylistForCurrentUser(uri)
+            .receive(on: DispatchQueue.main)
+            .sink { completion in
+                switch completion {
+                case .finished:
+                    print("SUCCESS: Unfollowed playlist")
+                case .failure(let error):
+                    print("ERROR: Unable to unfollow playlist: \(error)")
+                }
+            }
+            .store(in: &self.cancellables)
+    }
+    
+    public func retrieveTrackURIFromPlaylist(playlist: PlaylistInfo) -> [SpotifyURIConvertible] {
+        var uris: [SpotifyURIConvertible] = []
+
+        
+        for track in playlist.tracks {
+            if let uri = track.item?.uri {
+                print("valid uri")
+                uris.append(uri)
+                print("SUCCESS: Valid URI \(uri)")
+            }
+            else {
+                print("ERROR: Not valid URI")
+            }
+            
+        }
+        
+        
+        
+        return uris
+    }
     
     
 }

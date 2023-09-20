@@ -8,172 +8,124 @@
 import SwiftUI
 import SpotifyWebAPI
 import Combine
+import Shimmer
+import Refresher
 
 struct HomeView: View {
     @EnvironmentObject var beatFluxViewModel: BeatFluxViewModel
     @EnvironmentObject var spotify: Spotify
-    
+
     @State var showSpotifyLinkPrompt = false
     @State var isLoading = false
-    @State var showSettings = false
-    @State var didResetToTop: Bool = true
-    @State var showRefreshingIcon: Bool = false
-    @State var offset: CGFloat = 0.0
     @State var showSpotifyPlaylistListView: Bool = false
+    @State var showBanner: Bool = false
+    @State var bannerData: BannerModifier.BannerData = BannerModifier.BannerData(imageIcon: Image(systemName: "camera.aperture"),title: "Added Snapshot")
+    @State var searchQuery = ""
     
-    var arrowPullDownMultiplier: CGFloat = 100
-    var arrowStartRotationOffset: CGFloat = 30
-    
-    var size: CGFloat = 170
-    
-    let fontSizeParameters = ScrollEffectParameters(startOffset: 0, endOffset: -10, newValue: 20, originalValue: 34)
-    let opacityPlaylistBackgroundParameters = ScrollEffectParameters(startOffset: 0, endOffset: -10, newValue: 1, originalValue: 0)
-    let arrowOpacityParameters = ScrollEffectParameters(startOffset: 30, endOffset: 40, newValue: 1, originalValue: 0)
-    let opacityLoadingBackgroundParameters = ScrollEffectParameters(startOffset: 0, endOffset: -10, newValue: 0, originalValue: 1)
+    init() {
+
+//         //UINavigationBar.appearance().setBackgroundImage(UIImage(), for: UIBarMetrics.default)
+//         //UINavigationBar.appearance().shadowImage = UIImage()
+//         UINavigationBar.appearance().isTranslucent = false
+//         UINavigationBar.appearance().tintColor = .clear
+//         UINavigationBar.appearance().backgroundColor = .systemBackground
+    }
     
     var body: some View {
-        VStack {
-            TopBarView(showSettings: $showSettings, showSpotifyPlaylistListView: $showSpotifyPlaylistListView)
-                .environmentObject(beatFluxViewModel)
-            
-            ScrollView {
-                VStack {
-                    ZStack {
-                        GeometryReader { proxy in
-                            ZStack(alignment: .top) {
-                                Image(systemName: "arrow.up")
-                                    .font(.title3)
-                                    .fontWeight(.semibold)
-                                    .rotationEffect(.degrees(offset > arrowStartRotationOffset ? max(180, 180 + min((Double(offset - arrowStartRotationOffset) / arrowPullDownMultiplier) * 180.0, 180)) : 180), anchor: .center)
-                                    .foregroundStyle(Color.accentColor)
-                                    .opacity(beatFluxViewModel.isViewModelFullyLoaded ? (!showRefreshingIcon ? arrowOpacityParameters.getValueForOffset(offset: offset) : 0) : 0)
-                                
-                                LoadingIndicator(color: .accentColor, lineWidth: 4.0)
-                                    .frame(width: 25, height: 25)
-                                    .opacity(showRefreshingIcon ? 1 : 0)
-                                
-                            }
-                            .opacity(opacityLoadingBackgroundParameters.getValueForOffset(offset: offset))
-                            .padding(.top, 5)
-                            .frame(width: proxy.size.width)
-                            .offset(CGSize(width: 0, height: -offset))
-                            
-                            VStack(spacing: 0) {
-                                Rectangle()
-                                    .foregroundStyle(Color(UIColor.systemBackground).opacity(opacityPlaylistBackgroundParameters.getValueForOffset(offset: offset)))
-                                    .frame(height: 20)
-                                
-                                
-                                HStack {
-                                    
-                                    Text("Backups")
-                                        .font(.system(size: fontSizeParameters.getValueForOffset(offset: offset)))
-                                        .font(.largeTitle)
-                                        .fontWeight(.bold)
-                                                                        
-                                    Spacer()
-                                    
-                                    LoadingIndicator(color: .accentColor, lineWidth: 3.0)
-                                        .frame(width: 15, height: 15)
-                                        .opacity(offset < -10 ? (showRefreshingIcon ? 1 : 0) : 0)
-                                    
-                                }
-                                
-                                .padding(.horizontal)
-                                .padding(.vertical, 3)
-                                .background(.thickMaterial
-                                .opacity(opacityPlaylistBackgroundParameters.getValueForOffset(offset: offset)))
-                                
-                                
-                            }
-                            .frame(width: proxy.size.width)
-                            .offset(CGSize(width: 0, height: max(0, -offset)))
-                            
-                            
-                            
-                        }
-                        .padding(.bottom, 55)
-                    }
-                    .zIndex(1)
-                    
-                    if beatFluxViewModel.isViewModelFullyLoaded {
-                        if beatFluxViewModel.userData != nil {
-                            if !spotify.spotifyData.playlists.isEmpty {
-                                let columns = [
-                                    GridItem(.flexible()),
-                                    GridItem(.flexible())
-                                ]
-                                
-                                
-                                LazyVGrid(columns: columns, spacing: 20) {
-                                    
-                                    ForEach(spotify.spotifyData.playlists, id: \.self) { playlist in
-                                        PlaylistGridSquare(playlist: playlist.playlist)
+        ZStack {
+            NavigationView {
+                ScrollView {
+                        if beatFluxViewModel.isViewModelFullyLoaded && spotify.isBackupsLoaded {
+                            if beatFluxViewModel.userData != nil {
+                                if !spotify.spotifyData.playlists.isEmpty {
+                                    var filteredChunkedPlaylists: [[PlaylistInfo]] {
+                                        let playlists = spotify.spotifyData.playlists
+                                        let flatChunks = playlists.chunked(size: 2).flatMap { $0 }
+                                        let filteredChunks = flatChunks.filter {
+                                            searchQuery.isEmpty ? true : $0.playlist.name.contains(searchQuery)
+                                        }
+                                        return stride(from: 0, to: filteredChunks.count, by: 2).map {
+                                            Array(filteredChunks[$0..<min($0+2, filteredChunks.count)])
+                                        }
                                     }
                                     
+                                    Grid {
+                                        ForEach(0..<filteredChunkedPlaylists.count, id: \.self) { index in
+                                                GridRow(alignment: .top) {
+                                                    ForEach(filteredChunkedPlaylists[index], id: \.self) { playlist in
+                                                        PlaylistGridSquare(playlistInfo: playlist, showBanner: $showBanner)
+                                                            .frame(maxWidth: .infinity, alignment: .leading) // Align to leading
+                                                    }
+                                                }
+                                            }
+                                    }
+                                    .padding(.horizontal)
+                                    .animation(.default, value: filteredChunkedPlaylists)
+                                    .searchable(text: $searchQuery)
                                 }
-                                .padding(.horizontal)
-                            }
-                            else {
-                                NoPlaylistsFoundView()
+                                else {
+                                    NoPlaylistsFoundView()
+                                }
                             }
                         }
-                        else {
-                            NoPlaylistsFoundView()
-                        }
-                    }
-
-                    
-
-                    
-                    
-                    
-                    
+                        
                     
                 }
+                .refresher(style: .default) {
+                    await spotify.refreshUsersPlaylists(options: .all, priority: .low, source: .default)
+                }
+                .navigationTitle("Backups")  
+                .scrollIndicators(.hidden)
+                .toolbarBackground(Color(UIColor.systemBackground), for: .navigationBar)
                 
-                .background(
-                    GeometryReader { proxy in
-                        let offset = proxy.frame(in: .named("scroll")).minY
-                        Color.clear.preference(key: ViewOffsetKey.self, value: offset)
-                    }
-                )
             }
             .overlay {
+                VStack(spacing: 15) {
+                    ProgressView()
 
-                VStack(spacing: 20) {
-                    LoadingIndicator(color: .accentColor, lineWidth: 4.0)
-                        .frame(width: 25, height: 25)
-                    
                     Text("Loading...")
                         .foregroundStyle(.secondary)
-                        .fontWeight(.semibold)
                         
+
                 }
-                .opacity(beatFluxViewModel.isViewModelFullyLoaded ? 0 : 1)
-                    
+                .opacity(beatFluxViewModel.isViewModelFullyLoaded && spotify.isBackupsLoaded ? 0 : 1)
             }
-            .scrollDisabled(!beatFluxViewModel.isViewModelFullyLoaded)
-            .scrollIndicators(.hidden)
-            .coordinateSpace(name: "scroll")
-            .onPreferenceChange(ViewOffsetKey.self) { offset in
-                self.offset = offset
+            
+            VStack {
+                Spacer()
                 
-                if offset <= 0 { didResetToTop = true }
-                else { didResetToTop = false }
-                
-                if Double(offset - arrowStartRotationOffset) / arrowPullDownMultiplier >= 1.0 {
-                    if !showRefreshingIcon && beatFluxViewModel.isViewModelFullyLoaded {
-                        Task {
-                            await fetchData()
-                        }
+                HStack {
+                    Spacer()
+                    
+                    Button {
+                        UIImpactFeedbackGenerator(style: .rigid).impactOccurred()
+                        showSpotifyPlaylistListView.toggle()
+                    } label: {
+                        Circle()
+                            .frame(width: 65)
+                            .foregroundStyle(Color.accentColor)
+                            .overlay {
+                                Image(systemName: "plus")
+                                    .foregroundStyle(.white)
+                                    .fontWeight(.bold)
+                                    .font(.title3)
+                            }
+                            .shadow(radius: 16)
+                        
+                        
+                        
                     }
+                    .buttonStyle(ShrinkOnHoverButtonStyle())
+                    .disabled(!beatFluxViewModel.isViewModelFullyLoaded)
                 }
-                
-                
+                .padding([.trailing, .bottom])
             }
             
         }
+        
+        
+        .banner(data: $bannerData, show: $showBanner)
+
         .sheet(isPresented: $showSpotifyPlaylistListView) {
             SpotifyPlaylistListView()
         }
@@ -195,116 +147,7 @@ struct HomeView: View {
                 }
             }
         })
-        .fullScreenCover(isPresented: $showSettings) {
-            SettingsView(showSettings: $showSettings)
-        }
         
-    }
-
-    func fetchData() async {
-        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-        animateRefreshingIcon(isShowing: true)
-        
-        while (!didResetToTop) {
-            try? await Task.sleep(nanoseconds: 500_000_000)
-        }
-//        
-//        if spotify.isAuthorized {
-//            spotify.getUserPlaylists { optionalPlaylists in
-//                guard let playlists = optionalPlaylists else {
-//                    print("No backups found")
-//                    return
-//                }
-//                
-//                for fetchedPlaylist in playlists.items {
-//                    handleFetchedPlaylist(fetchedPlaylist)
-//                }
-//            }
-//        }
-        
-        spotify.refreshUserPlaylistArray()
-        
-        await beatFluxViewModel.retrieveUserData()
-        await spotify.retrieveSpotifyData()
-        
-        animateRefreshingIcon(isShowing: false)
-    }
-
-    func animateRefreshingIcon(isShowing: Bool) {
-        withAnimation(.easeOut(duration: 0.3)) {
-            showRefreshingIcon = isShowing
-        }
-    }
-
-    func handleFetchedPlaylist(_ fetchedPlaylist: Playlist<PlaylistItemsReference>) {
-        if let foundPlaylist = spotify.spotifyData.playlists.first(where: { $0.playlist.id == fetchedPlaylist.id}) {
-            handleFoundPlaylist(foundPlaylist: foundPlaylist, fetchedPlaylist: fetchedPlaylist)
-        } else {
-            retrieveAndAppendPlaylistItem(fetchedPlaylist: fetchedPlaylist)
-        }
-    }
-
-    func handleFoundPlaylist(foundPlaylist: PlaylistDetails, fetchedPlaylist: Playlist<PlaylistItemsReference>) {
-        if foundPlaylist.playlist.snapshotId != fetchedPlaylist.snapshotId {
-            spotify.retrievePlaylistItem(fetchedPlaylist: fetchedPlaylist) { playlistDetails in
-                updatePlaylistDetails(fetchedPlaylist: fetchedPlaylist, playlistDetails: playlistDetails)
-            }
-        }
-    }
-
-    func retrieveAndAppendPlaylistItem(fetchedPlaylist: Playlist<PlaylistItemsReference>) {
-        spotify.retrievePlaylistItem(fetchedPlaylist: fetchedPlaylist) { playlistDetails in
-            DispatchQueue.main.async {
-                spotify.spotifyData.playlists.append(playlistDetails)
-            }
-        }
-    }
-
-    func updatePlaylistDetails(fetchedPlaylist: Playlist<PlaylistItemsReference>, playlistDetails: PlaylistDetails) {
-        if let index = spotify.spotifyData.playlists.firstIndex(where: { $0.playlist.id == fetchedPlaylist.id}) {
-            DispatchQueue.main.async {
-                spotify.spotifyData.playlists[index] = playlistDetails
-            }
-        } else {
-            DispatchQueue.main.async {
-                spotify.spotifyData.playlists.append(playlistDetails)
-            }
-        }
-    }
-    
-}
-
-
-
-
-struct ScrollEffectParameters {
-    var startOffset: CGFloat
-    var endOffset: CGFloat
-    var newValue: CGFloat
-    var originalValue: CGFloat
-
-    func getValueForOffset(offset: CGFloat) -> CGFloat {
-        if startOffset <= endOffset {
-            // Handle positive scrolling (offset increases)
-            if offset < startOffset {
-                return originalValue
-            } else if offset > endOffset {
-                return newValue
-            } else {
-                let value = originalValue + ((offset - startOffset) / (endOffset - startOffset)) * (newValue - originalValue)
-                return value
-            }
-        } else {
-            // Handle negative scrolling (offset decreases)
-            if offset > startOffset {
-                return originalValue
-            } else if offset < endOffset {
-                return newValue
-            } else {
-                let value = originalValue - ((startOffset - offset) / (startOffset - endOffset)) * (originalValue - newValue)
-                return value
-            }
-        }
     }
 }
 
@@ -318,118 +161,176 @@ struct HomeView_Previews: PreviewProvider {
 }
 
 
+struct ShrinkOnHoverButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? 0.9 : 1)
+            .opacity(configuration.isPressed ? 1 : 1)  // Set opacity to 1 when pressed
+            .animation(.easeInOut(duration: 0.2), value: configuration.isPressed)
+            .scaleEffect(configuration.isPressed ? 0.9 : 1)
+            .animation(.easeInOut, value: configuration.isPressed)
+    }
+}
+
+
+
+
+
 private struct NoPlaylistsFoundView: View {
     var body: some View {
         VStack {
             Spacer()
             Image(systemName: "questionmark.app.dashed")
                 .font(.largeTitle)
+                .foregroundStyle(.secondary)
             Text("No Backups Found")
+                .foregroundStyle(.secondary)
                 .font(.title3)
                 .fontWeight(.semibold)
                 .padding(.top, 5)
             
+            
         }
-    }
-}
-
-private struct ViewOffsetKey: PreferenceKey {
-    static let defaultValue: CGFloat = 0.0
-    
-    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
-        value += nextValue()
     }
 }
 
 private struct PlaylistGridSquare: View {
-    var playlist: Playlist<PlaylistItemsReference>
+    var playlistInfo: PlaylistInfo
+    @EnvironmentObject var spotify: Spotify
+    @State var showExportView: Bool = false
+    @State var showPlaylistVersionHistory = false
+    @State var showSnapshotAlert = false
+    @Binding var showBanner: Bool
     
     var body: some View {
         
+        
+        
         VStack(alignment: .leading) {
-            AsyncImage(urlString: playlist.images[0].url.absoluteString) {
-                Rectangle()
-                    .foregroundStyle(Color(UIColor.secondarySystemGroupedBackground))
-                    .aspectRatio(contentMode: .fill)
-                    .redacted(reason: .placeholder)
-            } content: {
-                Image(uiImage: $0)
-                    .resizable()
-                    .scaledToFill()
-                    .frame(width: (UIScreen.main.bounds.width / 2) - 25, height: (UIScreen.main.bounds.width / 2) - 25)
-                    .clipped()
+            
+            if !playlistInfo.playlist.images.isEmpty {
+                
+                AsyncImage(urlString: playlistInfo.playlist.images[0].url.absoluteString) {
+                    Rectangle()
+                        .aspectRatio(contentMode: .fill)
+                        .frame(width: (UIScreen.main.bounds.width / 2) - 25, height: (UIScreen.main.bounds.width / 2) - 25)
+                        .foregroundColor(.secondary)
+                        .shimmering()
+                } content: {
+                    Image(uiImage: $0)
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width: (UIScreen.main.bounds.width / 2) - 25, height: (UIScreen.main.bounds.width / 2) - 25)
+                        .clipped()
+                        
+                }
+                .clipped()
+                .cornerRadius(12)
             }
-            .clipped()
-            .cornerRadius(16)
-    
-            VStack(alignment: .leading) {
-                Text(playlist.name)
+            else {
+                Rectangle()
+                    .foregroundStyle(Color(UIColor.tertiarySystemBackground))
+                    .aspectRatio(contentMode: .fill)
+                    .frame(width: (UIScreen.main.bounds.width / 2) - 25, height: (UIScreen.main.bounds.width / 2) - 25)
+                    .redacted(reason: .placeholder)
+                    .clipped()
+                    .cornerRadius(12)
+                    .overlay {
+                        Text("?")
+                            .font(.largeTitle)
+                    }
+            }
+            
+
+            VStack(alignment: .leading, spacing: 0) {
+                Text(playlistInfo.playlist.name)
                     .fontWeight(.semibold)
-                Text(playlist.owner?.displayName ?? "Unknown")
+                
+                Text(playlistInfo.playlist.owner?.displayName ?? "Unknown")
                     .font(.caption)
                     .foregroundStyle(.secondary)
+            }
+            .padding(.leading, 5)
+            
+
+            
+            
                 
-            } 
+            
         }
+        .padding(.horizontal, 5)
+        .padding(.vertical, 5)
         
+        .background(ContainerRelativeShape().fill(Color(uiColor: .systemBackground)))
+        .contextMenu(ContextMenu(menuItems: {
+            Button {
+                showExportView = true
+            } label: {
+                HStack {
+                    Text("Export")
+                    Spacer()
+                    Image(systemName: "square.and.arrow.up")
+                    
+                }
+            }
+            
+            Section("Snapshots") {
+                Button {
+                    Task {
+                        let snapshots = await self.spotify.getPlaylistSnapshots(playlist: playlistInfo)
+                        
+                        if snapshots.count < 2 {
+                            self.spotify.uploadPlaylistSnapshot(snapshot: PlaylistSnapshot(id: UUID().uuidString, playlist: playlistInfo, versionDate: Date()))
+                            withAnimation {
+                                showBanner = true
+                            }
+                            
+                        }
+                        else {
+                            showSnapshotAlert = true
+                        }
+                    }
+
+                        
+                    
+                    
+                } label: {
+                    HStack {
+                        Text("Create Snapshot")
+                        Spacer()
+                        Image(systemName: "plus")
+                    }
+                }
+
+                Button {
+                    showPlaylistVersionHistory = true
+                } label: {
+                    HStack {
+                        Text("Snapshots")
+                        Spacer()
+                        Image(systemName: "camera.aperture")
+                    }
+                }
+            }
+            
+            
+
+        }))
         
-        
-        
-        
+        .alert(isPresented: $showSnapshotAlert) {
+            Alert(title: Text("Snapshot Limit Reached"), message: Text("You can only save two snapshots at a time!"), dismissButton: .default(Text("Ok")))
+        }
+        .sheet(isPresented: $showExportView) {
+            NavigationView {
+                ExportPlaylistView(showExportView: $showExportView, playlistToExport: playlistInfo)
+            }
+            
+        }
+        .sheet(isPresented: $showPlaylistVersionHistory) {
+            
+            PlaylistSnapshotView(showPlaylistVersionHistory: $showPlaylistVersionHistory, playlistInfo: playlistInfo)
+
+        }
     }
 }
 
-private struct TopBarView: View {
-    @EnvironmentObject var beatFluxViewModel: BeatFluxViewModel
-    @Binding var showSettings: Bool
-    @Binding var showSpotifyPlaylistListView: Bool
-    
-    var body: some View {
-        VStack {
-            HStack {
-                Image("BeatFluxLogo")
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .frame(width: 40)
-                    .cornerRadius(16)
-            }
-            .frame(maxWidth: .infinity)
-            .overlay(alignment: .trailing) {
-                Button {
-                    showSpotifyPlaylistListView.toggle()
-                } label: {
-                    Circle()
-                        .frame(width: 35)
-                        .foregroundStyle(Color(UIColor.systemGray5))
-                        .overlay {
-                            Image(systemName: "plus")
-                                .fontWeight(.bold)
-                                .font(.subheadline)
-                        }
-                    
-                    
-                    
-                }
-                .disabled(!beatFluxViewModel.isViewModelFullyLoaded)
-                .padding(.trailing)
-            }
-            
-            .overlay(alignment: .leading) {
-                    Button {
-                        showSettings.toggle()
-                    } label: {
-                        Circle()
-                            .frame(width: 35)
-                            .foregroundStyle(Color(UIColor.systemGray5))
-                            .overlay {
-                                Image(systemName: "person.fill")
-                            }
-                    }
-                    .disabled(!beatFluxViewModel.isViewModelFullyLoaded)
-                    .padding(.leading)
-            }
-            
-            
-        }
-    }
-}
