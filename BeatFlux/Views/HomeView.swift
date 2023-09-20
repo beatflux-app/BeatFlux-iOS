@@ -187,9 +187,10 @@ private struct NoPlaylistsFoundView: View {
 
 private struct PlaylistGridSquare: View {
     var playlistInfo: PlaylistInfo
-    
+    @EnvironmentObject var spotify: Spotify
     @State var showExportView: Bool = false
     @State var showPlaylistVersionHistory = false
+    @State var showSnapshotAlert = false
     
     var body: some View {
         
@@ -262,17 +263,48 @@ private struct PlaylistGridSquare: View {
                     
                 }
             }
-            Button {
-                showPlaylistVersionHistory = true
-            } label: {
-                HStack {
-                    Text("Version History")
-                    Spacer()
-                    Image(systemName: "clock")
+            
+            Section("Snapshots") {
+                Button {
+                    Task {
+                        let snapshots = await self.spotify.getPlaylistSnapshots(playlist: playlistInfo)
+                        
+                        if snapshots.count < 2 {
+                            self.spotify.uploadPlaylistSnapshot(snapshot: PlaylistSnapshot(playlist: playlistInfo, versionDate: Date()))
+                        }
+                        else {
+                            showSnapshotAlert = true
+                        }
+                    }
+
+                        
+                    
+                    
+                } label: {
+                    HStack {
+                        Text("Create Snapshot")
+                        Spacer()
+                        Image(systemName: "plus")
+                    }
+                }
+
+                Button {
+                    showPlaylistVersionHistory = true
+                } label: {
+                    HStack {
+                        Text("Snapshots")
+                        Spacer()
+                        Image(systemName: "camera.aperture")
+                    }
                 }
             }
-            .disabled(true)
+            
+            
+
         }))
+        .alert(isPresented: $showSnapshotAlert) {
+            Alert(title: Text("Snapshot Error"), message: Text("You can only save two snapshots at a time!"), dismissButton: .default(Text("Ok")))
+        }
         .sheet(isPresented: $showExportView) {
             NavigationView {
                 ExportPlaylistView(showExportView: $showExportView, playlistToExport: playlistInfo)
@@ -281,7 +313,7 @@ private struct PlaylistGridSquare: View {
         }
         .sheet(isPresented: $showPlaylistVersionHistory) {
             
-            //PlaylistVersionHistory(showPlaylistVersionHistory: $showPlaylistVersionHistory, playlistInfo: playlistInfo)
+            PlaylistSnapshotView(showPlaylistVersionHistory: $showPlaylistVersionHistory, playlistInfo: playlistInfo)
 
         }
     }

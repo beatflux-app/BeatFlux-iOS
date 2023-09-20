@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct PlaylistSnapshotView: View {
+    @Environment(\.dismiss) private var dismiss
     @EnvironmentObject var spotify: Spotify
     @Binding var showPlaylistVersionHistory: Bool
     var playlistInfo: PlaylistInfo
@@ -15,6 +16,7 @@ struct PlaylistSnapshotView: View {
     @State var snapshots: [PlaylistSnapshot] = []
     @State var showSnapshotAlert = false
     @State var isLoading = false
+    @State var isPresentingConfirm = false
     
     var body: some View {
         
@@ -22,45 +24,57 @@ struct PlaylistSnapshotView: View {
         NavigationView {
             Form {
                 if !isLoading {
-                    if snapshots.isEmpty {
-                        Text("None")
-                            .foregroundStyle(.secondary)
-                    }
-                    else {
-                        ForEach(0..<snapshots.sorted(by: { $0.versionDate > $1.versionDate }).count, id: \.self) { index in
-                            NavigationLink(destination: ExportPlaylistView(showExportView: $showPlaylistVersionHistory, playlistToExport: snapshots.sorted(by: { $0.versionDate > $1.versionDate })[index].playlist)) {
-                                HStack {
-                                    VStack(alignment: .leading) {
-                                        Text("\(snapshots.sorted(by: { $0.versionDate > $1.versionDate })[index].playlist.tracks.count) Songs")
-                                            .font(.headline)
-                                            .lineLimit(1)
-                                        Text(snapshots.sorted(by: { $0.versionDate > $1.versionDate })[index].versionDate.formatted())
-                                            .font(.caption)
-                                    }
-                                    .padding(.trailing)
-
-                                    Spacer()
-
-
-                                    
-                                    
-                                    
-                                }
-                            }
-                            
-                            
+                    Section {
+                        if snapshots.isEmpty {
+                            Text("None")
+                                .foregroundStyle(.secondary)
                         }
-                        .onDelete(perform: delete(at:))
-                    }
+                        else {
+                            ForEach(0..<snapshots.sorted(by: { $0.versionDate > $1.versionDate }).count, id: \.self) { index in
+                                NavigationLink(destination: ExportPlaylistView(showExportView: $showPlaylistVersionHistory, playlistToExport: snapshots.sorted(by: { $0.versionDate > $1.versionDate })[index].playlist)) {
+                                    HStack {
+                                        VStack(alignment: .leading) {
+                                            Text("\(snapshots.sorted(by: { $0.versionDate > $1.versionDate })[index].playlist.tracks.count) Songs")
+                                                .font(.headline)
+                                                .lineLimit(1)
+                                            Text(snapshots.sorted(by: { $0.versionDate > $1.versionDate })[index].versionDate.formatted())
+                                                .font(.caption)
+                                        }
+                                        .padding(.trailing)
+
+                                        Spacer()
+
+
+                                        
+                                        
+                                        
+                                    }
+                                }
+                                
+                                
+                            }
+                            .onDelete(perform: delete(at:))
+                        }
+                        
                     
+                    } footer: {
+                        Text("\(2 - snapshots.count) of 2 Snapshots Remaining")
+                    }
                 }
                 else {
                     VStack(spacing: 15) {
-                        ProgressView()
-                        Text("Loading...")
-                            .foregroundStyle(.secondary)
+                        HStack {
+                            Spacer()
+                            ProgressView()
+                            Text("Loading...")
+                                .foregroundStyle(.secondary)
+                            Spacer()
+                        }
+
                     }
                 }
+
+                    
                 
                 
                 Section {
@@ -84,6 +98,7 @@ struct PlaylistSnapshotView: View {
                     } label: {
                         Text("Create New Snapshot")
                     }
+                    .disabled(snapshots.count >= 2)
                     .alert(isPresented: $showSnapshotAlert) {
                         Alert(title: Text("Snapshot Error"), message: Text("You can only save two snapshots at a time!"), dismissButton: .default(Text("Ok")))
                     }
@@ -98,9 +113,7 @@ struct PlaylistSnapshotView: View {
                     Button {
                         showPlaylistVersionHistory.toggle()
                     } label: {
-                        Text("Done")
-                            .fontWeight(.semibold)
-                            .foregroundStyle(Color.accentColor)
+                        dismissButton
                     }
 
                     
@@ -135,6 +148,13 @@ struct PlaylistSnapshotView: View {
                 await spotify.deletePlaylistSnapshot(playlist: playlistSnapshot)
             }
         }
+    }
+    
+    private var dismissButton: some View {
+        Button(action: { dismiss() }) {
+            Text("")
+        }
+        .buttonStyle(ExitButtonStyle(buttonSize: 30, symbolScale: 0.4))
     }
 }
 

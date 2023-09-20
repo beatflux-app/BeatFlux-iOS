@@ -46,7 +46,7 @@ final class DatabaseHandler {
     
     init() {
         let settings = FirestoreSettings()
-        settings.cacheSizeBytes = FirestoreCacheSizeUnlimited
+        settings.cacheSettings = MemoryCacheSettings()
         database.settings = settings
     }
     
@@ -181,6 +181,8 @@ final class DatabaseHandler {
         }
     }
     
+
+    
     func getSpotifyData(source: FirestoreSource) async throws -> SpotifyDataModel {
         
                 
@@ -218,7 +220,7 @@ final class DatabaseHandler {
 
                 
                 for document in querySnapshot.documents {
-                    if var playlist = try document.data(as: PlaylistInfo?.self) {
+                    if let playlist = try document.data(as: PlaylistInfo?.self) {
                         playlists.append(playlist)
                             
                         
@@ -289,7 +291,88 @@ final class DatabaseHandler {
         
     }
     
+    func getPlaylistSnapshots(playlist: PlaylistInfo) async throws -> [PlaylistSnapshot] {
+        guard let user = self.user else {
+            print("ERROR: Failed to get data from database because the user is nil")
+            throw UserError.nilUser
+        }
+        do {
+            let docRef = self.firestore.collection("users").document(user.uid)
+            
+            let documents = try await docRef.collection("playlists").document(playlist.playlist.id).collection("snapshots").getDocuments(source: FirestoreSource.default)
+            
+            var snapshots: [PlaylistSnapshot] = []
+            
+            for document in documents.documents {
+                if let decodedData = try? document.data(as: PlaylistSnapshot.self) {
+                    snapshots.append(decodedData)
+                }
+            }
+            
+            return snapshots
+        }
+        catch {
+            print("ERROR: Error while getting playlist snapshot \(error.localizedDescription)")
+            return []
+        }
+    }
     
+    func deletePlaylistSnapshot(playlistSnapshot: PlaylistSnapshot) async throws {
+        guard let user = self.user else {
+            print("ERROR: Failed to get data from database because the user is nil")
+            throw UserError.nilUser
+        }
+        do {
+            let docRef = self.firestore.collection("users").document(user.uid)
+            
+            let documents = try await docRef.collection("playlists").document(playlistSnapshot.playlist.playlist.id).collection("snapshots").getDocuments(source: FirestoreSource.default)
+
+            
+            for document in documents.documents {
+                if let decodedData = try? document.data(as: PlaylistSnapshot.self) {
+                    if decodedData.versionDate == playlistSnapshot.versionDate {
+                        try await docRef.collection("playlists").document(playlistSnapshot.playlist.playlist.id).collection("snapshots").document(document.documentID).delete()
+                    }
+                }
+            }
+            
+            print("SUCCESS: Successfully deleted playlist snapshot")
+
+        }
+        catch {
+            print("ERROR: Error while deleting playlist snapshot \(error.localizedDescription)")
+        }
+    }
+    
+    func uploadPlaylistSnapshot(snapshot: PlaylistSnapshot) throws {
+        guard let user = self.user else {
+            print("ERROR: Failed to get upload snapshot to database because the user is nil")
+            throw UserError.nilUser
+        }
+        
+        
+        let playlistsCollection = firestore.collection("users").document(user.uid).collection("playlists")
+        
+        let snapshotCollection = playlistsCollection.document(snapshot.playlist.playlist.id).collection("snapshots")
+        
+        snapshotCollection.document(UUID().uuidString).setData(from: snapshot)
+            .subscribe(on: DispatchQueue.global(qos: .background))
+            .receive(on: DispatchQueue.main) // Switch back to the main queue for the result
+            .sink(receiveCompletion: { completion in
+                if case .failure(let error) = completion {
+                    print("ERROR: Error while setting playlist: \(snapshot.playlist.playlist.name): snapshot \(error.localizedDescription)")
+                    return
+                }
+            }, receiveValue: { results in
+                
+                print("SUCCESS: Snapshot was successfully written")
+            })
+            .store(in: &cancellables)
+        
+
+        
+
+    }
     
     func uploadSpecificFieldFromPlaylistCollection(playlist: PlaylistInfo, delete: Bool = false, source: FirestoreSource) async {
         
@@ -298,6 +381,7 @@ final class DatabaseHandler {
             print("ERROR: User does not exist")
             return
         }
+        
         
         let playlistsCollection = firestore.collection("users").document(user.uid).collection("playlists")
         

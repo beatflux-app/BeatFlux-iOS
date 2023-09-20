@@ -32,10 +32,10 @@ struct PlaylistInfo: Codable, Hashable {
     var playlist:Playlist<PlaylistItemsReference>
     var tracks: [PlaylistItemContainer<PlaylistItem>] = []
     var lastFetched: Date
-    //var versionHistory: [priorBackupInfo] = []
+    var snapshots: [PlaylistSnapshot] = []
 }
 
-struct priorBackupInfo: Codable, Hashable {
+struct PlaylistSnapshot: Codable, Hashable {
     var playlist: PlaylistInfo
     var versionDate: Date
 }
