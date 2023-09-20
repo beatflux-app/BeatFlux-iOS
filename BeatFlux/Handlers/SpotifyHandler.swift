@@ -491,14 +491,11 @@ final class Spotify: ObservableObject {
                         
                         if fetchedPlaylist.snapshotId != userPlaylist.playlist.snapshotId {
                             // The playlist was changed, so save a new version
-                            do {
-                                let playlistInfo = try await self.retrievePlaylistItem(fetchedPlaylist: fetchedPlaylist)
-                                var updatedPlaylist = PlaylistInfo(playlist: fetchedPlaylist, lastFetched: Date())
-                                updatedPlaylist.tracks = playlistInfo.tracks
-                                updatedPlaylists.append(updatedPlaylist)
-                            } catch {
-                                print("Error retrieving playlist item: \(error)")
-                            }
+                            
+                            let playlistInfo = try await self.retrievePlaylistItem(fetchedPlaylist: fetchedPlaylist)
+                            
+                            updatedPlaylists.append(PlaylistInfo(playlist: fetchedPlaylist, tracks: playlistInfo.tracks, lastFetched: Date()))
+                            
                         } else {
                             // The playlist has not changed, keep the old version
                             updatedPlaylists.append(userPlaylist)
@@ -508,27 +505,26 @@ final class Spotify: ObservableObject {
                     
                     else {
                         // This is a new playlist, add it to userPlaylists
-                        do {
-                            let playlistInfo = try await self.retrievePlaylistItem(fetchedPlaylist: fetchedPlaylist)
-                            var newPlaylist = PlaylistInfo(playlist: fetchedPlaylist, lastFetched: Date())
-                            newPlaylist.tracks = playlistInfo.tracks
-                            updatedPlaylists.append(newPlaylist)
-                        } catch {
-                            print("Error retrieving playlist item: \(error)")
-                        }
+                        let playlistInfo = try await self.retrievePlaylistItem(fetchedPlaylist: fetchedPlaylist)
+                        
+                        updatedPlaylists.append(PlaylistInfo(playlist: fetchedPlaylist, tracks: playlistInfo.tracks, lastFetched: Date()))
                     }
                     
                 }
 
+                let copiedUpdatedPlaylists = updatedPlaylists  // Copy the array to keep on the main thread
+
                 DispatchQueue.main.async { [weak self] in
-                    if self?.userPlaylists != updatedPlaylists {
-                        self?.userPlaylists = updatedPlaylists
-                        self?.saveUsersLibraryToCache()
+                    guard let self = self else { return }
+                    if self.userPlaylists != copiedUpdatedPlaylists {
+                        self.userPlaylists = copiedUpdatedPlaylists
+                        self.saveUsersLibraryToCache()
                     }
-                    
                 }
-                
+                    
             }
+                
+            
 
 
 
