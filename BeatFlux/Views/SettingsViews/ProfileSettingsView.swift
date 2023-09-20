@@ -172,8 +172,14 @@ struct ProfileSettingsView: View {
                         saveProfile()
                         
                     } label: {
-                        Text("Save")
-                            .fontWeight(.semibold)
+                        if isLoading {
+                            ProgressView()
+                        }
+                        else {
+                            Text("Save")
+                                .fontWeight(.semibold)
+                        }
+
                     }
                     .disabled(!didChangeProfile)
                 }
@@ -206,12 +212,20 @@ struct ProfileSettingsView: View {
             showError = true
             return
         }
+        isLoading = true
         
         beatFluxViewModel.userData?.first_name = firstName
         beatFluxViewModel.userData?.last_name = lastName
         beatFluxViewModel.userData?.email = email
         
-        dismiss()
+        Task {
+            await beatFluxViewModel.uploadUserData()
+            isLoading = false
+            dismiss()
+        }
+        
+        
+       
         
     }
 }

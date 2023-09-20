@@ -327,14 +327,8 @@ final class DatabaseHandler {
             
             let documents = try await docRef.collection("playlists").document(playlistSnapshot.playlist.playlist.id).collection("snapshots").getDocuments(source: FirestoreSource.default)
 
-            
-            for document in documents.documents {
-                if let decodedData = try? document.data(as: PlaylistSnapshot.self) {
-                    if decodedData.versionDate == playlistSnapshot.versionDate {
-                        try await docRef.collection("playlists").document(playlistSnapshot.playlist.playlist.id).collection("snapshots").document(document.documentID).delete()
-                    }
-                }
-            }
+            try await docRef.collection("playlists").document(playlistSnapshot.playlist.playlist.id).collection("snapshots").document(playlistSnapshot.id).delete()
+
             
             print("SUCCESS: Successfully deleted playlist snapshot")
 
@@ -355,7 +349,7 @@ final class DatabaseHandler {
         
         let snapshotCollection = playlistsCollection.document(snapshot.playlist.playlist.id).collection("snapshots")
         
-        snapshotCollection.document(UUID().uuidString).setData(from: snapshot)
+        snapshotCollection.document(snapshot.id).setData(from: snapshot)
             .subscribe(on: DispatchQueue.global(qos: .background))
             .receive(on: DispatchQueue.main) // Switch back to the main queue for the result
             .sink(receiveCompletion: { completion in

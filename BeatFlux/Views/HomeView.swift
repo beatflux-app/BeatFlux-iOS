@@ -17,7 +17,9 @@ struct HomeView: View {
     @State var showSpotifyLinkPrompt = false
     @State var isLoading = false
     @State var showSpotifyPlaylistListView: Bool = false
-    
+    @State var showBanner: Bool = false
+    @State var bannerData: BannerModifier.BannerData = BannerModifier.BannerData(imageIcon: Image(systemName: "camera.aperture"),title: "Added Snapshot")
+    @State var searchQuery = ""
     
     init() {
 
@@ -36,30 +38,41 @@ struct HomeView: View {
                         if beatFluxViewModel.isViewModelFullyLoaded && spotify.isBackupsLoaded {
                             if beatFluxViewModel.userData != nil {
                                 if !spotify.spotifyData.playlists.isEmpty {
-                                    let playlists = spotify.spotifyData.playlists
-                                    let chunks = playlists.chunked(size: 2)
-                                    
+                                    var filteredChunkedPlaylists: [[PlaylistInfo]] {
+                                        let playlists = spotify.spotifyData.playlists
+                                        let flatChunks = playlists.chunked(size: 2).flatMap { $0 }
+                                        let filteredChunks = flatChunks.filter {
+                                            searchQuery.isEmpty ? true : $0.playlist.name.contains(searchQuery)
+                                        }
+                                        return stride(from: 0, to: filteredChunks.count, by: 2).map {
+                                            Array(filteredChunks[$0..<min($0+2, filteredChunks.count)])
+                                        }
+                                    }
                                     
                                     Grid {
-                                        ForEach(0..<chunks.count, id: \.self) { index in
+                                        ForEach(0..<filteredChunkedPlaylists.count, id: \.self) { index in
                                                 GridRow(alignment: .top) {
-                                                    ForEach(chunks[index], id: \.self) { playlist in
-                                                        PlaylistGridSquare(playlistInfo: playlist)
+                                                    ForEach(filteredChunkedPlaylists[index], id: \.self) { playlist in
+                                                        PlaylistGridSquare(playlistInfo: playlist, showBanner: $showBanner)
                                                             .frame(maxWidth: .infinity, alignment: .leading) // Align to leading
                                                     }
                                                 }
                                             }
                                     }
                                     .padding(.horizontal)
+                                    .animation(.default, value: filteredChunkedPlaylists)
+                                    .searchable(text: $searchQuery)
                                 }
                                 else {
                                     NoPlaylistsFoundView()
                                 }
                             }
                         }
+                        
                     
                 }
                 .navigationTitle("Backups")
+                
                 .refreshable {
                     Task {
                         await spotify.refreshUsersPlaylists(options: .all, priority: .low, source: .default)
@@ -115,7 +128,7 @@ struct HomeView: View {
                 
             }
         }
-        
+        .banner(data: $bannerData, show: $showBanner)
 
         .sheet(isPresented: $showSpotifyPlaylistListView) {
             SpotifyPlaylistListView()
@@ -191,6 +204,7 @@ private struct PlaylistGridSquare: View {
     @State var showExportView: Bool = false
     @State var showPlaylistVersionHistory = false
     @State var showSnapshotAlert = false
+    @Binding var showBanner: Bool
     
     var body: some View {
         
@@ -270,7 +284,11 @@ private struct PlaylistGridSquare: View {
                         let snapshots = await self.spotify.getPlaylistSnapshots(playlist: playlistInfo)
                         
                         if snapshots.count < 2 {
-                            self.spotify.uploadPlaylistSnapshot(snapshot: PlaylistSnapshot(playlist: playlistInfo, versionDate: Date()))
+                            self.spotify.uploadPlaylistSnapshot(snapshot: PlaylistSnapshot(id: UUID().uuidString, playlist: playlistInfo, versionDate: Date()))
+                            withAnimation {
+                                showBanner = true
+                            }
+                            
                         }
                         else {
                             showSnapshotAlert = true
@@ -302,8 +320,9 @@ private struct PlaylistGridSquare: View {
             
 
         }))
+        
         .alert(isPresented: $showSnapshotAlert) {
-            Alert(title: Text("Snapshot Error"), message: Text("You can only save two snapshots at a time!"), dismissButton: .default(Text("Ok")))
+            Alert(title: Text("Snapshot Limit Reached"), message: Text("You can only save two snapshots at a time!"), dismissButton: .default(Text("Ok")))
         }
         .sheet(isPresented: $showExportView) {
             NavigationView {

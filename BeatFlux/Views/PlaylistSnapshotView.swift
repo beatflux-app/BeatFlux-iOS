@@ -16,6 +16,7 @@ struct PlaylistSnapshotView: View {
     @State var snapshots: [PlaylistSnapshot] = []
     @State var showSnapshotAlert = false
     @State var isLoading = false
+    @State var isUploading = false
     @State var isPresentingConfirm = false
     
     var body: some View {
@@ -23,6 +24,8 @@ struct PlaylistSnapshotView: View {
         
         NavigationView {
             Form {
+                
+                
                 if !isLoading {
                     Section {
                         if snapshots.isEmpty {
@@ -30,14 +33,17 @@ struct PlaylistSnapshotView: View {
                                 .foregroundStyle(.secondary)
                         }
                         else {
-                            ForEach(0..<snapshots.sorted(by: { $0.versionDate > $1.versionDate }).count, id: \.self) { index in
-                                NavigationLink(destination: ExportPlaylistView(showExportView: $showPlaylistVersionHistory, playlistToExport: snapshots.sorted(by: { $0.versionDate > $1.versionDate })[index].playlist)) {
+
+                        
+                        
+                            ForEach(snapshots.sorted(by: { $0.versionDate > $1.versionDate })) { snapshot in
+                                NavigationLink(destination: ExportPlaylistView(showExportView: $showPlaylistVersionHistory, playlistToExport: snapshot.playlist)) {
                                     HStack {
                                         VStack(alignment: .leading) {
-                                            Text("\(snapshots.sorted(by: { $0.versionDate > $1.versionDate })[index].playlist.tracks.count) Songs")
+                                            Text("\(snapshot.playlist.tracks.count) Songs")
                                                 .font(.headline)
                                                 .lineLimit(1)
-                                            Text(snapshots.sorted(by: { $0.versionDate > $1.versionDate })[index].versionDate.formatted())
+                                            Text(snapshot.versionDate.formatted())
                                                 .font(.caption)
                                         }
                                         .padding(.trailing)
@@ -52,13 +58,12 @@ struct PlaylistSnapshotView: View {
                                 }
                                 
                                 
+                                
                             }
                             .onDelete(perform: delete(at:))
                         }
                         
                     
-                    } footer: {
-                        Text("\(2 - snapshots.count) of 2 Snapshots Remaining")
                     }
                 }
                 else {
@@ -73,36 +78,73 @@ struct PlaylistSnapshotView: View {
 
                     }
                 }
+                
+                Section {
+                    Button {
+                        if !isUploading {
+                            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                            Task {
+                            //isLoading = true
+                            print("pressed")
+                            
+                                snapshots = await self.spotify.getPlaylistSnapshots(playlist: playlistInfo)
+                                
+                                if snapshots.count < 2 {
+                                    withAnimation {
+                                        isUploading = true
+                                    }
+                                    
+                
+                                    
+                                    let snapshot = PlaylistSnapshot(id: UUID().uuidString, playlist: playlistInfo, versionDate: Date())
+                                    self.spotify.uploadPlaylistSnapshot(snapshot: snapshot)
+
+                                    withAnimation {
+                                        self.snapshots.append(snapshot)
+                                    }
+                                    
+
+                                    withAnimation {
+                                        isUploading = false
+                                    }
+                                    
+                                    
+                                    
+                                }
+                                else {
+                                    showSnapshotAlert = true
+                                }
+                            }
+
+                            //isLoading = false
+                        }
+                    } label: {
+                        HStack {
+                            Text("Create New Snapshot")
+                            Spacer()
+                            if isUploading {
+                                ProgressView()
+                            }
+                            
+                            
+                        }
+                        
+                    }
+                    .disabled(snapshots.count >= 2 || isUploading || isLoading)
+                    .alert(isPresented: $showSnapshotAlert) {
+                        Alert(title: Text("Snapshot Limit Reached"), message: Text("You can only save two snapshots at a time!"), dismissButton: .default(Text("Ok")))
+                    }
+                    
+                }
+                footer: {
+                   Text("\(2 - snapshots.count) of 2 Snapshots Remaining")
+               }
+                
 
                     
                 
                 
-                Section {
-                    Button {
-                        Task {
-                            let snapshots = await self.spotify.getPlaylistSnapshots(playlist: playlistInfo)
-                            
-                            if snapshots.count < 2 {
-                                let snapshot = PlaylistSnapshot(playlist: playlistInfo, versionDate: Date())
-                                self.spotify.uploadPlaylistSnapshot(snapshot: snapshot)
-                                withAnimation {
-                                    self.snapshots.append(snapshot)
-                                }
-                                
-                                
-                            }
-                            else {
-                                showSnapshotAlert = true
-                            }
-                        }
-                    } label: {
-                        Text("Create New Snapshot")
-                    }
-                    .disabled(snapshots.count >= 2)
-                    .alert(isPresented: $showSnapshotAlert) {
-                        Alert(title: Text("Snapshot Error"), message: Text("You can only save two snapshots at a time!"), dismissButton: .default(Text("Ok")))
-                    }
-                }
+                
                 
                 
             }
@@ -125,11 +167,19 @@ struct PlaylistSnapshotView: View {
             }
 
         }
+        .onChange(of: snapshots) { value in
+            print(value.count)
+        }
         .onAppear {
             Task {
-                isLoading = true
+                withAnimation {
+                    isLoading = true
+                }
+                
                 self.snapshots = await spotify.getPlaylistSnapshots(playlist: playlistInfo)
-                isLoading = false
+                withAnimation {
+                    isLoading = false
+                }
                 
             }
             
@@ -139,13 +189,22 @@ struct PlaylistSnapshotView: View {
     
     private func delete(at offsets: IndexSet) {
         for index in offsets {
+            withAnimation {
+                isUploading = true
+            }
             
             let playlistSnapshot = snapshots[index]
+            DispatchQueue.main.async {
+                snapshots.remove(at: index)
+            }
             
-            snapshots.remove(at: index)
             Task {
                 
                 await spotify.deletePlaylistSnapshot(playlist: playlistSnapshot)
+                withAnimation {
+                    isUploading = false
+                }
+                
             }
         }
     }

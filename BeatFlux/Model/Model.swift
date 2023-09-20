@@ -35,7 +35,8 @@ struct PlaylistInfo: Codable, Hashable {
     var snapshots: [PlaylistSnapshot] = []
 }
 
-struct PlaylistSnapshot: Codable, Hashable {
+struct PlaylistSnapshot: Codable, Hashable, Identifiable {
+    var id: String
     var playlist: PlaylistInfo
     var versionDate: Date
 }

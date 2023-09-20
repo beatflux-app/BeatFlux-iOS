@@ -11,6 +11,7 @@
 		DF0BDE2B2A27CA2A00C917FA /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF0BDE2A2A27CA2A00C917FA /* SettingsView.swift */; };
 		DF10E66D2A242EA100D9EFD7 /* SpotifyPopup.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF10E66C2A242EA100D9EFD7 /* SpotifyPopup.swift */; };
 		DF10E66F2A24E89300D9EFD7 /* WebView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF10E66E2A24E89300D9EFD7 /* WebView.swift */; };
+		DF2A3C7A2ABA8C6400565B94 /* BannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF2A3C792ABA8C6400565B94 /* BannerView.swift */; };
 		DF321D462AB13D52005D8C50 /* PlaylistSnapshotView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF321D452AB13D52005D8C50 /* PlaylistSnapshotView.swift */; };
 		DF3F15F62A55F6610032FFEC /* CreateNewPlaylistView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF3F15F52A55F6610032FFEC /* CreateNewPlaylistView.swift */; };
 		DF44EEAB29FBE2720027E3DD /* WelcomePageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF44EEAA29FBE2720027E3DD /* WelcomePageView.swift */; };
@@ -67,6 +68,7 @@
 		DF0BDE2A2A27CA2A00C917FA /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		DF10E66C2A242EA100D9EFD7 /* SpotifyPopup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpotifyPopup.swift; sourceTree = "<group>"; };
 		DF10E66E2A24E89300D9EFD7 /* WebView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebView.swift; sourceTree = "<group>"; };
+		DF2A3C792ABA8C6400565B94 /* BannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BannerView.swift; sourceTree = "<group>"; };
 		DF321D452AB13D52005D8C50 /* PlaylistSnapshotView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaylistSnapshotView.swift; sourceTree = "<group>"; };
 		DF3F15F52A55F6610032FFEC /* CreateNewPlaylistView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateNewPlaylistView.swift; sourceTree = "<group>"; };
 		DF44EEAA29FBE2720027E3DD /* WelcomePageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WelcomePageView.swift; sourceTree = "<group>"; };
@@ -284,6 +286,7 @@
 				DF469EC22A43426900BE166C /* AsyncImage.swift */,
 				DF0AB5EB2A49F0E400C28366 /* ExitButtonStyle.swift */,
 				DF8A77782A4DEA3E00266500 /* FormTitle.swift */,
+				DF2A3C792ABA8C6400565B94 /* BannerView.swift */,
 			);
 			path = GenericViews;
 			sourceTree = "<group>";
@@ -411,6 +414,7 @@
 				DFFC11ED2A54D3D9001BE252 /* ExportPlaylistView.swift in Sources */,
 				DFFE94CE2A1963ED00615281 /* AuthTextLabel_Element.swift in Sources */,
 				DF0BDE2B2A27CA2A00C917FA /* SettingsView.swift in Sources */,
+				DF2A3C7A2ABA8C6400565B94 /* BannerView.swift in Sources */,
 				DFA5BCA92A2D71A6004DB4A3 /* ProfileSettingsView.swift in Sources */,
 				DFFE94D22A19659B00615281 /* DatabaseHandler.swift in Sources */,
 				DFC6661329FA0AA3003227FE /* SignupView.swift in Sources */,
