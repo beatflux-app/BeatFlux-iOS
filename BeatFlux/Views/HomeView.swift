@@ -9,6 +9,7 @@ import SwiftUI
 import SpotifyWebAPI
 import Combine
 import Shimmer
+import Refresher
 
 struct HomeView: View {
     @EnvironmentObject var beatFluxViewModel: BeatFluxViewModel
@@ -34,7 +35,6 @@ struct HomeView: View {
         ZStack {
             NavigationView {
                 ScrollView {
-                    
                         if beatFluxViewModel.isViewModelFullyLoaded && spotify.isBackupsLoaded {
                             if beatFluxViewModel.userData != nil {
                                 if !spotify.spotifyData.playlists.isEmpty {
@@ -71,13 +71,10 @@ struct HomeView: View {
                         
                     
                 }
-                .navigationTitle("Backups")
-                
-                .refreshable {
-                    Task {
-                        await spotify.refreshUsersPlaylists(options: .all, priority: .low, source: .default)
-                    }
+                .refresher(style: .default) {
+                    await spotify.refreshUsersPlaylists(options: .all, priority: .low, source: .default)
                 }
+                .navigationTitle("Backups")  
                 .scrollIndicators(.hidden)
                 .toolbarBackground(Color(UIColor.systemBackground), for: .navigationBar)
                 
@@ -122,12 +119,11 @@ struct HomeView: View {
                     .disabled(!beatFluxViewModel.isViewModelFullyLoaded)
                 }
                 .padding([.trailing, .bottom])
-                
-                
-                
-                
             }
+            
         }
+        
+        
         .banner(data: $bannerData, show: $showBanner)
 
         .sheet(isPresented: $showSpotifyPlaylistListView) {

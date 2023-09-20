@@ -14,6 +14,7 @@
 		DF2A3C7A2ABA8C6400565B94 /* BannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF2A3C792ABA8C6400565B94 /* BannerView.swift */; };
 		DF321D462AB13D52005D8C50 /* PlaylistSnapshotView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF321D452AB13D52005D8C50 /* PlaylistSnapshotView.swift */; };
 		DF3F15F62A55F6610032FFEC /* CreateNewPlaylistView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF3F15F52A55F6610032FFEC /* CreateNewPlaylistView.swift */; };
+		DF412E842ABBA9AE00EBE08E /* Refresher in Frameworks */ = {isa = PBXBuildFile; productRef = DF412E832ABBA9AE00EBE08E /* Refresher */; };
 		DF44EEAB29FBE2720027E3DD /* WelcomePageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF44EEAA29FBE2720027E3DD /* WelcomePageView.swift */; };
 		DF469EC12A43420C00BE166C /* ImageLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF469EC02A43420C00BE166C /* ImageLoader.swift */; };
 		DF469EC32A43426900BE166C /* AsyncImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF469EC22A43426900BE166C /* AsyncImage.swift */; };
@@ -125,6 +126,7 @@
 				DF4980F72AAFCD34002A35E3 /* Shimmer in Frameworks */,
 				DF72E62629FEB487007A6306 /* CombineFirebaseAuth in Frameworks */,
 				DFAB03F02A090DAE006B5F7E /* SpotifyAPI in Frameworks */,
+				DF412E842ABBA9AE00EBE08E /* Refresher in Frameworks */,
 				DF72E62A29FEB487007A6306 /* CombineFirebaseFirestore in Frameworks */,
 				DF7F9A8B2A30F4010017E561 /* FirebaseFirestore in Frameworks */,
 				DF4980F02AAFB84E002A35E3 /* NukeExtensions in Frameworks */,
@@ -342,6 +344,7 @@
 				DF4980F12AAFB84E002A35E3 /* NukeUI */,
 				DF4980F32AAFB84E002A35E3 /* NukeVideo */,
 				DF4980F62AAFCD34002A35E3 /* Shimmer */,
+				DF412E832ABBA9AE00EBE08E /* Refresher */,
 			);
 			productName = BeatFlux;
 			productReference = DFAD004329F5B6C000EE6874 /* BeatFlux.app */;
@@ -378,6 +381,7 @@
 				DF7F9A832A30F4010017E561 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
 				DF4980EC2AAFB84E002A35E3 /* XCRemoteSwiftPackageReference "Nuke" */,
 				DF4980F52AAFCD34002A35E3 /* XCRemoteSwiftPackageReference "SwiftUI-Shimmer" */,
+				DF412E7E2ABBA6D000EBE08E /* XCRemoteSwiftPackageReference "SwiftUI-Refresher" */,
 			);
 			productRefGroup = DFAD004429F5B6C000EE6874 /* Products */;
 			projectDirPath = "";
@@ -664,6 +668,14 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		DF412E7E2ABBA6D000EBE08E /* XCRemoteSwiftPackageReference "SwiftUI-Refresher" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/gh123man/SwiftUI-Refresher.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.1.0;
+			};
+		};
 		DF4980EC2AAFB84E002A35E3 /* XCRemoteSwiftPackageReference "Nuke" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/kean/Nuke.git";
@@ -707,6 +719,11 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		DF412E832ABBA9AE00EBE08E /* Refresher */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = DF412E7E2ABBA6D000EBE08E /* XCRemoteSwiftPackageReference "SwiftUI-Refresher" */;
+			productName = Refresher;
+		};
 		DF4980ED2AAFB84E002A35E3 /* Nuke */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = DF4980EC2AAFB84E002A35E3 /* XCRemoteSwiftPackageReference "Nuke" */;
