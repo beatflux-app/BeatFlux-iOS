@@ -455,9 +455,9 @@ final class Spotify: ObservableObject {
         }
     }
     
-    func uploadPlaylistSnapshot(snapshot: PlaylistSnapshot) {
+    func uploadPlaylistSnapshot(snapshot: PlaylistSnapshot) async {
         do {
-            try DatabaseHandler.shared.uploadPlaylistSnapshot(snapshot: snapshot)
+            try await DatabaseHandler.shared.uploadPlaylistSnapshot(snapshot: snapshot)
         }
         catch {
             print("ERROR: Failed to upload playlist snapshot to database \(error.localizedDescription)")

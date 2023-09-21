@@ -324,8 +324,6 @@ final class DatabaseHandler {
         }
         do {
             let docRef = self.firestore.collection("users").document(user.uid)
-            
-            let documents = try await docRef.collection("playlists").document(playlistSnapshot.playlist.playlist.id).collection("snapshots").getDocuments(source: FirestoreSource.default)
 
             try await docRef.collection("playlists").document(playlistSnapshot.playlist.playlist.id).collection("snapshots").document(playlistSnapshot.id).delete()
 
@@ -338,7 +336,7 @@ final class DatabaseHandler {
         }
     }
     
-    func uploadPlaylistSnapshot(snapshot: PlaylistSnapshot) throws {
+    func uploadPlaylistSnapshot(snapshot: PlaylistSnapshot) async throws {
         guard let user = self.user else {
             print("ERROR: Failed to get upload snapshot to database because the user is nil")
             throw UserError.nilUser
@@ -349,19 +347,27 @@ final class DatabaseHandler {
         
         let snapshotCollection = playlistsCollection.document(snapshot.playlist.playlist.id).collection("snapshots")
         
-        snapshotCollection.document(snapshot.id).setData(from: snapshot)
-            .subscribe(on: DispatchQueue.global(qos: .background))
-            .receive(on: DispatchQueue.main) // Switch back to the main queue for the result
-            .sink(receiveCompletion: { completion in
-                if case .failure(let error) = completion {
-                    print("ERROR: Error while setting playlist: \(snapshot.playlist.playlist.name): snapshot \(error.localizedDescription)")
-                    return
-                }
-            }, receiveValue: { results in
-                
-                print("SUCCESS: Snapshot was successfully written")
-            })
-            .store(in: &cancellables)
+        
+        return try await withCheckedThrowingContinuation { continuation in
+            snapshotCollection.document(snapshot.id).setData(from: snapshot)
+                .subscribe(on: DispatchQueue.global(qos: .background))
+                .receive(on: DispatchQueue.main) // Switch back to the main queue for the result
+                .sink(receiveCompletion: { completion in
+                    switch completion {
+                    case .finished:
+                        continuation.resume()
+                    case .failure(let error):
+                        print("ERROR: Error while setting playlist: \(snapshot.playlist.playlist.name): snapshot \(error.localizedDescription)")
+                        continuation.resume(throwing: error)
+                    }
+                    
+                }, receiveValue: { results in
+                    
+                    print("SUCCESS: Snapshot was successfully written")
+                })
+                .store(in: &cancellables)
+        }
+        
         
 
         

@@ -14,6 +14,7 @@ struct SpotifyPlaylistListView: View {
     @EnvironmentObject var spotify: Spotify
     @State var loadingPlaylistID: String?
     @State var isRefreshing: Bool = false
+    @State var arrowRotation: Double = 0
     
     var body: some View {
         NavigationView {
@@ -25,6 +26,59 @@ struct SpotifyPlaylistListView: View {
                             playlistSection(title: "Playlists From Other Accounts", playlists: spotify.spotifyData.playlists.filter { playlist in
                                 spotify.userPlaylists.first(where: { $0.playlist.id == playlist.playlist.id }) == nil
                             })
+                        
+                        Section {
+                            HStack {
+                                Spacer()
+                                VStack(alignment: .center, spacing: 12) {
+                                    Text("Don't see your playlists?")
+                                        .font(.subheadline)
+                                        .foregroundStyle(.secondary)
+                                    Button {
+                                        if !isRefreshing {
+                                            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                                            Task {
+                                                toggleRefreshing()
+                                                
+                                                await spotify.refreshUsersPlaylists(options: .libraryPlaylists, priority: .medium, source: .default)
+                                                toggleRefreshing()
+                                            }
+                                        }
+
+                                        
+                                    } label: {
+                                        HStack(spacing: 15) {
+                                            Text("Refresh")
+                                            Image(systemName: "arrow.clockwise")
+                                                .rotationEffect(.degrees(isRefreshing ? 360 : 0))
+                                                .animation(
+                                                    isRefreshing ?
+                                                        Animation.linear(duration: 1)
+                                                        .repeatForever(autoreverses: false) : .default, value: isRefreshing
+                                                )
+                                                .onAppear {
+                                                    if isRefreshing {
+                                                        arrowRotation = 360
+                                                    }
+                                                }
+                                        }
+                                        .font(.subheadline)
+                                        .fontWeight(.semibold)
+                                        .foregroundColor(.white)
+                                        .padding([.horizontal])
+                                        .padding(.vertical, 5)
+                                        .background {
+                                            Capsule()
+                                                .foregroundColor(.accentColor)
+                                        }
+                                    }
+
+                                }
+                                Spacer()
+                            }
+                            
+                        }
+                        .listRowBackground(Color.clear)
                         
                         
                     }
@@ -40,6 +94,26 @@ struct SpotifyPlaylistListView: View {
                 ToolbarItem {
                     dismissButton
                 }
+            }
+        }
+        
+    }
+    
+    private func toggleRefreshing() {
+        if isRefreshing {
+            // Already refreshing. Set to a full circle.
+            let remaining = 360 - (arrowRotation.truncatingRemainder(dividingBy: 360))
+            withAnimation(Animation.linear(duration: remaining / 360)) {
+                arrowRotation += remaining
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + remaining / 360) {
+                isRefreshing = false
+            }
+        } else {
+            // Start refreshing
+            isRefreshing = true
+            withAnimation(Animation.linear(duration: 1).repeatForever(autoreverses: false)) {
+                arrowRotation += 360
             }
         }
     }
@@ -61,8 +135,7 @@ struct SpotifyPlaylistListView: View {
         VStack(spacing: 15) {
             Spacer()
             ProgressView()
-            Text("LOADING...")
-                .font(.caption)
+            Text("Loading...")
                 .foregroundStyle(.secondary)
             Spacer()
         }

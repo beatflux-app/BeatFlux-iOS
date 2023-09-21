@@ -67,15 +67,12 @@ struct PlaylistSnapshotView: View {
                     }
                 }
                 else {
-                    VStack(spacing: 15) {
-                        HStack {
-                            Spacer()
-                            ProgressView()
-                            Text("Loading...")
-                                .foregroundStyle(.secondary)
-                            Spacer()
-                        }
-
+                    HStack(spacing: 15) {
+                        Spacer()
+                        ProgressView()
+                        Text("Loading...")
+                            .foregroundStyle(.secondary)
+                        Spacer()
                     }
                 }
                 
@@ -85,7 +82,6 @@ struct PlaylistSnapshotView: View {
                             UIImpactFeedbackGenerator(style: .medium).impactOccurred()
                             Task {
                             //isLoading = true
-                            print("pressed")
                             
                                 snapshots = await self.spotify.getPlaylistSnapshots(playlist: playlistInfo)
                                 
@@ -97,7 +93,7 @@ struct PlaylistSnapshotView: View {
                 
                                     
                                     let snapshot = PlaylistSnapshot(id: UUID().uuidString, playlist: playlistInfo, versionDate: Date())
-                                    self.spotify.uploadPlaylistSnapshot(snapshot: snapshot)
+                                    await self.spotify.uploadPlaylistSnapshot(snapshot: snapshot)
 
                                     withAnimation {
                                         self.snapshots.append(snapshot)
@@ -166,9 +162,6 @@ struct PlaylistSnapshotView: View {
                 }
             }
 
-        }
-        .onChange(of: snapshots) { value in
-            print(value.count)
         }
         .onAppear {
             Task {
