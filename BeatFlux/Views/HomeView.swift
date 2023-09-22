@@ -32,8 +32,9 @@ struct HomeView: View {
     }
     
     var body: some View {
-        ZStack {
-            NavigationView {
+        
+        NavigationView {
+            ZStack {
                 ScrollView {
                         if beatFluxViewModel.isViewModelFullyLoaded && spotify.isBackupsLoaded {
                             if beatFluxViewModel.userData != nil {
@@ -78,6 +79,35 @@ struct HomeView: View {
                 .scrollIndicators(.hidden)
                 .toolbarBackground(Color(UIColor.systemBackground), for: .navigationBar)
                 
+                VStack {
+                    Spacer()
+                    
+                    HStack {
+                        Spacer()
+                        
+                        Button {
+                            UIImpactFeedbackGenerator(style: .rigid).impactOccurred()
+                            showSpotifyPlaylistListView.toggle()
+                        } label: {
+                            Circle()
+                                .frame(width: 65)
+                                .foregroundStyle(Color.accentColor)
+                                .overlay {
+                                    Image(systemName: "plus")
+                                        .foregroundStyle(.white)
+                                        .fontWeight(.bold)
+                                        .font(.title3)
+                                }
+                                .shadow(radius: 16)
+                            
+                            
+                            
+                        }
+                        .buttonStyle(ShrinkOnHoverButtonStyle())
+                        .disabled(!beatFluxViewModel.isViewModelFullyLoaded)
+                    }
+                    .padding([.trailing, .bottom])
+                }
             }
             .overlay {
                 VStack(spacing: 15) {
@@ -91,35 +121,7 @@ struct HomeView: View {
                 .opacity(beatFluxViewModel.isViewModelFullyLoaded && spotify.isBackupsLoaded ? 0 : 1)
             }
             
-            VStack {
-                Spacer()
-                
-                HStack {
-                    Spacer()
-                    
-                    Button {
-                        UIImpactFeedbackGenerator(style: .rigid).impactOccurred()
-                        showSpotifyPlaylistListView.toggle()
-                    } label: {
-                        Circle()
-                            .frame(width: 65)
-                            .foregroundStyle(Color.accentColor)
-                            .overlay {
-                                Image(systemName: "plus")
-                                    .foregroundStyle(.white)
-                                    .fontWeight(.bold)
-                                    .font(.title3)
-                            }
-                            .shadow(radius: 16)
-                        
-                        
-                        
-                    }
-                    .buttonStyle(ShrinkOnHoverButtonStyle())
-                    .disabled(!beatFluxViewModel.isViewModelFullyLoaded)
-                }
-                .padding([.trailing, .bottom])
-            }
+            
             
         }
         
@@ -205,63 +207,83 @@ private struct PlaylistGridSquare: View {
     var body: some View {
         
         
-        
-        VStack(alignment: .leading) {
-            
-            if !playlistInfo.playlist.images.isEmpty {
+        NavigationLink(destination: PlaylistInfoView(playlistInfo: playlistInfo)) {
+            VStack(alignment: .leading) {
                 
-                AsyncImage(urlString: playlistInfo.playlist.images[0].url.absoluteString) {
-                    Rectangle()
-                        .aspectRatio(contentMode: .fill)
-                        .frame(width: (UIScreen.main.bounds.width / 2) - 25, height: (UIScreen.main.bounds.width / 2) - 25)
-                        .foregroundColor(.secondary)
-                        .shimmering()
-                } content: {
-                    Image(uiImage: $0)
-                        .resizable()
-                        .scaledToFill()
-                        .frame(width: (UIScreen.main.bounds.width / 2) - 25, height: (UIScreen.main.bounds.width / 2) - 25)
-                        .clipped()
-                        
-                }
-                .clipped()
-                .cornerRadius(12)
-            }
-            else {
-                Rectangle()
-                    .foregroundStyle(Color(UIColor.tertiarySystemBackground))
-                    .aspectRatio(contentMode: .fill)
-                    .frame(width: (UIScreen.main.bounds.width / 2) - 25, height: (UIScreen.main.bounds.width / 2) - 25)
-                    .redacted(reason: .placeholder)
+                if !playlistInfo.playlist.images.isEmpty {
+                    
+                    AsyncImage(urlString: playlistInfo.playlist.images[0].url.absoluteString) {
+                        Rectangle()
+                            .aspectRatio(contentMode: .fill)
+                            .frame(width: (UIScreen.main.bounds.width / 2) - 25, height: (UIScreen.main.bounds.width / 2) - 25)
+                            .foregroundColor(.secondary)
+                            .shimmering()
+                    } content: {
+                        Image(uiImage: $0)
+                            .resizable()
+                            .scaledToFill()
+                            .frame(width: (UIScreen.main.bounds.width / 2) - 25, height: (UIScreen.main.bounds.width / 2) - 25)
+                            .clipped()
+                            
+                    }
                     .clipped()
                     .cornerRadius(12)
-                    .overlay {
-                        Text("?")
-                            .font(.largeTitle)
-                    }
+                }
+                else {
+                    Rectangle()
+                        .foregroundStyle(Color(UIColor.tertiarySystemBackground))
+                        .aspectRatio(contentMode: .fill)
+                        .frame(width: (UIScreen.main.bounds.width / 2) - 25, height: (UIScreen.main.bounds.width / 2) - 25)
+                        .redacted(reason: .placeholder)
+                        .clipped()
+                        .cornerRadius(12)
+                        .overlay {
+                            Text("?")
+                                .font(.largeTitle)
+                        }
+                }
+                
+
+                VStack(alignment: .leading, spacing: 0) {
+                    Text(playlistInfo.playlist.name)
+                        .fontWeight(.semibold)
+                        .foregroundColor(.primary)
+                    
+                    Text(playlistInfo.playlist.owner?.displayName ?? "Unknown")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+                .padding(.leading, 5)
+                
+
+                
+                
+                    
+                
             }
             
-
-            VStack(alignment: .leading, spacing: 0) {
-                Text(playlistInfo.playlist.name)
-                    .fontWeight(.semibold)
-                
-                Text(playlistInfo.playlist.owner?.displayName ?? "Unknown")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+            .padding(.horizontal, 5)
+            .padding(.vertical, 5)
+            
+            .background(ContainerRelativeShape().fill(Color(uiColor: .systemBackground)))
+            
+            
+            .alert(isPresented: $showSnapshotAlert) {
+                Alert(title: Text("Snapshot Limit Reached"), message: Text("You can only save two snapshots at a time!"), dismissButton: .default(Text("Ok")))
             }
-            .padding(.leading, 5)
-            
-
-            
-            
+            .sheet(isPresented: $showExportView) {
+                NavigationView {
+                    ExportPlaylistView(showExportView: $showExportView, playlistToExport: playlistInfo)
+                }
                 
-            
+            }
+            .sheet(isPresented: $showPlaylistVersionHistory) {
+                
+                PlaylistSnapshotView(showPlaylistVersionHistory: $showPlaylistVersionHistory, playlistInfo: playlistInfo)
+
+            }
         }
-        .padding(.horizontal, 5)
-        .padding(.vertical, 5)
-        
-        .background(ContainerRelativeShape().fill(Color(uiColor: .systemBackground)))
+        .buttonStyle(PlainButtonStyle())
         .contextMenu(ContextMenu(menuItems: {
             Button {
                 showExportView = true
@@ -316,21 +338,6 @@ private struct PlaylistGridSquare: View {
             
 
         }))
-        
-        .alert(isPresented: $showSnapshotAlert) {
-            Alert(title: Text("Snapshot Limit Reached"), message: Text("You can only save two snapshots at a time!"), dismissButton: .default(Text("Ok")))
-        }
-        .sheet(isPresented: $showExportView) {
-            NavigationView {
-                ExportPlaylistView(showExportView: $showExportView, playlistToExport: playlistInfo)
-            }
-            
-        }
-        .sheet(isPresented: $showPlaylistVersionHistory) {
-            
-            PlaylistSnapshotView(showPlaylistVersionHistory: $showPlaylistVersionHistory, playlistInfo: playlistInfo)
-
-        }
     }
 }
 

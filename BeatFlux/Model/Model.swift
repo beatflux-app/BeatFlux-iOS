@@ -30,7 +30,7 @@ struct SpotifyDataModel: Codable {
 
 struct PlaylistInfo: Codable, Hashable {
     var playlist:Playlist<PlaylistItemsReference>
-    var tracks: [PlaylistItemContainer<PlaylistItem>] = []
+    var tracks: [PlaylistItemContainer<Track>] = []
     var lastFetched: Date
     var snapshots: [PlaylistSnapshot] = []
 }

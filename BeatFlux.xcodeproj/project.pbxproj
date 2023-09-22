@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		DF088E792ABD0EEE0002A8E9 /* PlaylistInfoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF088E782ABD0EEE0002A8E9 /* PlaylistInfoView.swift */; };
 		DF0AB5EC2A49F0E400C28366 /* ExitButtonStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF0AB5EB2A49F0E400C28366 /* ExitButtonStyle.swift */; };
 		DF0BDE2B2A27CA2A00C917FA /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF0BDE2A2A27CA2A00C917FA /* SettingsView.swift */; };
 		DF10E66D2A242EA100D9EFD7 /* SpotifyPopup.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF10E66C2A242EA100D9EFD7 /* SpotifyPopup.swift */; };
@@ -65,6 +66,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		DF088E782ABD0EEE0002A8E9 /* PlaylistInfoView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaylistInfoView.swift; sourceTree = "<group>"; };
 		DF0AB5EB2A49F0E400C28366 /* ExitButtonStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExitButtonStyle.swift; sourceTree = "<group>"; };
 		DF0BDE2A2A27CA2A00C917FA /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		DF10E66C2A242EA100D9EFD7 /* SpotifyPopup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpotifyPopup.swift; sourceTree = "<group>"; };
@@ -150,6 +152,7 @@
 				DF3F15F52A55F6610032FFEC /* CreateNewPlaylistView.swift */,
 				DF604D902AB086A400DCF363 /* IntroIconView.swift */,
 				DF321D452AB13D52005D8C50 /* PlaylistSnapshotView.swift */,
+				DF088E782ABD0EEE0002A8E9 /* PlaylistInfoView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -424,6 +427,7 @@
 				DFC6661329FA0AA3003227FE /* SignupView.swift in Sources */,
 				DFA5BCAC2A2D73D1004DB4A3 /* SettingsTextLabel_Element.swift in Sources */,
 				DF6A789B2A43A85E00067D68 /* SpotifyPlaylistListView.swift in Sources */,
+				DF088E792ABD0EEE0002A8E9 /* PlaylistInfoView.swift in Sources */,
 				DFFA14412A2A01CF009F9275 /* NetworkStatus.swift in Sources */,
 				DFBE88BF29FF51DB00572B47 /* LoadingIndicator.swift in Sources */,
 				DFFA143C2A298218009F9275 /* RedactedView.swift in Sources */,

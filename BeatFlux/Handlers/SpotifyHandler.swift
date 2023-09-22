@@ -421,7 +421,7 @@ final class Spotify: ObservableObject {
         var localCancellable: Set<AnyCancellable> = []
         
         return try await withCheckedThrowingContinuation { continuation in
-            self.api.playlistItems(fetchedPlaylist.uri)
+            self.api.playlistTracks(fetchedPlaylist.uri)
                 .subscribe(on: DispatchQueue.global(qos: .background))
                 .receive(on: DispatchQueue.main)
                 .sink(receiveCompletion: { completion in
@@ -433,6 +433,7 @@ final class Spotify: ObservableObject {
                     continuation.resume(returning: PlaylistInfo(playlist: fetchedPlaylist, tracks: pagingObject.items, lastFetched: Date()))
                 })
                 .store(in: &localCancellable)
+                
         }
     }
 

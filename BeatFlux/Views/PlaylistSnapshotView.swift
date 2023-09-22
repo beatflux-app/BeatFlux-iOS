@@ -86,9 +86,9 @@ struct PlaylistSnapshotView: View {
                                 snapshots = await self.spotify.getPlaylistSnapshots(playlist: playlistInfo)
                                 
                                 if snapshots.count < 2 {
-                                    withAnimation {
-                                        isUploading = true
-                                    }
+                                    
+                                    isUploading = true
+                                    
                                     
                 
                                     
@@ -100,9 +100,9 @@ struct PlaylistSnapshotView: View {
                                     }
                                     
 
-                                    withAnimation {
-                                        isUploading = false
-                                    }
+                                   
+                                    isUploading = false
+                                    
                                     
                                     
                                     
@@ -165,14 +165,14 @@ struct PlaylistSnapshotView: View {
         }
         .onAppear {
             Task {
-                withAnimation {
-                    isLoading = true
-                }
+                
+                isLoading = true
+                
                 
                 self.snapshots = await spotify.getPlaylistSnapshots(playlist: playlistInfo)
-                withAnimation {
-                    isLoading = false
-                }
+                
+                isLoading = false
+                
                 
             }
             
