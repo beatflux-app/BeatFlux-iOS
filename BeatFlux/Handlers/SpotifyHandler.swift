@@ -1,4 +1,5 @@
 import SpotifyWebAPI
+import FirebaseDatabase
 import UIKit
 import SwiftUI
 import Foundation
@@ -90,16 +91,21 @@ final class Spotify: ObservableObject {
     let refreshTokensQueue = DispatchQueue(label: "refreshTokens")
     
     init() {
-        Auth.auth().addStateDidChangeListener { auth, user in
-            if let _ = user {
-                self.isUserAuthLoggedIn = true
-            } else {
-                self.isUserAuthLoggedIn = false
-            }
-        }
+        let connectedRef = Database.database().reference(withPath: ".info/connected")
         
-        if self.isUserAuthLoggedIn {
-            initializeSpotify()
+        connectedRef.observe(.value) { snapshot  in
+            if let connected = snapshot.value as? Bool, connected {
+                Auth.auth().addStateDidChangeListener { [weak self] auth, user in
+                    guard let self = self else { return }
+                    if let _ = user {
+                        self.isUserAuthLoggedIn = true
+                        
+                        initializeSpotify()
+                    } else {
+                        self.isUserAuthLoggedIn = false
+                    }
+                }
+            }
         }
         
         

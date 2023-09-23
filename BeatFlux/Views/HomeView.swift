@@ -21,22 +21,14 @@ struct HomeView: View {
     @State var showBanner: Bool = false
     @State var bannerData: BannerModifier.BannerData = BannerModifier.BannerData(imageIcon: Image(systemName: "camera.aperture"),title: "Added Snapshot")
     @State var searchQuery = ""
-    
-    init() {
 
-//         //UINavigationBar.appearance().setBackgroundImage(UIImage(), for: UIBarMetrics.default)
-//         //UINavigationBar.appearance().shadowImage = UIImage()
-//         UINavigationBar.appearance().isTranslucent = false
-//         UINavigationBar.appearance().tintColor = .clear
-//         UINavigationBar.appearance().backgroundColor = .systemBackground
-    }
     
     var body: some View {
         
         NavigationView {
             ZStack {
                 ScrollView {
-                        if beatFluxViewModel.isViewModelFullyLoaded && spotify.isBackupsLoaded {
+                    if beatFluxViewModel.isViewModelFullyLoaded && spotify.isBackupsLoaded && beatFluxViewModel.isConnected {
                             if beatFluxViewModel.userData != nil {
                                 if !spotify.spotifyData.playlists.isEmpty {
                                     var filteredChunkedPlaylists: [[PlaylistInfo]] {
@@ -109,16 +101,33 @@ struct HomeView: View {
                     .padding([.trailing, .bottom])
                 }
             }
+            .onChange(of: beatFluxViewModel.isConnected) { value in
+//                if value == true {
+//
+//                    DatabaseHandler.shared.initializeSpotifyData()
+//                    spotify.initializeSpotify()
+//                }
+            }
             .overlay {
-                VStack(spacing: 15) {
-                    ProgressView()
+                if beatFluxViewModel.isConnected {
+                    VStack(spacing: 15) {
+                        ProgressView()
 
-                    Text("Loading...")
-                        .foregroundStyle(.secondary)
-                        
+                        Text("Loading...")
+                            .foregroundStyle(.secondary)
+                            
 
+                    }
+                    .opacity(beatFluxViewModel.isViewModelFullyLoaded && spotify.isBackupsLoaded ? 0 : 1)
                 }
-                .opacity(beatFluxViewModel.isViewModelFullyLoaded && spotify.isBackupsLoaded ? 0 : 1)
+                else {
+                    VStack(spacing: 15) {
+                        Text("No Network Connection")
+                            .foregroundStyle(.secondary)
+                    }
+                    .opacity(beatFluxViewModel.isConnected ? 0 : 1)
+                }
+                
             }
             
             

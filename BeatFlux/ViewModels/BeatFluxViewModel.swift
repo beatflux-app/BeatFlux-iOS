@@ -11,6 +11,7 @@ import FirebaseCore
 import FirebaseFirestore
 import Network
 import FirebaseAuth
+import FirebaseDatabase
 
 
 class BeatFluxViewModel: ObservableObject {
@@ -55,40 +56,30 @@ class BeatFluxViewModel: ObservableObject {
         return Auth.auth().currentUser
     }
     
+    
+    
     init() {
-        monitor.pathUpdateHandler = { path in
-            DispatchQueue.main.async {
-                if path.status == .satisfied {
-                    if path.usesInterfaceType(.wifi) || path.usesInterfaceType(.cellular) {
-                        withAnimation(.none) {
-                            self.isConnected = true
-                        }
-                        
-                    } else {
-                        withAnimation(.none) {
-                            self.isConnected = false
-                        }
-                    }
-                }
-                else {
-                    withAnimation(.none) {
-                        self.isConnected = false
-                    }
-                }
+        let connectedRef = Database.database().reference(withPath: ".info/connected")
+        
+        connectedRef.observe(.value) { snapshot in
+            if let connected = snapshot.value as? Bool, connected {
+                self.isConnected = true
                 
-            }
-        }
-        
-        monitor.start(queue: queue)
-        
-        Auth.auth().addStateDidChangeListener { [weak self] auth, user in
-            guard let self = self else { return }
-            if let _ = user {
-                self.isUserLoggedIn = true
+                Auth.auth().addStateDidChangeListener { [weak self] auth, user in
+                    guard let self = self else { return }
+                    if let _ = user {
+                        self.isUserLoggedIn = true
+                    } else {
+                        self.isUserLoggedIn = false
+                    }
+                }
             } else {
-                self.isUserLoggedIn = false
+                self.isConnected = false
             }
         }
+        
+        
+        
         
     }
 
