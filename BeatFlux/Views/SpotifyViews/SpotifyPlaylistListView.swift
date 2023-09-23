@@ -19,7 +19,7 @@ struct SpotifyPlaylistListView: View {
     var body: some View {
         NavigationView {
             Group {
-                if spotify.isSpotifyInitializationLoaded {
+                if !spotify.isSpotifyPlaylistsLoading && spotify.isSpotifyInitializationLoaded {
                     Form {
                         
                             playlistSection(title: "Your Spotify Library", playlists: spotify.userPlaylists)
@@ -135,7 +135,7 @@ struct SpotifyPlaylistListView: View {
         VStack(spacing: 15) {
             Spacer()
             ProgressView()
-            Text("Loading...")
+            Text("Fetching Your Playlists...")
                 .foregroundStyle(.secondary)
             Spacer()
         }

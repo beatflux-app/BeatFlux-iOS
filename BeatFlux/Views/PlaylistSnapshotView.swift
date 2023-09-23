@@ -18,6 +18,8 @@ struct PlaylistSnapshotView: View {
     @State var isLoading = false
     @State var isUploading = false
     @State var isPresentingConfirm = false
+    @State var isRefreshing: Bool = false
+    @State var arrowRotation: Double = 0
     
     var body: some View {
         
@@ -68,7 +70,6 @@ struct PlaylistSnapshotView: View {
                 }
                 else {
                     HStack(spacing: 15) {
-                        Spacer()
                         ProgressView()
                         Text("Loading...")
                             .foregroundStyle(.secondary)
@@ -82,8 +83,9 @@ struct PlaylistSnapshotView: View {
                             UIImpactFeedbackGenerator(style: .medium).impactOccurred()
                             Task {
                             //isLoading = true
-                            
-                                snapshots = await self.spotify.getPlaylistSnapshots(playlist: playlistInfo)
+                                
+                                snapshots = await self.spotify.getPlaylistSnapshots(playlist: playlistInfo, location: .cloud)
+                                
                                 
                                 if snapshots.count < 2 {
                                     
@@ -93,7 +95,7 @@ struct PlaylistSnapshotView: View {
                 
                                     
                                     let snapshot = PlaylistSnapshot(id: UUID().uuidString, playlist: playlistInfo, versionDate: Date())
-                                    await self.spotify.uploadPlaylistSnapshot(snapshot: snapshot)
+                                    await self.spotify.uploadPlaylistSnapshot(snapshot: snapshot, playlistInfo: playlistInfo)
 
                                     withAnimation {
                                         self.snapshots.append(snapshot)
@@ -136,6 +138,59 @@ struct PlaylistSnapshotView: View {
                    Text("\(2 - snapshots.count) of 2 Snapshots Remaining")
                }
                 
+                Section {
+                    HStack {
+                        Spacer()
+                        VStack(alignment: .center, spacing: 12) {
+                            Text("Don't see your snapshots?")
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                            Button {
+                                if !isRefreshing {
+                                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                                    Task {
+                                        toggleRefreshing()
+                                        
+                                        self.snapshots = await spotify.getPlaylistSnapshots(playlist: playlistInfo, location: .cloud)
+                                        toggleRefreshing()
+                                    }
+                                }
+
+                                
+                            } label: {
+                                HStack(spacing: 15) {
+                                    Text("Refresh")
+                                    Image(systemName: "arrow.clockwise")
+                                        .rotationEffect(.degrees(isRefreshing ? 360 : 0))
+                                        .animation(
+                                            isRefreshing ?
+                                                Animation.linear(duration: 1)
+                                                .repeatForever(autoreverses: false) : .default, value: isRefreshing
+                                        )
+                                        .onAppear {
+                                            if isRefreshing {
+                                                arrowRotation = 360
+                                            }
+                                        }
+                                }
+                                .font(.subheadline)
+                                .fontWeight(.semibold)
+                                .foregroundColor(.white)
+                                .padding([.horizontal])
+                                .padding(.vertical, 5)
+                                .background {
+                                    Capsule()
+                                        .foregroundColor(.accentColor)
+                                }
+                            }
+
+                        }
+                        Spacer()
+                    }
+                    
+                }
+                .listRowBackground(Color.clear)
+                
 
                     
                 
@@ -164,20 +219,57 @@ struct PlaylistSnapshotView: View {
 
         }
         .onAppear {
-            Task {
-                
-                isLoading = true
-                
-                
-                self.snapshots = await spotify.getPlaylistSnapshots(playlist: playlistInfo)
-                
-                isLoading = false
-                
-                
-            }
+            //if let index = spotify.spotifyData.playlists.firstIndex(where:  { $0.playlist.id == playlistInfo.playlist.id }) {
+                //if spotify.spotifyData.playlists[index].snapshots.isEmpty {
             
+            if let cache = spotify.cachedSnapshots[playlistInfo.playlist.id] {
+                self.snapshots = cache
+            }
+            else {
+                Task {
+                    
+                    isLoading = true
+                    
+                    
+                    self.snapshots = await spotify.getPlaylistSnapshots(playlist: playlistInfo, location: .cloud)
+                    
+//                        DispatchQueue.main.async {
+//
+//
+//                            spotify.spotifyData.playlists[index].snapshots = snapshots
+//
+//
+//                        }
+                    
+                    isLoading = false
+                    
+                    
+                }
+            }
+                    
+              //  }
+            //}
         }
 
+    }
+    
+    private func toggleRefreshing() {
+        if isRefreshing {
+            // Already refreshing. Set to a full circle.
+            let remaining = 360 - (arrowRotation.truncatingRemainder(dividingBy: 360))
+            withAnimation(Animation.linear(duration: remaining / 360)) {
+                arrowRotation += remaining
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + remaining / 360) {
+                isRefreshing = false
+            }
+        } else {
+            // Start refreshing
+            isRefreshing = true
+            withAnimation(Animation.linear(duration: 1).repeatForever(autoreverses: false)) {
+                arrowRotation += 360
+            }
+        }
     }
     
     private func delete(at offsets: IndexSet) {
@@ -193,7 +285,7 @@ struct PlaylistSnapshotView: View {
             
             Task {
                 
-                await spotify.deletePlaylistSnapshot(playlist: playlistSnapshot)
+                await spotify.deletePlaylistSnapshot(playlist: playlistSnapshot, playlistInfo: playlistInfo)
                 withAnimation {
                     isUploading = false
                 }

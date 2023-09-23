@@ -67,13 +67,13 @@ struct PlaylistInfoView: View {
                     Section("Snapshots") {
                         Button {
                             Task {
-                                let snapshots = await self.spotify.getPlaylistSnapshots(playlist: playlistInfo)
+                                let snapshots = await self.spotify.getPlaylistSnapshots(playlist: playlistInfo, location: .cloud)
 
                                 if snapshots.count < 2 {
                                     withAnimation {
                                         showBanner = true
                                     }
-                                    await self.spotify.uploadPlaylistSnapshot(snapshot: PlaylistSnapshot(id: UUID().uuidString, playlist: playlistInfo, versionDate: Date()))
+                                    await self.spotify.uploadPlaylistSnapshot(snapshot: PlaylistSnapshot(id: UUID().uuidString, playlist: playlistInfo, versionDate: Date()), playlistInfo: playlistInfo)
                                     
 
                                 }
@@ -134,7 +134,7 @@ private struct ListView: View {
                             .clipped()
                             
                     }
-                    .frame(width: (UIScreen.main.bounds.width / 2), height: (UIScreen.main.bounds.width / 2) )
+                    .frame(width: (UIScreen.main.bounds.width / 1.8), height: (UIScreen.main.bounds.width / 1.8) )
                     .clipped()
                     .cornerRadius(12)
                     Spacer()

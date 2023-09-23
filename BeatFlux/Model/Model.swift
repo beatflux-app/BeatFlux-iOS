@@ -41,4 +41,8 @@ struct PlaylistSnapshot: Codable, Hashable, Identifiable {
     var versionDate: Date
 }
 
-
+struct UserPlaylistCache: Codable {
+    var authManager: AuthorizationCodeFlowManager?
+    var lastFetched = Date()
+    var playlists: [PlaylistInfo]
+}

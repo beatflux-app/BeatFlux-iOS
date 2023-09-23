@@ -299,10 +299,10 @@ private struct PlaylistGridSquare: View {
             Section("Snapshots") {
                 Button {
                     Task {
-                        let snapshots = await self.spotify.getPlaylistSnapshots(playlist: playlistInfo)
+                        let snapshots = await self.spotify.getPlaylistSnapshots(playlist: playlistInfo, location: .cloud)
                         
                         if snapshots.count < 2 {
-                            await self.spotify.uploadPlaylistSnapshot(snapshot: PlaylistSnapshot(id: UUID().uuidString, playlist: playlistInfo, versionDate: Date()))
+                            await self.spotify.uploadPlaylistSnapshot(snapshot: PlaylistSnapshot(id: UUID().uuidString, playlist: playlistInfo, versionDate: Date()), playlistInfo: playlistInfo)
                             withAnimation {
                                 showBanner = true
                             }
