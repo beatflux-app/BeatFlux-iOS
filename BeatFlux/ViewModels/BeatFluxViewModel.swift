@@ -125,4 +125,12 @@ class BeatFluxViewModel: ObservableObject {
             print("ERROR: Failed to upload user data: \(error.localizedDescription)")
         }
     }
+    
+    func changeUsersEmail(newEmail: String) async throws {
+        try await DatabaseHandler.shared.updateUsersEmail(newEmail: newEmail)
+    }
+    
+    func changeUsersPassword(newPassword: String) async throws {
+        try await DatabaseHandler.shared.changeUsersPassword(newPassword: newPassword)
+    }
 }

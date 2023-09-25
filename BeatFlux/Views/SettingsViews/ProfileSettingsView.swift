@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import FirebaseAuth
 
 struct ProfileSettingsView: View {
     @Environment(\.dismiss) var dismiss
@@ -25,9 +26,11 @@ struct ProfileSettingsView: View {
     @State var email: String = ""
     @State var isLoading: Bool = false
     @State var showConfirmationToCancel = false
-    
+    @State private var isReauthenticationViewPresented: Bool = false
+    @State var showPasswordError = false
     @State var showError: Bool = false
     @State var error: String = ""
+    @State var password: String = ""
     
     @FocusState private var focusedField: Field?
     
@@ -123,7 +126,7 @@ struct ProfileSettingsView: View {
             if let userData = beatFluxViewModel.userData {
                 originalFirstName = userData.first_name
                 originalLastName = userData.last_name
-                originalEmail = userData.email ?? ""
+                originalEmail = beatFluxViewModel.user?.email ?? ""
             }
             
         }
@@ -148,19 +151,61 @@ struct ProfileSettingsView: View {
             }
 
         })
+        .sheet(isPresented: $isReauthenticationViewPresented, onDismiss: {
+            isLoading = false
+        }, content: {
+            NavigationView {
+                Form {
+
+                    Section {
+                        Text("Please re-enter your password to continue")
+                            .foregroundStyle(.secondary)
+                            .font(.subheadline)
+                        SecureField("Password", text: $password)
+                    }
+
+                    Button("Submit") {
+                        
+                        reauthenticateUser(email: email, password: password)
+                       
+                        
+                    }
+                    .alert(isPresented: $showPasswordError) {
+                        Alert(
+                            title: Text("Error"),
+                            message: Text("Could not reauthenticate. Please try again."),
+                            dismissButton: .default(Text("OK"))
+                        )
+                    }
+                        
+                        
+                    
+                }
+                .navigationTitle("Reauthenticate")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button {
+                            isLoading = false
+                            isReauthenticationViewPresented = false
+                        } label: {
+                            dismissButton
+                        }
+
+                    }
+
+                }
+            }
+        })
+
+        
         .navigationTitle("Profile")
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(true)
         .toolbar {
             ToolbarItem(placement: .navigationBarLeading) {
                 Button {
-//                    if didChangeProfile {
-//                        showConfirmationToCancel.toggle()
-//                    }
-//                    else {
-                        dismiss()
-//                    }
-
+                    dismiss()
                 } label: {
                     Text("Cancel")
                         .fontWeight(.semibold)
@@ -169,7 +214,10 @@ struct ProfileSettingsView: View {
             ToolbarItem {
                 if beatFluxViewModel.isConnected {
                     Button {
-                        saveProfile()
+                        Task {
+                            await saveProfile()
+                        }
+                        
                         
                     } label: {
                         if isLoading {
@@ -191,6 +239,54 @@ struct ProfileSettingsView: View {
 
             }
         }
+        
+    }
+    
+    private var dismissButton: some View {
+        Button(action: { dismiss() }) {
+            Text("")
+        }
+        .buttonStyle(ExitButtonStyle(buttonSize: 30, symbolScale: 0.4))
+    }
+    
+    private func reauthenticateUser(email: String, password: String) {
+        
+        guard let usersCurrentEmail = beatFluxViewModel.user?.email else { return }
+        
+        let credential = EmailAuthProvider.credential(withEmail: usersCurrentEmail, password: password)
+        
+        Auth.auth().currentUser?.reauthenticate(with: credential, completion: { (authResult, error) in
+            if let error = error {
+                print("Reauthentication error: \(error)")
+                showPasswordError = true
+                return
+            }
+            Task {
+                do {
+                    try await beatFluxViewModel.changeUsersEmail(newEmail: email)
+                }
+                catch {
+                    print(error.localizedDescription)
+                }
+                beatFluxViewModel.userData?.first_name = firstName
+                beatFluxViewModel.userData?.last_name = lastName
+
+                await beatFluxViewModel.uploadUserData()
+                isLoading = false
+                dismiss()
+                
+            }
+            
+            isReauthenticationViewPresented = false
+            print("Successfully reauthenticated.")
+            
+        })
+
+ 
+        
+    
+        
+        
     }
     
     func checkForModifiedValues() {
@@ -202,33 +298,40 @@ struct ProfileSettingsView: View {
         }
     }
     
-    func saveProfile() {
+    func saveProfile() async {
         error = ""
         if email.isBlank { error = "Email is blank" }
         if firstName.isBlank { error = "First name is blank" }
         if lastName.isBlank { error = "Last name is blank" }
         if !email.isValidEmail() { error = "Email is not valid" }
-        if !error.isBlank {
-            showError = true
-            return
-        }
         isLoading = true
         
-        beatFluxViewModel.userData?.first_name = firstName
-        beatFluxViewModel.userData?.last_name = lastName
-        beatFluxViewModel.userData?.email = email
-        
-        Task {
-            await beatFluxViewModel.uploadUserData()
+        if !error.isBlank {
+            showError = true
             isLoading = false
-            dismiss()
+            return
         }
         
         
-       
+        if email != beatFluxViewModel.user?.email {
+            isReauthenticationViewPresented = true
+        }
+        else {
+            beatFluxViewModel.userData?.first_name = firstName
+            beatFluxViewModel.userData?.last_name = lastName
+
+            
+            Task {
+                await beatFluxViewModel.uploadUserData()
+                isLoading = false
+                dismiss()
+            }
+        }
         
     }
 }
+
+
 
 struct ProfileSettingsView_Previews: PreviewProvider {
     static var previews: some View {

@@ -13,11 +13,10 @@ import SpotifyWebAPI
 struct UserModel: Codable {
     var first_name: String
     var last_name: String
-    var email: String?
     var is_using_dark: Bool = false
     var account_link_shown = false
     
-    static let defaultData = UserModel(first_name: "", last_name: "", email: nil, is_using_dark: false, account_link_shown: false)
+    static let defaultData = UserModel(first_name: "", last_name: "", is_using_dark: false, account_link_shown: false)
 }
 
 struct SpotifyDataModel: Codable {

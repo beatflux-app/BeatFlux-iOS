@@ -65,7 +65,7 @@ struct HomeView: View {
                     
                 }
                 .refresher(style: .default) {
-                    await spotify.refreshUsersPlaylists(options: .all, priority: .low, source: .default)
+                    await spotify.refreshUsersPlaylists(options: .libraryPlaylists, priority: .low, source: .default)
                 }
                 .navigationTitle("Backups")  
                 .scrollIndicators(.hidden)
@@ -293,7 +293,7 @@ private struct PlaylistGridSquare: View {
             }
         }
         .buttonStyle(PlainButtonStyle())
-        .contextMenu(ContextMenu(menuItems: {
+        .contextMenu(menuItems: {
             Button {
                 showExportView = true
             } label: {
@@ -343,10 +343,59 @@ private struct PlaylistGridSquare: View {
                     }
                 }
             }
-            
-            
+        }, preview: {
+            VStack(alignment: .leading) {
+                if !playlistInfo.playlist.images.isEmpty {
+                    
+                    AsyncImage(urlString: playlistInfo.playlist.images[0].url.absoluteString) {
+                        Rectangle()
+                            .aspectRatio(contentMode: .fill)
+                            .frame(width: 300, height: 300)
+                            .foregroundColor(.secondary)
+                            .shimmering()
+                    } content: {
+                        Image(uiImage: $0)
+                            .resizable()
+                            .scaledToFill()
+                            .frame(width: 300, height: 300)
+                            .clipped()
+                            
+                    }
+                    .clipped()
+                    .cornerRadius(12)
+                }
+                else {
+                    Rectangle()
+                        .foregroundStyle(Color(UIColor.tertiarySystemBackground))
+                        .aspectRatio(contentMode: .fill)
+                        .frame(width: 250, height: 250)
+                        .redacted(reason: .placeholder)
+                        .clipped()
+                        .cornerRadius(12)
+                        .overlay {
+                            Text("?")
+                                .font(.largeTitle)
+                        }
+                }
+                
+                
+                VStack(alignment: .leading, spacing: 0) {
+                    Text(playlistInfo.playlist.name)
+                        .fontWeight(.semibold)
+                        .foregroundColor(.primary)
+                    
+                    Text(playlistInfo.playlist.owner?.displayName ?? "Unknown")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+                .padding(.leading, 5)
+                
 
-        }))
+                
+                
+            }
+            .padding()
+        })
     }
 }
 

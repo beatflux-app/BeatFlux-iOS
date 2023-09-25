@@ -75,6 +75,25 @@ struct SettingsView: View {
                 } header: {
                     Text("Connections")
                 }
+                
+                Section {
+                    NavigationLink(destination: SecuritySettingsView()) {
+                        HStack(spacing: 15) {
+                            RoundedRectangle(cornerRadius: 8)
+                                .foregroundColor(.blue)
+                                .frame(width: 25, height: 25)
+                                .overlay {
+                                    Image(systemName: "lock.fill")
+                                        .font(.subheadline)
+                                }
+                            Text("Security")
+                        }
+                    }
+                    .disabled(!beatFluxViewModel.isUserValid || !beatFluxViewModel.isConnected)
+                    
+                } header: {
+                    Text("Settings")
+                }
 
                 
                 
@@ -84,6 +103,29 @@ struct SettingsView: View {
                 } label: {
                     Text("Logout")
                 }
+                
+                Section {
+                    
+                    
+                    HStack {
+                        Spacer()
+                        VStack(spacing: 15) {
+                            Image("BeatFluxLogo")
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .frame(width: 30, height: 30)
+                                .clipShape(RoundedRectangle(cornerRadius: 16))
+                            Text("BeatFlux 0.1.0 (BETA)")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                        
+                        Spacer()
+                    }
+                    
+                }
+                .listRowBackground(Color.clear)
+
 
                 
             }
