@@ -59,9 +59,22 @@ final class Spotify: ObservableObject {
                 DispatchQueue.main.async { [weak self] in
                     guard let self = self else { return }
                     
+
+                    if !self.isUserAuthLoggedIn {
+                        if self.isAuthorized {
+                            self.api.authorizationManager.deauthorize()
+                        }
+                       
+                    }
+                    
                     self.currentUser = nil
                     self.isAuthorized = false
                     self.isRetrievingTokens = false
+                    self.isBackupsLoaded = false
+                    self.isSpotifyInitializationLoaded = false
+                    self.spotifyData = SpotifyDataModel()
+                    self.userPlaylists = []
+                    //self.saveUsersLibraryToCache()
                     
                     print("SUCCESS: All spotify api cancellables removed successfully")
                     if self.isUserAuthLoggedIn {
@@ -180,7 +193,14 @@ final class Spotify: ObservableObject {
                 // Concurrently fetch data and check authorization
                 
 
-                guard spotifyDataFetched != nil else { return }
+            guard spotifyDataFetched != nil else {
+                DispatchQueue.main.async { [weak self] in
+                    self?.isSpotifyInitializationLoaded = true
+                    self?.isBackupsLoaded = true
+                }
+                
+                return
+            }
                 
                 // Check for authorization info
                 guard let authManagerData = authManagerData else {
@@ -364,6 +384,7 @@ final class Spotify: ObservableObject {
             self?.currentUser = nil
             self?.refreshTokensCancellable = nil
             self?.userPlaylists = []
+            self?.saveUsersLibraryToCache()
         }
 
         
