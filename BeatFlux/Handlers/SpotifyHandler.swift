@@ -1,4 +1,5 @@
 import SpotifyWebAPI
+import FirebaseDatabase
 import UIKit
 import SwiftUI
 import Foundation
@@ -31,6 +32,7 @@ final class Spotify: ObservableObject {
     var authorizationState = String.randomURLSafe(length: 128)
     
     @Published var isSpotifyInitializationLoaded = false
+    @Published var isSpotifyPlaylistsLoading = false
     @Published var isBackupsLoaded = false
     @Published var isAuthorized = false
     
@@ -38,6 +40,8 @@ final class Spotify: ObservableObject {
     @Published var currentUser: SpotifyUser? = nil
     @Published var userPlaylists: [PlaylistInfo] = []
     @Published var spotifyData: SpotifyDataModel = SpotifyDataModel.defaultData
+    @Published var cachedSnapshots: [String:[PlaylistSnapshot]] = [:]
+    
     
     enum SpotifyError: Error {
         case nilSpotifyData
@@ -87,16 +91,21 @@ final class Spotify: ObservableObject {
     let refreshTokensQueue = DispatchQueue(label: "refreshTokens")
     
     init() {
-        Auth.auth().addStateDidChangeListener { auth, user in
-            if let _ = user {
-                self.isUserAuthLoggedIn = true
-            } else {
-                self.isUserAuthLoggedIn = false
-            }
-        }
+        let connectedRef = Database.database().reference(withPath: ".info/connected")
         
-        if self.isUserAuthLoggedIn {
-            initializeSpotify()
+        connectedRef.observe(.value) { snapshot  in
+            if let connected = snapshot.value as? Bool, connected {
+                Auth.auth().addStateDidChangeListener { [weak self] auth, user in
+                    guard let self = self else { return }
+                    if let _ = user {
+                        self.isUserAuthLoggedIn = true
+                        
+                        initializeSpotify()
+                    } else {
+                        self.isUserAuthLoggedIn = false
+                    }
+                }
+            }
         }
         
         
@@ -260,9 +269,16 @@ final class Spotify: ObservableObject {
     }
     var startTime = Date()
     func authorizationManagerDidChange() {
-        DispatchQueue.main.async {
+        DispatchQueue.main.async { [self] in
+
+            self.isSpotifyInitializationLoaded = false
+            self.isSpotifyPlaylistsLoading = true
+            
+            
             self.isAuthorized = self.api.authorizationManager.isAuthorized()
             print("Spotify.authorizationManagerDidChange: isAuthorized:", self.isAuthorized)
+            
+            self.isSpotifyInitializationLoaded = true
 
             self.autoRefreshTokensWhenExpired()
             self.retrieveCurrentUser()
@@ -270,28 +286,35 @@ final class Spotify: ObservableObject {
             // Concurrently run tasks to speed up the function.
             
             Task {
-                if self.retrieveUsersLibraryFromCache() == nil {
-                   
+                let cache = self.retrieveUsersLibraryFromCache()
+                
+                if let cache = cache {
+                    if cache.authManager != self.spotifyData.authorization_manager || cache.lastFetched.timeIntervalSinceNow > 259200 { //259200 is 3 days
+                        await self.refreshUsersPlaylists(options: .libraryPlaylists, priority: .high, source: .default)
+                    }
+                    DispatchQueue.main.async { [weak self] in
+                        self?.isSpotifyPlaylistsLoading = false
+                    }
+                    print("Fetched users library from cache")
+                }
+                else {
                     await self.refreshUsersPlaylists(options: .libraryPlaylists, priority: .high, source: .default)
                     
                     DispatchQueue.main.async { [weak self] in
-                        self?.isSpotifyInitializationLoaded = true
+                        self?.isSpotifyPlaylistsLoading = false
                     }
 
                     print("Time Elapsed: \(Date().timeIntervalSince1970 - self.startTime.timeIntervalSince1970)")
                 }
-                else {
-                    DispatchQueue.main.async { [weak self] in
-                        self?.isSpotifyInitializationLoaded = true
-                    }
-                    print("Fetched users library from cache")
-                }
+
                
                 await self.uploadSpotifyAuthManager()
                 
+            }
+                
                 
 
-            }
+            
         }
 
         // Save the data to the keychain only if the user is not nil.
@@ -307,22 +330,22 @@ final class Spotify: ObservableObject {
         let archiveURL = documentsDirectory.appendingPathComponent("usersLibraryPlaylists").appendingPathExtension("plist")
 
         do {
-            let encodedData = try PropertyListEncoder().encode(userPlaylists)
+            let encodedData = try PropertyListEncoder().encode(UserPlaylistCache(authManager: spotifyData.authorization_manager, lastFetched: Date(), playlists: self.userPlaylists))
             try encodedData.write(to: archiveURL)
         } catch {
             print("Error encoding spotifyData: \(error)")
         }
     }
     
-    func retrieveUsersLibraryFromCache() -> [PlaylistInfo]? {
+    func retrieveUsersLibraryFromCache() -> UserPlaylistCache? {
         let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
         let archiveURL = documentsDirectory.appendingPathComponent("usersLibraryPlaylists").appendingPathExtension("plist")
         
         do {
             let retrievedData = try Data(contentsOf: archiveURL)
-            let decodedData = try PropertyListDecoder().decode([PlaylistInfo].self, from: retrievedData)
+            let decodedData = try PropertyListDecoder().decode(UserPlaylistCache.self, from: retrievedData)
             DispatchQueue.main.async {
-                self.userPlaylists = decodedData
+                self.userPlaylists = decodedData.playlists
             }
             return decodedData
             
@@ -385,6 +408,7 @@ final class Spotify: ObservableObject {
 
         
     }
+
     
     public func getUserPlaylists(priority: DatabaseHandler.Priorities) async throws -> PagingObject<Playlist<PlaylistItemsReference>> {
         var localCancellable: Set<AnyCancellable> = []
@@ -421,7 +445,7 @@ final class Spotify: ObservableObject {
         var localCancellable: Set<AnyCancellable> = []
         
         return try await withCheckedThrowingContinuation { continuation in
-            self.api.playlistItems(fetchedPlaylist.uri)
+            self.api.playlistTracks(fetchedPlaylist.uri)
                 .subscribe(on: DispatchQueue.global(qos: .background))
                 .receive(on: DispatchQueue.main)
                 .sink(receiveCompletion: { completion in
@@ -433,12 +457,48 @@ final class Spotify: ObservableObject {
                     continuation.resume(returning: PlaylistInfo(playlist: fetchedPlaylist, tracks: pagingObject.items, lastFetched: Date()))
                 })
                 .store(in: &localCancellable)
+                
         }
     }
+    
+    enum SnapshotLocation {
+        case cache
+        case cloud
+    }
 
-    func getPlaylistSnapshots(playlist: PlaylistInfo) async -> [PlaylistSnapshot] {
+    func getPlaylistSnapshots(playlist: PlaylistInfo, location: SnapshotLocation) async -> [PlaylistSnapshot] {
         do {
-            return try await DatabaseHandler.shared.getPlaylistSnapshots(playlist: playlist)
+            var data: [PlaylistSnapshot]
+            
+            switch location {
+            case .cache:
+                data = cachedSnapshots[playlist.playlist.id] ?? []
+            case .cloud:
+                data = try await DatabaseHandler.shared.getPlaylistSnapshots(playlist: playlist)
+            }
+            
+            if var cachedSnapshots = cachedSnapshots[playlist.playlist.id] {
+                if let index = cachedSnapshots.firstIndex(where: { $0.id == playlist.playlist.id} ) {
+                    cachedSnapshots.remove(at: index)
+                }
+                
+                let cachedSnapshots = cachedSnapshots
+                
+                DispatchQueue.main.async {
+                    self.cachedSnapshots.updateValue(cachedSnapshots, forKey: playlist.playlist.id)
+                }
+
+            }
+            else {
+                let data = data
+                DispatchQueue.main.async {
+                    self.cachedSnapshots.updateValue(data, forKey: playlist.playlist.id)
+                }
+                
+            }
+            
+            return data
+            
         }
         catch {
             print("ERROR: Error while getting playlist snapshots \(error.localizedDescription)")
@@ -446,18 +506,50 @@ final class Spotify: ObservableObject {
         }
     }
     
-    func deletePlaylistSnapshot(playlist: PlaylistSnapshot) async {
+    func deletePlaylistSnapshot(playlist: PlaylistSnapshot, playlistInfo: PlaylistInfo) async {
         do {
             try await DatabaseHandler.shared.deletePlaylistSnapshot(playlistSnapshot: playlist)
+            
+            if var cachedSnapshots = cachedSnapshots[playlistInfo.playlist.id] {
+                if let index = cachedSnapshots.firstIndex(where: { $0.id == playlist.id} ) {
+                    cachedSnapshots.remove(at: index)
+                }
+                let cachedSnapshots = cachedSnapshots
+                
+                DispatchQueue.main.async {
+                    self.cachedSnapshots.updateValue(cachedSnapshots, forKey: playlistInfo.playlist.id)
+                }
+                
+            }
         }
         catch {
             print("ERROR: Error while deleting playlist snapshot \(error.localizedDescription)")
         }
     }
     
-    func uploadPlaylistSnapshot(snapshot: PlaylistSnapshot) {
+    func uploadPlaylistSnapshot(snapshot: PlaylistSnapshot, playlistInfo: PlaylistInfo) async {
         do {
-            try DatabaseHandler.shared.uploadPlaylistSnapshot(snapshot: snapshot)
+            try await DatabaseHandler.shared.uploadPlaylistSnapshot(snapshot: snapshot)
+            if var cachedSnapshots = cachedSnapshots[playlistInfo.playlist.id] {
+                if let index = cachedSnapshots.firstIndex(where: { $0.id == snapshot.id} ) {
+                    cachedSnapshots.remove(at: index)
+                }
+                cachedSnapshots.append(snapshot)
+                let cachedSnapshots = cachedSnapshots
+                
+                DispatchQueue.main.async {
+                    self.cachedSnapshots.updateValue(cachedSnapshots, forKey: playlistInfo.playlist.id)
+                }
+                
+            }
+            else {
+                DispatchQueue.main.async {
+                    self.cachedSnapshots.updateValue([snapshot], forKey: playlistInfo.playlist.id)
+                }
+                
+            }
+            
+            
         }
         catch {
             print("ERROR: Failed to upload playlist snapshot to database \(error.localizedDescription)")

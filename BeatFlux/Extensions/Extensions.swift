@@ -8,12 +8,12 @@
 import UIKit
 import SwiftUI
 
-extension UINavigationController {
-    open override func viewDidLoad() {
-        super.viewDidLoad()
-        interactivePopGestureRecognizer?.delegate = nil
-    }
-}
+//extension UINavigationController {
+//    open override func viewDidLoad() {
+//        super.viewDidLoad()
+//        interactivePopGestureRecognizer?.delegate = nil
+//    }
+//}
 
 extension View {
     func border(_ color: Color, width: CGFloat, cornerRadius: CGFloat) -> some View {

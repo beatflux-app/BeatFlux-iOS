@@ -55,7 +55,7 @@ final class DatabaseHandler {
         
         firestore.collection("users")
             .document(user.uid)
-            .setData(from: UserModel(first_name: firstName, last_name: lastName, email: user.email, is_using_dark: false), merge: true)
+            .setData(from: UserModel(first_name: firstName, last_name: lastName, is_using_dark: false), merge: true)
             .sink(
                 receiveCompletion: { completion in
                     if case let .failure(error) = completion {
@@ -127,7 +127,6 @@ final class DatabaseHandler {
                 
                 let firstName = document.get("first_name") as? String ?? UserModel.defaultData.first_name
                 let last_name = document.get("last_name") as? String ?? UserModel.defaultData.last_name
-                let email = document.get("email") as? String
                 let isUsingDark = document.get("is_using_dark") as? Bool ?? UserModel.defaultData.is_using_dark
                 let accountLinkShown = document.get("account_link_shown") as? Bool ?? UserModel.defaultData.account_link_shown
                 
@@ -164,7 +163,6 @@ final class DatabaseHandler {
                 let returnValue = UserModel(
                     first_name: firstName,
                     last_name: last_name,
-                    email: email,
                     is_using_dark: isUsingDark,
                     account_link_shown: accountLinkShown)
                 
@@ -324,8 +322,6 @@ final class DatabaseHandler {
         }
         do {
             let docRef = self.firestore.collection("users").document(user.uid)
-            
-            let documents = try await docRef.collection("playlists").document(playlistSnapshot.playlist.playlist.id).collection("snapshots").getDocuments(source: FirestoreSource.default)
 
             try await docRef.collection("playlists").document(playlistSnapshot.playlist.playlist.id).collection("snapshots").document(playlistSnapshot.id).delete()
 
@@ -338,7 +334,7 @@ final class DatabaseHandler {
         }
     }
     
-    func uploadPlaylistSnapshot(snapshot: PlaylistSnapshot) throws {
+    func uploadPlaylistSnapshot(snapshot: PlaylistSnapshot) async throws {
         guard let user = self.user else {
             print("ERROR: Failed to get upload snapshot to database because the user is nil")
             throw UserError.nilUser
@@ -349,19 +345,27 @@ final class DatabaseHandler {
         
         let snapshotCollection = playlistsCollection.document(snapshot.playlist.playlist.id).collection("snapshots")
         
-        snapshotCollection.document(snapshot.id).setData(from: snapshot)
-            .subscribe(on: DispatchQueue.global(qos: .background))
-            .receive(on: DispatchQueue.main) // Switch back to the main queue for the result
-            .sink(receiveCompletion: { completion in
-                if case .failure(let error) = completion {
-                    print("ERROR: Error while setting playlist: \(snapshot.playlist.playlist.name): snapshot \(error.localizedDescription)")
-                    return
-                }
-            }, receiveValue: { results in
-                
-                print("SUCCESS: Snapshot was successfully written")
-            })
-            .store(in: &cancellables)
+        
+        return try await withCheckedThrowingContinuation { continuation in
+            snapshotCollection.document(snapshot.id).setData(from: snapshot)
+                .subscribe(on: DispatchQueue.global(qos: .background))
+                .receive(on: DispatchQueue.main) // Switch back to the main queue for the result
+                .sink(receiveCompletion: { completion in
+                    switch completion {
+                    case .finished:
+                        continuation.resume()
+                    case .failure(let error):
+                        print("ERROR: Error while setting playlist: \(snapshot.playlist.playlist.name): snapshot \(error.localizedDescription)")
+                        continuation.resume(throwing: error)
+                    }
+                    
+                }, receiveValue: { results in
+                    
+                    print("SUCCESS: Snapshot was successfully written")
+                })
+                .store(in: &cancellables)
+        }
+        
         
 
         
@@ -525,6 +529,49 @@ final class DatabaseHandler {
                 )
                 .store(in: &cancellables)
         }
+    }
+    
+    func updateUsersEmail(newEmail: String) async throws {
+        return try await withCheckedThrowingContinuation { continuation in
+                // Assuming reauthentication has been done
+                Auth.auth().currentUser?.updateEmail(to: newEmail) { error in
+                    if let error = error {
+                        print("ERROR: Error changing users email: \(error)")
+                        continuation.resume(throwing: error)
+                    } else {
+                        print("SUCCESS: Successfully changed users email")
+                        Auth.auth().currentUser?.reload(completion: { error in
+                            if let error = error {
+                                print("ERROR: Error while trying to reload current user \(error.localizedDescription)")
+                            }
+                           
+                        })
+                        continuation.resume(returning: ())
+                    }
+                }
+            }
+            
+    }
+    
+    func changeUsersPassword(newPassword: String) async throws {
+        return try await withCheckedThrowingContinuation { continuation in
+                // Assuming reauthentication has been done
+                Auth.auth().currentUser?.updatePassword(to: newPassword) { (error) in
+                    if let error = error {
+                        print("ERROR: Error changing users password: \(error)")
+                        continuation.resume(throwing: error)
+                    } else {
+                        print("SUCCESS: Successfully changed users password")
+                        Auth.auth().currentUser?.reload(completion: { error in
+                            if let error = error {
+                                print("ERROR: Error while trying to reload current user \(error.localizedDescription)")
+                            }
+                           
+                        })
+                        continuation.resume(returning: ())
+                    }
+                }
+            }
     }
 }
 

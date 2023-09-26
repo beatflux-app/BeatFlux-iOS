@@ -25,6 +25,7 @@ struct BannerModifier: ViewModifier {
                     HStack(spacing: 10) {
                         data.imageIcon
                         Text(data.title)
+                            .font(.subheadline)
                             .bold()
                     }
                     .foregroundColor(Color.white)

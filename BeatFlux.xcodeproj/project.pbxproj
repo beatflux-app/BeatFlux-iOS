@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		DF088E792ABD0EEE0002A8E9 /* PlaylistInfoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF088E782ABD0EEE0002A8E9 /* PlaylistInfoView.swift */; };
 		DF0AB5EC2A49F0E400C28366 /* ExitButtonStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF0AB5EB2A49F0E400C28366 /* ExitButtonStyle.swift */; };
 		DF0BDE2B2A27CA2A00C917FA /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF0BDE2A2A27CA2A00C917FA /* SettingsView.swift */; };
 		DF10E66D2A242EA100D9EFD7 /* SpotifyPopup.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF10E66C2A242EA100D9EFD7 /* SpotifyPopup.swift */; };
@@ -36,6 +37,7 @@
 		DF72E62C29FEB487007A6306 /* CombineFirebaseFunctions in Frameworks */ = {isa = PBXBuildFile; productRef = DF72E62B29FEB487007A6306 /* CombineFirebaseFunctions */; };
 		DF72E62E29FEB487007A6306 /* CombineFirebaseRemoteConfig in Frameworks */ = {isa = PBXBuildFile; productRef = DF72E62D29FEB487007A6306 /* CombineFirebaseRemoteConfig */; };
 		DF72E63029FEB487007A6306 /* CombineFirebaseStorage in Frameworks */ = {isa = PBXBuildFile; productRef = DF72E62F29FEB487007A6306 /* CombineFirebaseStorage */; };
+		DF7A385E2AC0DF130049C929 /* SecuritySettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF7A385D2AC0DF130049C929 /* SecuritySettingsView.swift */; };
 		DF7F9A852A30F4010017E561 /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = DF7F9A842A30F4010017E561 /* FirebaseAnalytics */; };
 		DF7F9A872A30F4010017E561 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = DF7F9A862A30F4010017E561 /* FirebaseAuth */; };
 		DF7F9A892A30F4010017E561 /* FirebaseDatabase in Frameworks */ = {isa = PBXBuildFile; productRef = DF7F9A882A30F4010017E561 /* FirebaseDatabase */; };
@@ -65,6 +67,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		DF088E782ABD0EEE0002A8E9 /* PlaylistInfoView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaylistInfoView.swift; sourceTree = "<group>"; };
 		DF0AB5EB2A49F0E400C28366 /* ExitButtonStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExitButtonStyle.swift; sourceTree = "<group>"; };
 		DF0BDE2A2A27CA2A00C917FA /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		DF10E66C2A242EA100D9EFD7 /* SpotifyPopup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpotifyPopup.swift; sourceTree = "<group>"; };
@@ -81,6 +84,7 @@
 		DF604D902AB086A400DCF363 /* IntroIconView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IntroIconView.swift; sourceTree = "<group>"; };
 		DF67A34C2A28162100E3BF89 /* SpotifySettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpotifySettingsView.swift; sourceTree = "<group>"; };
 		DF6A789A2A43A85E00067D68 /* SpotifyPlaylistListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpotifyPlaylistListView.swift; sourceTree = "<group>"; };
+		DF7A385D2AC0DF130049C929 /* SecuritySettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SecuritySettingsView.swift; sourceTree = "<group>"; };
 		DF8A77782A4DEA3E00266500 /* FormTitle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FormTitle.swift; sourceTree = "<group>"; };
 		DFA5BCA82A2D71A6004DB4A3 /* ProfileSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileSettingsView.swift; sourceTree = "<group>"; };
 		DFA5BCAB2A2D73D1004DB4A3 /* SettingsTextLabel_Element.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsTextLabel_Element.swift; sourceTree = "<group>"; };
@@ -150,6 +154,7 @@
 				DF3F15F52A55F6610032FFEC /* CreateNewPlaylistView.swift */,
 				DF604D902AB086A400DCF363 /* IntroIconView.swift */,
 				DF321D452AB13D52005D8C50 /* PlaylistSnapshotView.swift */,
+				DF088E782ABD0EEE0002A8E9 /* PlaylistInfoView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -208,6 +213,7 @@
 				DF0BDE2A2A27CA2A00C917FA /* SettingsView.swift */,
 				DF67A34C2A28162100E3BF89 /* SpotifySettingsView.swift */,
 				DFA5BCA82A2D71A6004DB4A3 /* ProfileSettingsView.swift */,
+				DF7A385D2AC0DF130049C929 /* SecuritySettingsView.swift */,
 			);
 			path = SettingsViews;
 			sourceTree = "<group>";
@@ -424,6 +430,7 @@
 				DFC6661329FA0AA3003227FE /* SignupView.swift in Sources */,
 				DFA5BCAC2A2D73D1004DB4A3 /* SettingsTextLabel_Element.swift in Sources */,
 				DF6A789B2A43A85E00067D68 /* SpotifyPlaylistListView.swift in Sources */,
+				DF088E792ABD0EEE0002A8E9 /* PlaylistInfoView.swift in Sources */,
 				DFFA14412A2A01CF009F9275 /* NetworkStatus.swift in Sources */,
 				DFBE88BF29FF51DB00572B47 /* LoadingIndicator.swift in Sources */,
 				DFFA143C2A298218009F9275 /* RedactedView.swift in Sources */,
@@ -442,6 +449,7 @@
 				DF469EC32A43426900BE166C /* AsyncImage.swift in Sources */,
 				DFB08E2229F7EC1A0074A86A /* LoginView.swift in Sources */,
 				DF604D912AB086A400DCF363 /* IntroIconView.swift in Sources */,
+				DF7A385E2AC0DF130049C929 /* SecuritySettingsView.swift in Sources */,
 				DF0AB5EC2A49F0E400C28366 /* ExitButtonStyle.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
