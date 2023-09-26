@@ -21,6 +21,25 @@ struct ExportPlaylistView: View {
     var body: some View {
         
             Form {
+                Section {
+                    NavigationLink(destination: PlaylistInfoView(playlistInfo: playlistToExport, showMoreOptionsButton: false)) {
+                        HStack(spacing: 13) {
+                            Image(systemName: "doc.on.doc.fill")
+                                .font(.title)
+                                .foregroundColor(.accentColor)
+                            
+                            VStack(alignment: .leading, spacing: 1) {
+                                Text("View Playlist")
+                                    .foregroundColor(.primary)
+                                    .fontWeight(.semibold)
+                                    .font(.headline)
+                                Text("See the songs inside this playlist")
+                                    .foregroundColor(.secondary)
+                                    .font(.subheadline)
+                            }
+                        }
+                    }
+                }
                 NavigationLink(destination: CreateNewPlaylistView(playlistToExport: playlistToExport, showExportView: $showExportView)) {
                     HStack(spacing: 13) {
                         Image(systemName: "plus.square.fill")

@@ -91,6 +91,9 @@ class BeatFluxViewModel: ObservableObject {
         }
     }
     
+    func deleteUserData() async throws {
+        try await DatabaseHandler.shared.deleteAllUserData()
+    }
 
 
     func retrieveUserData() async {

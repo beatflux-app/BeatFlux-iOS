@@ -63,10 +63,16 @@ struct SettingsView: View {
                 Section {
                     NavigationLink(destination: SpotifySettingsView().environmentObject(beatFluxViewModel).environmentObject(spotify)) {
                         HStack(spacing: 15) {
-                            Image("SpotifyLogo")
-                                .resizable()
-                                .aspectRatio(contentMode: .fit)
-                                .frame(width: 25)
+                            RoundedRectangle(cornerRadius: 8)
+                                .foregroundColor(.black)
+                                .frame(width: 25, height: 25)
+                                .overlay {
+                                    Image("SpotifyLogo")
+                                        .resizable()
+                                        .aspectRatio(contentMode: .fit)
+                                        .frame(width: 18)
+                                }
+                            
                             Text("Spotify")
                         }
                     }
@@ -85,6 +91,7 @@ struct SettingsView: View {
                                 .overlay {
                                     Image(systemName: "lock.fill")
                                         .font(.subheadline)
+                                        .foregroundColor(.white)
                                 }
                             Text("Security")
                         }

@@ -218,7 +218,7 @@ private struct ForgotPasswordView: View {
                     isLoading = true
                     
                     Auth.auth().sendPasswordReset(withEmail: emailToSendTo) { error in
-                        if let error = error {
+                        if error != nil {
                             passwordResetAlertText = "Unable to send reset password email. Please try again later."
                             showPasswordResetAlert = true
                         }

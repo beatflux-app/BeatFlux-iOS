@@ -17,13 +17,14 @@ struct PlaylistInfoView: View {
     
     var playlistInfo: PlaylistInfo
     
-    @State var showExportView: Bool = false
-    @State var showPlaylistVersionHistory = false
-    @State var showSnapshotAlert = false
-    @State var showBanner: Bool = false
-    @State var bannerData: BannerModifier.BannerData = BannerModifier.BannerData(imageIcon: Image(systemName: "camera.aperture"),title: "Added Snapshot")
-    @State var searchQuery = ""
-    @State var isSearchActive: Bool = false
+    @State private var showExportView: Bool = false
+    @State private var showPlaylistVersionHistory = false
+    @State private var showSnapshotAlert = false
+    @State private var showBanner: Bool = false
+    @State private var bannerData: BannerModifier.BannerData = BannerModifier.BannerData(imageIcon: Image(systemName: "camera.aperture"),title: "Added Snapshot")
+    @State private var searchQuery = ""
+    @State private var isSearchActive: Bool = false
+    @State var showMoreOptionsButton = true
     
     
     var body: some View {
@@ -38,7 +39,7 @@ struct PlaylistInfoView: View {
             PlaylistSnapshotView(showPlaylistVersionHistory: $showPlaylistVersionHistory, playlistInfo: playlistInfo)
 
         }
-        .navigationTitle(playlistInfo.playlist.name)
+        .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
         .alert(isPresented: $showSnapshotAlert) {
             Alert(title: Text("Snapshot Limit Reached"), message: Text("You can only save two snapshots at a time!"), dismissButton: .default(Text("Ok")))
@@ -51,62 +52,71 @@ struct PlaylistInfoView: View {
         }
         .banner(data: $bannerData, show: $showBanner)
         .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                Menu {
-                    Button {
-                        showExportView = true
-                    } label: {
-                        HStack {
-                            Text("Export")
-                            Spacer()
-                            Image(systemName: "square.and.arrow.up")
-
-                        }
-                    }
-
-                    Section("Snapshots") {
+            if showMoreOptionsButton {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Menu {
                         Button {
-                            Task {
-                                let snapshots = await self.spotify.getPlaylistSnapshots(playlist: playlistInfo, location: .cloud)
-
-                                if snapshots.count < 2 {
-                                    withAnimation {
-                                        showBanner = true
-                                    }
-                                    await self.spotify.uploadPlaylistSnapshot(snapshot: PlaylistSnapshot(id: UUID().uuidString, playlist: playlistInfo, versionDate: Date()), playlistInfo: playlistInfo)
-                                    
-
-                                }
-                                else {
-                                    showSnapshotAlert = true
-                                }
-                            }
-                        }
-                         label: {
-                            HStack {
-                                Text("Create Snapshot")
-                                Spacer()
-                                Image(systemName: "plus")
-                            }
-                        }
-
-                        Button {
-                            showPlaylistVersionHistory = true
+                            showExportView = true
                         } label: {
                             HStack {
-                                Text("Snapshots")
+                                Text("Export")
                                 Spacer()
-                                Image(systemName: "camera.aperture")
+                                Image(systemName: "square.and.arrow.up")
+
                             }
                         }
+
+                        Section("Snapshots") {
+                            Button {
+                                Task {
+                                    let snapshots = await self.spotify.getPlaylistSnapshots(playlist: playlistInfo, location: .cloud)
+
+                                    if snapshots.count < 2 {
+                                        withAnimation {
+                                            showBanner = true
+                                        }
+                                        await self.spotify.uploadPlaylistSnapshot(snapshot: PlaylistSnapshot(id: UUID().uuidString, playlist: playlistInfo, versionDate: Date()), playlistInfo: playlistInfo)
+                                        
+
+                                    }
+                                    else {
+                                        showSnapshotAlert = true
+                                    }
+                                }
+                            }
+                             label: {
+                                HStack {
+                                    Text("Create Snapshot")
+                                    Spacer()
+                                    Image(systemName: "plus")
+                                }
+                            }
+
+                            Button {
+                                showPlaylistVersionHistory = true
+                            } label: {
+                                HStack {
+                                    Text("Snapshots")
+                                    Spacer()
+                                    Image(systemName: "camera.aperture")
+                                }
+                            }
+                        }
+
+                        
+                    } label: {
+                        Image(systemName: "ellipsis")
+                            .font(.callout)
+                            .padding(10)
+                            .background {
+                                Circle()
+                                    .fill(Color(UIColor.secondarySystemFill))
+                            }
                     }
 
-                    
-                } label: {
-                    Image(systemName: "ellipsis.circle.fill")
                 }
-
             }
+            
         }
     }
 }
@@ -119,26 +129,42 @@ private struct ListView: View {
     var body: some View {
         if !isSearching {
             Section {
-                HStack {
-                    Spacer()
-                    AsyncImage(urlString: playlistInfo.playlist.images[0].url.absoluteString) {
-                        Rectangle()
-                            .aspectRatio(contentMode: .fill)
-                            .foregroundColor(.secondary)
-                            .shimmering()
-                    } content: {
-                        Image(uiImage: $0)
-                            .resizable()
-                            .scaledToFill()
-                            
+                
+                    HStack {
+                        Spacer()
+                        VStack(alignment: .center, spacing: 16) {
+                            AsyncImage(urlString: playlistInfo.playlist.images[0].url.absoluteString) {
+                                Rectangle()
+                                    .aspectRatio(contentMode: .fill)
+                                    .foregroundColor(.secondary)
+                                    .shimmering()
+                            } content: {
+                                Image(uiImage: $0)
+                                    .resizable()
+                                    .scaledToFill()
+                                    
+                                    .clipped()
+                                    
+                            }
+                            .frame(width: (UIScreen.main.bounds.width / 1.8), height: (UIScreen.main.bounds.width / 1.8) )
                             .clipped()
+                            .cornerRadius(12)
                             
+                            VStack {
+                                Text(playlistInfo.playlist.name)
+                                    .font(.headline)
+                                Text("Created by \(playlistInfo.playlist.owner?.displayName ?? "Unknown")")
+                                    .font(.subheadline)
+                                    .foregroundStyle(.secondary)
+                            }
+ 
+                        }
+                        
+                        Spacer()
                     }
-                    .frame(width: (UIScreen.main.bounds.width / 1.8), height: (UIScreen.main.bounds.width / 1.8) )
-                    .clipped()
-                    .cornerRadius(12)
-                    Spacer()
-                }
+                
+                
+               
             }
             .listRowSeparator(.hidden)
             .padding(.bottom)

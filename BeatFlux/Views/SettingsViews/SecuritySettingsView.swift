@@ -29,6 +29,11 @@ struct SecuritySettingsView: View {
                 NavigationLink(destination: ForgotPasswordView(showBanner: $showBanner, bannerData: $bannerData)) {
                     Text("Forgot Password?")
                 }
+                
+                
+                NavigationLink(destination: AccountDeletionView()) {
+                    Text("Delete Account")
+                }
 
             }
 
@@ -42,6 +47,66 @@ struct SecuritySettingsView: View {
     
     
    
+}
+
+private struct AccountDeletionView: View {
+    @EnvironmentObject var beatFluxViewModel: BeatFluxViewModel
+    @State var showError = false
+    @State var isPresentingConfirm = false
+    @State var isDeleting = false
+    
+    var body: some View {
+        Form {
+            Section {
+                Text("By deleting your account, you will remove all your spotify backup playlists from the BeatFlux servers. No copy will be stored on your device. \n\nThis action cannot be undone or recovered.")
+            }
+            
+            Button {
+                isPresentingConfirm = true
+            } label: {
+                HStack {
+                    Text("Delete All Data")
+                    
+                    Spacer()
+                    if isDeleting {
+                        ProgressView()
+                    }
+                    else {
+                        Image(systemName: "trash.fill")
+                    }
+                    
+                }
+                .foregroundColor(.red)
+            }
+            .disabled(isDeleting)
+        }
+        .navigationTitle("Account Deletion")
+        .alert("Unable to delete your account. Please try again later.", isPresented: $showError) {
+            Button {
+                showError.toggle()
+            } label: {
+                Text("Ok")
+            }
+
+        }
+        .confirmationDialog("Are you sure?",
+          isPresented: $isPresentingConfirm) {
+          Button("Delete Account", role: .destructive) {
+              Task {
+                  isDeleting = true
+                  do {
+                      try await beatFluxViewModel.deleteUserData()
+                      try await beatFluxViewModel.user?.delete()
+                  } catch {
+                      print("ERROR: Unable to delete user account \(error.localizedDescription)")
+                      showError = true
+                  }
+                  isDeleting = false
+              }
+              
+           }
+         }
+    }
 }
 
 private struct ForgotPasswordView: View {

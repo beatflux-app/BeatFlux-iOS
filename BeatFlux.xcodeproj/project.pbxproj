@@ -150,11 +150,7 @@
 				DF44EEA429FBDE5E0027E3DD /* AuthenticationViews */,
 				DF599E7529FD70A700EBF850 /* InitializationPage.swift */,
 				DFAD004829F5B6C000EE6874 /* HomeView.swift */,
-				DFFC11EC2A54D3D9001BE252 /* ExportPlaylistView.swift */,
-				DF3F15F52A55F6610032FFEC /* CreateNewPlaylistView.swift */,
 				DF604D902AB086A400DCF363 /* IntroIconView.swift */,
-				DF321D452AB13D52005D8C50 /* PlaylistSnapshotView.swift */,
-				DF088E782ABD0EEE0002A8E9 /* PlaylistInfoView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -202,6 +198,10 @@
 			children = (
 				DF6A789A2A43A85E00067D68 /* SpotifyPlaylistListView.swift */,
 				DF10E66C2A242EA100D9EFD7 /* SpotifyPopup.swift */,
+				DF321D452AB13D52005D8C50 /* PlaylistSnapshotView.swift */,
+				DF3F15F52A55F6610032FFEC /* CreateNewPlaylistView.swift */,
+				DFFC11EC2A54D3D9001BE252 /* ExportPlaylistView.swift */,
+				DF088E782ABD0EEE0002A8E9 /* PlaylistInfoView.swift */,
 			);
 			path = SpotifyViews;
 			sourceTree = "<group>";

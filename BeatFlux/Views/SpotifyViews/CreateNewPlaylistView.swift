@@ -25,22 +25,31 @@ struct CreateNewPlaylistView: View {
     
     var body: some View {
         
-        VStack {
-            TextField("Playlist Name", text: $playlistName)
-                .disabled(isLoading)
-            
-            Toggle(isOn: $isPublic) {
-                Text("Is Public")
+        Form {
+            Section {
+                TextField("Playlist Name", text: $playlistName)
+                    .disabled(isLoading)
+                
+                TextField("Description", text: $description)
+                    .disabled(isLoading)
+            } header: {
+                Text("Details")
             }
-            .disabled(isLoading)
-            
-            Toggle(isOn: $isCollaborative) {
-                Text("Is Collaborative")
-            }
-            .disabled(isLoading)
-            
-            TextField("Description", text: $description)
+            Section {
+                Toggle(isOn: $isPublic) {
+                    Text("Is Public")
+                }
                 .disabled(isLoading)
+                
+                Toggle(isOn: $isCollaborative) {
+                    Text("Is Collaborative")
+                }
+                .disabled(isLoading)
+                
+
+            }
+
+            
             
             Button {
                 Task {
