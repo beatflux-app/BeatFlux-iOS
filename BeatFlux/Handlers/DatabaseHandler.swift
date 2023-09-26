@@ -51,10 +51,12 @@ final class DatabaseHandler {
     }
     
     func initializeUser(firstName: String, lastName: String) {
-        guard let user = user else { return }
+        var localCancellable: Set<AnyCancellable> = []
         
-        firestore.collection("users")
-            .document(user.uid)
+        guard let user = user else { return }
+
+        
+        firestore.collection("users").document(user.uid)
             .setData(from: UserModel(first_name: firstName, last_name: lastName, is_using_dark: false), merge: true)
             .sink(
                 receiveCompletion: { completion in
@@ -66,7 +68,7 @@ final class DatabaseHandler {
                     print("SUCCESS: Initialization user data was successfully initialized to database")
                 }
             )
-            .store(in: &cancellables)
+            .store(in: &localCancellable)
     }
     
     func initializeSpotifyData() {
@@ -380,7 +382,11 @@ final class DatabaseHandler {
         }
         
         
+        
         let playlistsCollection = firestore.collection("users").document(user.uid)
+        
+        try self.deleteAllPlaylists()
+        
         return try await withCheckedThrowingContinuation { continuation in
             playlistsCollection.delete()
                 .subscribe(on: DispatchQueue.global(qos: .background))

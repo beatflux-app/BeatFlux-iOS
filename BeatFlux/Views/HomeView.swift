@@ -33,13 +33,14 @@ struct HomeView: View {
                     if beatFluxViewModel.isViewModelFullyLoaded && spotify.isBackupsLoaded && beatFluxViewModel.isConnected {
                             if beatFluxViewModel.userData != nil {
                                 VStack(alignment: .leading) {
-                                    if #available(iOS 17, *) {
-                                        TipView(RefreshTip()) { action in
-                                            presentRefreshInfo.toggle()
-                                        }
-                                    }
+                                    
                                     if !spotify.spotifyData.playlists.isEmpty {
                                         ScrollView {
+                                            if #available(iOS 17, *) {
+                                                TipView(RefreshTip())
+                                                .padding(.horizontal)
+                                                .padding(.bottom, 13)
+                                            }
                                             var filteredChunkedPlaylists: [[PlaylistInfo]] {
                                                 let playlists = spotify.spotifyData.playlists
                                                 let flatChunks = playlists.chunked(size: 2).flatMap { $0 }
@@ -73,8 +74,7 @@ struct HomeView: View {
                                         .scrollIndicators(.hidden)
 
                                 }
-                                    
-                                else {
+                                    else if(spotify.isBackupsLoaded && spotify.spotifyData.playlists.isEmpty && beatFluxViewModel.isViewModelFullyLoaded) {
                                     NoPlaylistsFoundView(showSpotifyLinkPrompt: $showSpotifyLinkPrompt)
                                 }
                                 
@@ -148,12 +148,19 @@ struct HomeView: View {
                     }
                     .opacity(beatFluxViewModel.isViewModelFullyLoaded && spotify.isBackupsLoaded ? 0 : 1)
                 }
-                else {
-                    VStack(spacing: 15) {
+                else if (!beatFluxViewModel.isConnected && beatFluxViewModel.isViewModelFullyLoaded){
+                    VStack {
+                        
+                        
+                        Image(systemName: "wifi.slash")
+                            .font(.largeTitle)
+                            .foregroundStyle(.secondary)
                         Text("No Network Connection")
                             .foregroundStyle(.secondary)
+                            .font(.title3)
+                            .fontWeight(.semibold)
+                            .padding(.top, 5)
                     }
-                    .opacity(beatFluxViewModel.isConnected ? 0 : 1)
                 }
                 
             }
@@ -216,14 +223,6 @@ struct RefreshTip: Tip {
 
     var image: Image? {
         Image(systemName: "timer")
-    }
-    
-    var actions: [Action] {
-        
-        [Action(id: "learn-more", {
-            Text("Learn more")
-        })]
-
     }
 }
 
@@ -353,54 +352,56 @@ private struct PlaylistGridSquare: View {
         
         NavigationLink(destination: PlaylistInfoView(playlistInfo: playlistInfo)) {
             VStack(alignment: .center) {
-                
-                if !playlistInfo.playlist.images.isEmpty {
-                    
-                    AsyncImage(urlString: playlistInfo.playlist.images[0].url.absoluteString) {
-                        Rectangle()
-                            .aspectRatio(contentMode: .fill)
-                            .frame(width: (UIScreen.main.bounds.width / 2) - 25, height: (UIScreen.main.bounds.width / 2) - 25)
-                            .foregroundColor(.secondary)
-                            .shimmering()
-                    } content: {
-                        Image(uiImage: $0)
-                            .resizable()
-                            .scaledToFill()
-                            .frame(width: (UIScreen.main.bounds.width / 2) - 25, height: (UIScreen.main.bounds.width / 2) - 25)
-                            .clipped()
-                            
-                    }
-                    .clipped()
-                    .cornerRadius(12)
-                }
-                else {
-                    Rectangle()
-                        .foregroundStyle(Color(UIColor.tertiarySystemBackground))
-                        .aspectRatio(contentMode: .fill)
-                        .frame(width: (UIScreen.main.bounds.width / 2) - 25, height: (UIScreen.main.bounds.width / 2) - 25)
-                        .redacted(reason: .placeholder)
+                VStack(alignment: .leading) {
+                    if !playlistInfo.playlist.images.isEmpty {
+                        
+                        AsyncImage(urlString: playlistInfo.playlist.images[0].url.absoluteString) {
+                            Rectangle()
+                                .aspectRatio(contentMode: .fill)
+                                .frame(width: (UIScreen.main.bounds.width / 2) - 25, height: (UIScreen.main.bounds.width / 2) - 25)
+                                .foregroundColor(.secondary)
+                                .shimmering()
+                        } content: {
+                            Image(uiImage: $0)
+                                .resizable()
+                                .scaledToFill()
+                                .frame(width: (UIScreen.main.bounds.width / 2) - 25, height: (UIScreen.main.bounds.width / 2) - 25)
+                                .clipped()
+                                
+                        }
                         .clipped()
                         .cornerRadius(12)
-                        .overlay {
-                            Text("?")
-                                .font(.largeTitle)
+                    }
+                    else {
+                        Rectangle()
+                            .foregroundStyle(Color(UIColor.tertiarySystemBackground))
+                            .aspectRatio(contentMode: .fill)
+                            .frame(width: (UIScreen.main.bounds.width / 2) - 25, height: (UIScreen.main.bounds.width / 2) - 25)
+                            .redacted(reason: .placeholder)
+                            .clipped()
+                            .cornerRadius(12)
+                            .overlay {
+                                Text("?")
+                                    .font(.largeTitle)
+                            }
+                    }
+                    
+
+                        VStack(alignment: .leading, spacing: 0) {
+                            Text(playlistInfo.playlist.name)
+                                .fontWeight(.semibold)
+                                .foregroundColor(.primary)
+                            
+                            Text(playlistInfo.playlist.owner?.displayName ?? "Unknown")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
                         }
+
+
                 }
                 
-                HStack {
-                    VStack(alignment: .leading, spacing: 0) {
-                        Text(playlistInfo.playlist.name)
-                            .fontWeight(.semibold)
-                            .foregroundColor(.primary)
-                        
-                        Text(playlistInfo.playlist.owner?.displayName ?? "Unknown")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                    }
-                    .padding(.leading, 5)
-                    
-                    Spacer()
-                }
+               
+                
 
                 
 

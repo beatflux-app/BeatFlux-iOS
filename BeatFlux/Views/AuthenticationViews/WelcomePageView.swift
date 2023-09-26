@@ -14,28 +14,28 @@ struct WelcomePageView: View {
     
     var body: some View {
         //MARK: Home Page
-//        VStack {
-//            HStack {
-//                Image("BeatFluxLogo")
-//                    .resizable()
-//                    .aspectRatio(contentMode: .fit)
-//                    .frame(width: 40)
-//                    .cornerRadius(16)
-//            }
-//            .frame(maxWidth: .infinity)
-//            .padding(.top)
-//            
-//            Spacer()
-//            
-//            Text("Backup your playlists in real time.")
-//                .fontWeight(.bold)
-//                .font(.largeTitle)
-//                .padding(.horizontal)
-//            
-//            Spacer()
-//            
-//            
-            VStack(spacing: 20) {
+        VStack {
+            HStack {
+                Image("BeatFluxLogo")
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: 40)
+                    .cornerRadius(16)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.top)
+            
+            Spacer()
+            
+            Text("Backup your playlists in real time.")
+                .fontWeight(.bold)
+                .font(.largeTitle)
+                .padding(.horizontal)
+            
+            Spacer()
+            
+            
+//            VStack(spacing: 20) {
 //                Button {
 //                    UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
 //                   
@@ -90,8 +90,8 @@ struct WelcomePageView: View {
 //                }
 //
 //            }
-//            .padding(.bottom)
-//            
+            //.padding(.bottom)
+            
 //            HStack {
 //                Rectangle()
 //                    .frame(height: 1)
