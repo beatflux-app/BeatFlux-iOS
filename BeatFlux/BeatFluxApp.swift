@@ -8,6 +8,7 @@
 import SwiftUI
 import FirebaseCore
 import SpotifyWebAPI
+import TipKit
 
 @main
 struct BeatFluxApp: App {
@@ -29,6 +30,14 @@ struct BeatFluxApp: App {
             InitializationPage()
                 .environmentObject(beatFluxViewModel)
                 .environmentObject(spotify)
+                .task {
+                    if #available(iOS 17.0, *) {
+                        try? Tips.configure([
+                            .displayFrequency(.immediate),
+                            .datastoreLocation(.applicationDefault)
+                        ])
+                    }
+                }
         }
         
     }

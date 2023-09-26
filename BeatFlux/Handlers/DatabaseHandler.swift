@@ -372,6 +372,33 @@ final class DatabaseHandler {
 
     }
     
+    func deleteAllUserData() async throws {
+        guard let user = user else {
+            
+            print("ERROR: User does not exist")
+            throw UserError.nilUser
+        }
+        
+        
+        let playlistsCollection = firestore.collection("users").document(user.uid)
+        return try await withCheckedThrowingContinuation { continuation in
+            playlistsCollection.delete()
+                .subscribe(on: DispatchQueue.global(qos: .background))
+                .receive(on: DispatchQueue.main)
+                .sink(receiveCompletion: { completion in
+                    if case .failure(let error) = completion {
+                        print("ERROR: Error while deleting user \(error.localizedDescription)")
+                        continuation.resume(throwing: error)
+                    }
+                }, receiveValue: { results in
+                    continuation.resume()
+                    print("SUCCESS: User data was successfully deleted")
+                })
+                .store(in: &cancellables)
+        }
+        
+    }
+    
     func uploadSpecificFieldFromPlaylistCollection(playlist: PlaylistInfo, delete: Bool = false, source: FirestoreSource) async {
         
         guard let user = user else {

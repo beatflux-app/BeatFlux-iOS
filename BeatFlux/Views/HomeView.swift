@@ -10,6 +10,7 @@ import SpotifyWebAPI
 import Combine
 import Shimmer
 import Refresher
+import TipKit
 
 struct HomeView: View {
     @EnvironmentObject var beatFluxViewModel: BeatFluxViewModel
@@ -21,55 +22,67 @@ struct HomeView: View {
     @State var showBanner: Bool = false
     @State var bannerData: BannerModifier.BannerData = BannerModifier.BannerData(imageIcon: Image(systemName: "camera.aperture"),title: "Added Snapshot")
     @State var searchQuery = ""
-
+    @State var presentRefreshInfo = false
+    
     
     var body: some View {
         
         NavigationView {
             ZStack {
-                ScrollView {
+                
                     if beatFluxViewModel.isViewModelFullyLoaded && spotify.isBackupsLoaded && beatFluxViewModel.isConnected {
                             if beatFluxViewModel.userData != nil {
-                                if !spotify.spotifyData.playlists.isEmpty {
-                                    var filteredChunkedPlaylists: [[PlaylistInfo]] {
-                                        let playlists = spotify.spotifyData.playlists
-                                        let flatChunks = playlists.chunked(size: 2).flatMap { $0 }
-                                        let filteredChunks = flatChunks.filter {
-                                            searchQuery.isEmpty ? true : $0.playlist.name.contains(searchQuery)
-                                        }
-                                        return stride(from: 0, to: filteredChunks.count, by: 2).map {
-                                            Array(filteredChunks[$0..<min($0+2, filteredChunks.count)])
+                                VStack(alignment: .leading) {
+                                    if #available(iOS 17, *) {
+                                        TipView(RefreshTip()) { action in
+                                            presentRefreshInfo.toggle()
                                         }
                                     }
-                                    
-                                    Grid {
-                                        ForEach(0..<filteredChunkedPlaylists.count, id: \.self) { index in
-                                                GridRow(alignment: .top) {
-                                                    ForEach(filteredChunkedPlaylists[index], id: \.self) { playlist in
-                                                        PlaylistGridSquare(playlistInfo: playlist, showBanner: $showBanner)
-                                                            .frame(maxWidth: .infinity, alignment: .leading) // Align to leading
+                                    if !spotify.spotifyData.playlists.isEmpty {
+                                        ScrollView {
+                                            var filteredChunkedPlaylists: [[PlaylistInfo]] {
+                                                let playlists = spotify.spotifyData.playlists
+                                                let flatChunks = playlists.chunked(size: 2).flatMap { $0 }
+                                                let filteredChunks = flatChunks.filter {
+                                                    searchQuery.isEmpty ? true : $0.playlist.name.contains(searchQuery)
+                                                }
+                                                return stride(from: 0, to: filteredChunks.count, by: 2).map {
+                                                    Array(filteredChunks[$0..<min($0+2, filteredChunks.count)])
+                                                }
+                                            }
+                                            
+                                            Grid {
+                                                ForEach(0..<filteredChunkedPlaylists.count, id: \.self) { index in
+                                                    GridRow(alignment: .top) {
+                                                        ForEach(filteredChunkedPlaylists[index], id: \.self) { playlist in
+                                                            PlaylistGridSquare(playlistInfo: playlist, showBanner: $showBanner)
+                                                                .frame(maxWidth: .infinity, alignment: .leading) // Align to leading
+                                                        }
                                                     }
                                                 }
                                             }
+                                            
+                                            .animation(.default, value: filteredChunkedPlaylists)
+                                            .searchable(text: $searchQuery, placement: .navigationBarDrawer(displayMode: .always))
+                                            .padding(.horizontal)
                                     }
-                                    .padding(.horizontal)
-                                    .animation(.default, value: filteredChunkedPlaylists)
-                                    .searchable(text: $searchQuery)
+                                        .refresher(style: .default) {
+                                            await spotify.refreshUsersPlaylists(options: .libraryPlaylists, priority: .low, source: .default)
+                                        }
+                                        .toolbarBackground(Color(UIColor.systemBackground), for: .navigationBar)
+                                        .scrollIndicators(.hidden)
+
                                 }
+                                    
                                 else {
-                                    NoPlaylistsFoundView()
+                                    NoPlaylistsFoundView(showSpotifyLinkPrompt: $showSpotifyLinkPrompt)
                                 }
+                                
                             }
                         }
                         
                     
                 }
-                .refresher(style: .default) {
-                    await spotify.refreshUsersPlaylists(options: .libraryPlaylists, priority: .low, source: .default)
-                }
-                .navigationTitle("Backups")  
-                .scrollIndicators(.hidden)
-                .toolbarBackground(Color(UIColor.systemBackground), for: .navigationBar)
                 
                 VStack {
                     Spacer()
@@ -81,33 +94,48 @@ struct HomeView: View {
                             UIImpactFeedbackGenerator(style: .rigid).impactOccurred()
                             showSpotifyPlaylistListView.toggle()
                         } label: {
-                            Circle()
-                                .frame(width: 65)
-                                .foregroundStyle(Color.accentColor)
-                                .overlay {
-                                    Image(systemName: "plus")
-                                        .foregroundStyle(.white)
-                                        .fontWeight(.bold)
-                                        .font(.title3)
-                                }
-                                .shadow(radius: 16)
+                            if #available(iOS 17.0, *) {
+                                Circle()
+                                    .popoverTip(AddBackUpTip(), arrowEdge: .bottom)
+                                    .frame(width: 65)
+                                    .foregroundStyle(Color.accentColor)
+                                    .overlay {
+                                        Image(systemName: "plus")
+                                            .foregroundStyle(.white)
+                                            .fontWeight(.bold)
+                                            .font(.title3)
+                                    }
+                                    .shadow(radius: 16)
+                                    
+                            }
+                            else {
+                                Circle()
+                                    .frame(width: 65)
+                                    .foregroundStyle(Color.accentColor)
+                                    .overlay {
+                                        Image(systemName: "plus")
+                                            .foregroundStyle(.white)
+                                            .fontWeight(.bold)
+                                            .font(.title3)
+                                    }
+                                    .shadow(radius: 16)
+                            }
+                            
                             
                             
                             
                         }
                         .buttonStyle(ShrinkOnHoverButtonStyle())
                         .disabled(!beatFluxViewModel.isViewModelFullyLoaded)
+
                     }
                     .padding([.trailing, .bottom])
                 }
             }
-            .onChange(of: beatFluxViewModel.isConnected) { value in
-//                if value == true {
-//
-//                    DatabaseHandler.shared.initializeSpotifyData()
-//                    spotify.initializeSpotify()
-//                }
-            }
+            .navigationTitle("Backups")
+            .toolbar(.visible, for: .navigationBar)
+            .navigationBarTitleDisplayMode(.inline)
+
             .overlay {
                 if beatFluxViewModel.isConnected {
                     VStack(spacing: 15) {
@@ -140,6 +168,9 @@ struct HomeView: View {
         .sheet(isPresented: $showSpotifyPlaylistListView) {
             SpotifyPlaylistListView()
         }
+        .sheet(isPresented: $presentRefreshInfo, content: {
+            PlaylistRefreshInformation()
+        })
         
         .sheet(isPresented: $showSpotifyLinkPrompt, onDismiss: {
             beatFluxViewModel.userData?.account_link_shown = true
@@ -171,6 +202,76 @@ struct HomeView_Previews: PreviewProvider {
     }
 }
 
+@available(iOS 17, *)
+struct RefreshTip: Tip {
+    var title: Text {
+        Text("Playlist Refresh")
+    }
+
+
+    var message: Text? {
+        Text("Playlists refresh automatically every 10 minutes")
+    }
+
+
+    var image: Image? {
+        Image(systemName: "timer")
+    }
+    
+    var actions: [Action] {
+        
+        [Action(id: "learn-more", {
+            Text("Learn more")
+        })]
+
+    }
+}
+
+@available(iOS 17, *)
+struct AddBackUpTip: Tip {
+    var title: Text {
+        Text("Add Backups")
+    }
+
+
+    var message: Text? {
+        Text("Press to backup your playlists")
+    }
+
+
+    var image: Image? {
+        Image(systemName: "hand.point.up.left.fill")
+    }
+    
+}
+
+struct PlaylistRefreshInformation: View {
+    @Environment(\.dismiss) var dismiss
+    
+    var body: some View {
+        NavigationView {
+            Form {
+                Text("Our BeatFlux servers automatically refresh your playlists every 10 minutes. This ensures that you're playlists are always up to data.")
+            }
+            .navigationTitle("Refresh Information")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem {
+                    dismissButton
+                }
+            }
+        }
+
+    }
+    
+    private var dismissButton: some View {
+        Button(action: { dismiss() }) {
+            Text("")
+        }
+        .buttonStyle(ExitButtonStyle(buttonSize: 30, symbolScale: 0.4))
+    }
+}
+
 
 struct ShrinkOnHoverButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
@@ -188,6 +289,9 @@ struct ShrinkOnHoverButtonStyle: ButtonStyle {
 
 
 private struct NoPlaylistsFoundView: View {
+    @EnvironmentObject var spotify: Spotify
+    @Binding var showSpotifyLinkPrompt: Bool
+    
     var body: some View {
         VStack {
             Spacer()
@@ -200,6 +304,37 @@ private struct NoPlaylistsFoundView: View {
                 .fontWeight(.semibold)
                 .padding(.top, 5)
             
+            
+            if !spotify.isAuthorized {
+                Button {
+                    showSpotifyLinkPrompt = true
+                } label: {
+                    HStack(spacing: 15) {
+                        Image("SpotifyLogoWhite")
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .frame(height: 25)
+                        
+                        
+                        Text("Connect To Spotify")
+                            .foregroundColor(.white)
+                            .fontWeight(.semibold)
+                            
+                            
+                    }
+                    .padding(.horizontal)
+                    .padding(.vertical, 8)
+                    .background {
+                        Capsule()
+                            .foregroundColor(.accentColor)
+                    }
+                    
+                }
+                .padding(.top)
+
+            }
+            
+            Spacer()
             
         }
     }
@@ -217,7 +352,7 @@ private struct PlaylistGridSquare: View {
         
         
         NavigationLink(destination: PlaylistInfoView(playlistInfo: playlistInfo)) {
-            VStack(alignment: .leading) {
+            VStack(alignment: .center) {
                 
                 if !playlistInfo.playlist.images.isEmpty {
                     
@@ -252,17 +387,21 @@ private struct PlaylistGridSquare: View {
                         }
                 }
                 
-
-                VStack(alignment: .leading, spacing: 0) {
-                    Text(playlistInfo.playlist.name)
-                        .fontWeight(.semibold)
-                        .foregroundColor(.primary)
+                HStack {
+                    VStack(alignment: .leading, spacing: 0) {
+                        Text(playlistInfo.playlist.name)
+                            .fontWeight(.semibold)
+                            .foregroundColor(.primary)
+                        
+                        Text(playlistInfo.playlist.owner?.displayName ?? "Unknown")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                    .padding(.leading, 5)
                     
-                    Text(playlistInfo.playlist.owner?.displayName ?? "Unknown")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
+                    Spacer()
                 }
-                .padding(.leading, 5)
+
                 
 
                 
@@ -270,9 +409,6 @@ private struct PlaylistGridSquare: View {
                     
                 
             }
-            
-            .padding(.horizontal, 5)
-            .padding(.vertical, 5)
             
             .background(ContainerRelativeShape().fill(Color(uiColor: .systemBackground)))
             
@@ -311,11 +447,10 @@ private struct PlaylistGridSquare: View {
                         let snapshots = await self.spotify.getPlaylistSnapshots(playlist: playlistInfo, location: .cloud)
                         
                         if snapshots.count < 2 {
-                            await self.spotify.uploadPlaylistSnapshot(snapshot: PlaylistSnapshot(id: UUID().uuidString, playlist: playlistInfo, versionDate: Date()), playlistInfo: playlistInfo)
                             withAnimation {
                                 showBanner = true
                             }
-                            
+                            await self.spotify.uploadPlaylistSnapshot(snapshot: PlaylistSnapshot(id: UUID().uuidString, playlist: playlistInfo, versionDate: Date()), playlistInfo: playlistInfo)
                         }
                         else {
                             showSnapshotAlert = true
