@@ -33,13 +33,14 @@ struct HomeView: View {
                     if beatFluxViewModel.isViewModelFullyLoaded && spotify.isBackupsLoaded && beatFluxViewModel.isConnected {
                             if beatFluxViewModel.userData != nil {
                                 VStack(alignment: .leading) {
-                                    if #available(iOS 17, *) {
-                                        TipView(RefreshTip()) { action in
-                                            presentRefreshInfo.toggle()
-                                        }
-                                    }
+                                    
                                     if !spotify.spotifyData.playlists.isEmpty {
                                         ScrollView {
+                                            if #available(iOS 17, *) {
+                                                TipView(RefreshTip()) { action in
+                                                    presentRefreshInfo.toggle()
+                                                }
+                                            }
                                             var filteredChunkedPlaylists: [[PlaylistInfo]] {
                                                 let playlists = spotify.spotifyData.playlists
                                                 let flatChunks = playlists.chunked(size: 2).flatMap { $0 }
